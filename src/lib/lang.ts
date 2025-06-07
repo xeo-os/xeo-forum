@@ -2,38 +2,85 @@ type LocaleKey = 'en-US' | 'zh-CN' | 'zh-TW' | 'es-ES' | 'fr-FR' | 'ru-RU' | 'ja
 
 type LangTexts = Record<LocaleKey, string>;
 
+// 缓存当前语言以避免重复解析
+let cachedLocale: string | null = null;
+let lastPathname: string | null = null;
+
+function getCurrentLocale(): string {
+  if (typeof window === 'undefined') return 'en-US';
+  
+  const currentPathname = window.location.pathname;
+  
+  // 如果路径没有变化，直接返回缓存的语言
+  if (currentPathname === lastPathname && cachedLocale) {
+    return cachedLocale;
+  }
+  
+  // 更新缓存
+  lastPathname = currentPathname;
+  cachedLocale = currentPathname.split('/')[1] || 'en-US';
+  
+  return cachedLocale;
+}
+
 export default function lang(langs: LangTexts, locale?: string): string {
+  // 如果提供了locale参数，直接使用
+  if (locale) {
+    return langs[locale as LocaleKey] || langs['en-US'];
+  }
+  
   // 服务端渲染兼容性检查
-  if (typeof window === 'undefined' && !locale) {
+  if (typeof window === 'undefined') {
     return langs['en-US'];
   }
   
-  // 获取当前语言代码
-  const currentLocale = locale || (typeof window !== 'undefined' ? window.location.pathname.split('/')[1] : 'en-US');
+  // 获取当前语言代码（使用缓存）
+  const currentLocale = getCurrentLocale();
   
   // 类型安全的语言匹配
   return langs[currentLocale as LocaleKey] || langs['en-US'];
 }
 
 // 便捷的钩子函数用于React组件
-export function useLang() {
-  if (typeof window === 'undefined') return 'en-US';
-  return window.location.pathname.split('/')[1] || 'en-US';
+export function useLang(): string {
+  return getCurrentLocale();
+}
+
+// 清除缓存的函数（在路由变化时调用）
+export function clearLocaleCache(): void {
+  cachedLocale = null;
+  lastPathname = null;
+}
+
+// 预设语言，避免每次都重新创建对象
+export function createLangTemplate(): LangTexts {
+  return {
+    'en-US': '',
+    'zh-CN': '',
+    'zh-TW': '',
+    'es-ES': '',
+    'fr-FR': '',
+    'ru-RU': '',
+    'ja-JP': '',
+    'de-DE': '',
+    'pt-BR': '',
+    'ko-KR': ''
+  };
 }
 
 /* eg:
 
 lang({
-    'en-US':
-    'zh-CN':
-    'zh-TW':
-    'es-ES':
-    'fr-FR':
-    'ru-RU':
-    'ja-JP':
-    'de-DE':
-    'pt-BR':
-    'ko-KR':
+    'en-US': '',
+    'zh-CN': '',
+    'zh-TW': '',
+    'es-ES': '',
+    'fr-FR': '',
+    'ru-RU': '',
+    'ja-JP': '',
+    'de-DE': '',
+    'pt-BR': '',
+    'ko-KR': ''
 })
 
 */
