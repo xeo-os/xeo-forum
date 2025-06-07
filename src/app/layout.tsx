@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Xeo Forum",
-  description: "International forum platform",
+  title: "Xeo OS",
+  description: "Exchange everyone's opinions, just by words.",
 };
 
 export default function RootLayout({
@@ -11,10 +11,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body>
-        {children}
-      </body>
+    <html>
+      <body>{children}</body>
     </html>
   );
 }
+  

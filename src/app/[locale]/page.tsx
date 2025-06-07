@@ -1,34 +1,28 @@
+import lang from "@/lib/lang";
+
 type Props = {
   params: { locale: string };
 };
 
-const messages = {
-  en: {
-    welcome: "Welcome to Xeo Forum",
-    description: "Connect with people around the world"
-  },
-  zh: {
-    welcome: "欢迎来到 Xeo 论坛",
-    description: "与世界各地的人们建立联系"
-  },
-  ja: {
-    welcome: "Xeo フォーラムへようこそ",
-    description: "世界中の人々とつながりましょう"
-  },
-  ko: {
-    welcome: "Xeo 포럼에 오신 것을 환영합니다",
-    description: "전 세계 사람들과 소통하세요"
-  }
-};
-
 export default function HomePage({ params }: Props) {
   const { locale } = params;
-  const content = messages[locale as keyof typeof messages] || messages.en;
+  
+  const welcomeText = lang({
+    "en-US": "Welcome to Xeo OS",
+    "zh-CN": "欢迎来到 Xeo OS",
+    "zh-TW": "歡迎來到 Xeo OS",
+    "es-ES": "Bienvenido a Xeo OS",
+    "fr-FR": "Bienvenue sur Xeo OS",
+    "ru-RU": "Добро пожаловать в Xeo OS",
+    "ja-JP": "Xeo OS へようこそ",
+    "de-DE": "Willkommen bei Xeo OS",
+    "pt-BR": "Bem-vindo ao Xeo OS",
+    "ko-KR": "Xeo OS에 오신 것을 환영합니다",
+  }, locale);
 
   return (
     <main>
-      <h1>{content.welcome}</h1>
-      <p>{content.description}</p>
+      <h1>{welcomeText}</h1>
     </main>
   );
 }
