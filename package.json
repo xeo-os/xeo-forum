@@ -25,6 +25,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "remixicon": "^4.6.0",
+    "rlog-js": "^1.5.2",
     "tailwind-merge": "^3.3.0"
   },
   "devDependencies": {
