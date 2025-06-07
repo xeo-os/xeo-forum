@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  uid           Int          @id @default(autoincrement())
+  uuid          String       @default(uuid())
+  email         String       @unique
+  emailVerified Boolean      @default(false)
+  username      String       @unique @db.VarChar(10)
+  nickname      String       @db.VarChar(50)
+  bio           String?      @db.VarChar(255)
+  birth         String?      @db.VarChar(10)
+  country       String?      @db.VarChar(20)
+  timearea      String?      @db.VarChar(10)
+  avatar        String?      @db.VarChar(100)
+  role          Role         @default(USER)
+  updatedAt     DateTime     @updatedAt
+  createdAt     DateTime     @default(now())
+  lastUseAt     String?
+  gender        Gender?      @default(UNSET)
+  password      String
+  followed      FriendShip[] @relation("Followed")
+  following     FriendShip[] @relation("Following")
+  notice        Notice[]
+  // messageSend    Message[]    @relation("MessageFrom")
+  // messageReceive Message[]    @relation("MessageTo")
+  post          Post[]
+  reply         Reply[]
+  Avatar        Avatar[]
+}
+
+model Post {
+  id      Int     @id @default(autoincrement())
+  origin  String  @db.VarChar(100)
+  User    User?   @relation(fields: [userUid], references: [uid])
+  userUid Int?
+  Reply   Reply[]
+}
+
+model Reply {
+  id          String   @id @default(uuid())
+  content     String   @db.VarChar(1000)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  postUid     Int?
+  noteUid     String?
+  commentUid  String?
+  userUid     Int
+  likeUserUid Int[]
+  post        Post?    @relation(fields: [postUid], references: [id])
+  user        User     @relation(fields: [userUid], references: [uid])
+  parentReply Reply?   @relation("CommentReplies", fields: [commentUid], references: [id])
+  replies     Reply[]  @relation("CommentReplies")
+  childReplay Boolean  @default(false)
+}
+
+model Task {
+  id        String   @id @default(uuid())
+  status    String   @default("PENDING") @db.VarChar(20)
+  createdAt DateTime @default(now())
+}
+
+model Avatar {
+  id         String @id @default(uuid())
+  user       User   @relation(fields: [userUid], references: [uid])
+  userUid    Int
+  emoji      String @db.VarChar(10)
+  background String @db.VarChar(100)
+}
+
+model FriendShip {
+  id          Int      @id @default(autoincrement())
+  follower    User     @relation("Followed", fields: [followerId], references: [uid])
+  followerId  Int
+  following   User     @relation("Following", fields: [followingId], references: [uid])
+  followingId Int
+  createdAt   DateTime @default(now())
+}
+
+model Notice {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [uid])
+  userId    Int
+  content   String   @db.VarChar(255)
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  ADMIN
+  MODERATOR
+  USER
+}
+
+enum Gender {
+  MALE
+  FAMALE
+  INTERSEX
+  UNSET
+}

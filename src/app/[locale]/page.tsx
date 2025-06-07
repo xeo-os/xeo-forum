@@ -1,5 +1,6 @@
 import lang from "@/lib/lang";
 
+import "@/app/globals.css";
 type Props = {
   params: { locale: string };
 };

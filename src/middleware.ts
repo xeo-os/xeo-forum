@@ -170,6 +170,6 @@ export const config = {
     // - _next/image (图片优化)
     // - favicon.ico (网站图标)
     // - 其他静态资源
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:jpg|jpeg|gif|png|svg|ico|webp|js|css|woff|woff2|ttf|otf)).*)',
+    '/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|.*\\.(?:jpg|jpeg|gif|png|svg|ico|webp|js|css|woff|woff2|ttf|otf)).*)',
   ],
 };

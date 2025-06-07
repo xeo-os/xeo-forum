@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import lang from "@/lib/lang";
 
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
+import { SiteHeader } from "@/components/app-header";
+
 type Props = {
   children: React.ReactNode;
   params: { locale: string };
@@ -53,7 +57,21 @@ export default function LocaleLayout({ children, params }: Props) {
 
   return (
     <html lang={locale}>
-      <body>{children}</body>
+      <body>
+        <div className="[--header-height:calc(var(--spacing)*14)]">
+          <SidebarProvider>
+            <SiteHeader locale={locale} />
+            <div className="flex flex-1" style={{ marginTop: 'var(--header-height)' }}>
+              <AppSidebar locale={locale}/>
+              <SidebarInset>
+                <main className="flex flex-1 flex-col p-4">
+                  {children}
+                </main>
+              </SidebarInset>
+            </div>
+          </SidebarProvider>
+        </div>
+      </body>
     </html>
   );
 }
