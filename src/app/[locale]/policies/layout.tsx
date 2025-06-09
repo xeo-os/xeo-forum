@@ -4,6 +4,7 @@ import { getThemeFromCookie} from "@/lib/theme-utils";
 
 import { ThemeScript } from "@/components/theme-script";
 import { ThemeSync } from "@/components/theme-sync";
+import { PageTransition } from "@/components/page-transition";
 
 type Props = {
   children: React.ReactNode;
@@ -21,7 +22,9 @@ export default async function LocaleLayout({ children}: Props) {
     <>
       <ThemeScript />
       <ThemeSync serverTheme={savedTheme} />
-      {children}
+      <PageTransition>
+        {children}
+      </PageTransition>
     </>
   );
 }

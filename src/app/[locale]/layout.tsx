@@ -8,6 +8,7 @@ import { getThemeFromCookie, getHtmlClassName } from "@/lib/theme-utils";
 import { ThemeScript } from "@/components/theme-script";
 import { ClientLayout } from "@/components/client-layout";
 import { ThemeSync } from "@/components/theme-sync";
+import { PageTransition } from "@/components/page-transition";
 
 type Props = {
   children: React.ReactNode;
@@ -71,7 +72,9 @@ export default async function LocaleLayout({ children, params }: Props) {
         <ThemeScript />
         <ThemeSync serverTheme={savedTheme} />
         <ClientLayout locale={locale} savedTheme={savedTheme}>
-          {children}
+          <PageTransition>
+            {children}
+          </PageTransition>
         </ClientLayout>
       </body>
     </html>
