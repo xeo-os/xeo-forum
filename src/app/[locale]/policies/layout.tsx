@@ -1,34 +1,27 @@
 "use server";
 import { headers } from "next/headers";
+import { getThemeFromCookie} from "@/lib/theme-utils";
 
 import { ThemeScript } from "@/components/theme-script";
+import { ThemeSync } from "@/components/theme-sync";
 
 type Props = {
   children: React.ReactNode;
   params: { locale: string };
 };
 
-export default async function LocaleLayout({ children }: Props) {
-  const locale =
-    new URLSearchParams((await headers()).get("query") || "").get("lang") ||
-    "zh-CN";
+export default async function LocaleLayout({ children}: Props) {
 
+  // 使用统一的主题处理逻辑
   const headersList = await headers();
   const cookieHeader = headersList.get("cookie") || "";
-  const themeCookie = cookieHeader
-    .split(";")
-    .find((c) => c.trim().startsWith("theme="));
-
-  const savedTheme = themeCookie ? themeCookie.split("=")[1] : "dark";
-
-  const htmlClassName = savedTheme === "dark" ? "dark" : "";
+  const savedTheme = getThemeFromCookie(cookieHeader);
 
   return (
-    <html lang={locale} className={htmlClassName} suppressHydrationWarning>
-      <body suppressHydrationWarning>
-        <ThemeScript />
-        {children}
-      </body>
-    </html>
+    <>
+      <ThemeScript />
+      <ThemeSync serverTheme={savedTheme} />
+      {children}
+    </>
   );
 }

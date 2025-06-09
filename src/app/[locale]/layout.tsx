@@ -3,9 +3,11 @@
 import type { Metadata } from "next";
 import lang from "@/lib/lang";
 import { headers } from "next/headers";
+import { getThemeFromCookie, getHtmlClassName } from "@/lib/theme-utils";
 
 import { ThemeScript } from "@/components/theme-script";
 import { ClientLayout } from "@/components/client-layout";
+import { ThemeSync } from "@/components/theme-sync";
 
 type Props = {
   children: React.ReactNode;
@@ -55,25 +57,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function LocaleLayout({ children, params }: Props) {
-  const awaitedParams = await Promise.resolve(params);
-  const { locale } = awaitedParams;
+  const { locale } = await params;
   
-  // 从 Cookie 中读取主题设置，改进检测逻辑
+  // 使用统一的主题处理逻辑
   const headersList = await headers();
   const cookieHeader = headersList.get('cookie') || '';
-  const themeCookie = cookieHeader
-    .split(';')
-    .find(c => c.trim().startsWith('theme='));
-  
-  const savedTheme = themeCookie ? themeCookie.split('=')[1].trim() : 'dark';
-  
-  // 确保主题类名正确设置
-  const htmlClassName = savedTheme === 'dark' ? 'dark' : '';
+  const savedTheme = getThemeFromCookie(cookieHeader);
+  const htmlClassName = getHtmlClassName(savedTheme);
 
   return (
     <html lang={locale} className={htmlClassName} suppressHydrationWarning>
       <body suppressHydrationWarning>
         <ThemeScript />
+        <ThemeSync serverTheme={savedTheme} />
         <ClientLayout locale={locale} savedTheme={savedTheme}>
           {children}
         </ClientLayout>

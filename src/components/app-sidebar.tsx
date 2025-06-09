@@ -26,8 +26,7 @@ import { Separator } from "@/components/ui/separator";
 
 import { useState, useEffect } from "react";
 import { SidebarInner } from "./sidebar-inner";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
 
 export function AppSidebar({
   locale,
@@ -38,6 +37,7 @@ export function AppSidebar({
 }) {
   const [theme, setTheme] = useState<string>(currentTheme);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     setTheme(currentTheme);
@@ -176,9 +176,9 @@ export function AppSidebar({
               <DropdownMenuContent side="top" className="w-full">
                 {langList().map((lang) => (
                   <DropdownMenuItem key={lang}>
-                    <Link href={lang} className="block w-full text-center">
+                    <a href={`/${lang}${pathname.replace(`/${locale}`, "")}`} className="block w-full text-center">
                       {langName(lang)}
-                    </Link>
+                    </a>
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
