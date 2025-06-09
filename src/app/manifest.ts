@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Xchange Everyone\'s Opinions',
     start_url: '/',
     display: 'standalone',
-    background_color: '#fff',
-    theme_color: '#fff',
+    background_color: '#09090b',
+    theme_color: '#09090b',
     icons: [
       {
         src: '/icon.png',

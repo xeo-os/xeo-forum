@@ -9,39 +9,105 @@ datasource db {
 }
 
 model User {
-  uid           Int          @id @default(autoincrement())
-  uuid          String       @default(uuid())
-  email         String       @unique
-  emailVerified Boolean      @default(false)
-  username      String       @unique @db.VarChar(10)
-  nickname      String       @db.VarChar(50)
-  bio           String?      @db.VarChar(255)
-  birth         String?      @db.VarChar(10)
-  country       String?      @db.VarChar(20)
-  timearea      String?      @db.VarChar(10)
-  avatar        String?      @db.VarChar(100)
-  role          Role         @default(USER)
-  updatedAt     DateTime     @updatedAt
-  createdAt     DateTime     @default(now())
-  lastUseAt     String?
-  gender        Gender?      @default(UNSET)
-  password      String
-  followed      FriendShip[] @relation("Followed")
-  following     FriendShip[] @relation("Following")
-  notice        Notice[]
+  uid             Int          @id @default(autoincrement())
+  uuid            String       @default(uuid())
+  email           String       @unique
+  emailVerified   Boolean      @default(false)
+  emailVerifyCode String?      @db.VarChar(10)
+  username        String       @unique @db.VarChar(20)
+  nickname        String       @db.VarChar(50)
+  bio             String?      @db.VarChar(255)
+  birth           String?      @db.VarChar(10)
+  country         String?      @db.VarChar(20)
+  timearea        String?      @db.VarChar(10)
+  avatar          String?      @db.VarChar(100)
+  role            Role         @default(USER)
+  updatedAt       DateTime     @updatedAt
+  createdAt       DateTime     @default(now())
+  lastUseAt       String?
+  gender          Gender?      @default(UNSET)
+  password        String
+  exp             Int          @default(0)
+  followed        FriendShip[] @relation("Followed")
+  following       FriendShip[] @relation("Following")
+  notice          Notice[]
   // messageSend    Message[]    @relation("MessageFrom")
   // messageReceive Message[]    @relation("MessageTo")
-  post          Post[]
-  reply         Reply[]
-  Avatar        Avatar[]
+  post            Post[]
+  reply           Reply[]
+  Avatar          Avatar[]
+}
+model Post {
+  id          Int      @id @default(autoincrement())
+  published   Boolean  @default(false)
+  originLang  String?  @db.VarChar(10)
+  User        User?    @relation(fields: [userUid], references: [uid])
+  userUid     Int?
+  updatedAt   DateTime @updatedAt
+  lastReplyAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  title       String   @db.VarChar(50)
+  origin      String   @db.VarChar(100)
+  titleZHCN   String?  @db.VarChar(100)
+  contentZHCN String?  @db.VarChar(200)
+  titleENUS   String?  @db.VarChar(100)
+  contentENUS String?  @db.VarChar(200)
+  titleZHTW   String?  @db.VarChar(100)
+  contentZHTW String?  @db.VarChar(200)
+  titleESES   String?  @db.VarChar(100)
+  contentESES String?  @db.VarChar(200)
+  titleFRFR   String?  @db.VarChar(100)
+  contentFRFR String?  @db.VarChar(200)
+  titleRURU   String?  @db.VarChar(100)
+  contentRURU String?  @db.VarChar(200)
+  titleJAJP   String?  @db.VarChar(100)
+  contentJAJP String?  @db.VarChar(200)
+  titleDEDE   String?  @db.VarChar(100)
+  contentDEDE String?  @db.VarChar(200)
+  titlePTBR   String?  @db.VarChar(100)
+  contentPTBR String?  @db.VarChar(200)
+  titleKOKR   String?  @db.VarChar(100)
+  contentKOKR String?  @db.VarChar(200)
+
+  Reply  Reply[]
+  topics Topic[] @relation("PostTopics")
 }
 
-model Post {
-  id      Int     @id @default(autoincrement())
-  origin  String  @db.VarChar(100)
-  User    User?   @relation(fields: [userUid], references: [uid])
-  userUid Int?
-  Reply   Reply[]
+model Topic {
+  name               String          @id @db.VarChar(30)
+  emoji              String          @db.VarChar(5)
+  index              Int             @default(0)
+  posts              Post[]          @relation("PostTopics")
+  nameZHCN           String?         @db.VarChar(30)
+  nameENUS           String?         @db.VarChar(30)
+  nameZHTW           String?         @db.VarChar(30)
+  nameESES           String?         @db.VarChar(30)
+  nameFRFR           String?         @db.VarChar(30)
+  nameRURU           String?         @db.VarChar(30)
+  nameJAJP           String?         @db.VarChar(30)
+  nameDEDE           String?         @db.VarChar(30)
+  namePTBR           String?         @db.VarChar(30)
+  nameKOKR           String?         @db.VarChar(30)
+  classificationName String          @db.VarChar(30)
+  Classification     Classification  @relation(fields: [classificationName], references: [name])
+}
+
+model Classification {
+  name      String   @id @db.VarChar(30)
+  index     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  topics    Topic[]
+  nameZHCN  String?  @db.VarChar(30)
+  nameENUS  String?  @db.VarChar(30)
+  nameZHTW  String?  @db.VarChar(30)
+  nameESES  String?  @db.VarChar(30)
+  nameFRFR  String?  @db.VarChar(30)
+  nameRURU  String?  @db.VarChar(30)
+  nameJAJP  String?  @db.VarChar(30)
+  nameDEDE  String?  @db.VarChar(30)
+  namePTBR  String?  @db.VarChar(30)
+  nameKOKR  String?  @db.VarChar(30)
 }
 
 model Reply {

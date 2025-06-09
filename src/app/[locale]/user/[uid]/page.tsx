@@ -1,6 +1,4 @@
-"use server"
-
-import prisma from "../api/_utils/prisma";
+import prisma from "@/app/api/_utils/prisma";
 
 import "@/app/globals.css";
 type Props = {
@@ -14,6 +12,10 @@ type Post = {
   createdAt: Date;
   published: boolean;
 };
+
+const metadata = {
+  title: "Home",
+}
 
 export default async function HomePage({ params }: Props) {
   // 读取最近文章
@@ -29,6 +31,7 @@ export default async function HomePage({ params }: Props) {
 
   return (
     <main>
+        Hello
       {posts.map((post) => (
         <article key={post.id}>
           <h2>{post.title}</h2>
@@ -41,3 +44,5 @@ export default async function HomePage({ params }: Props) {
     </main>
   );
 }
+
+export { metadata };

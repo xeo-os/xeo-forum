@@ -1,9 +1,11 @@
+"use server";
+
 import type { Metadata } from "next";
 import lang from "@/lib/lang";
+import { headers } from "next/headers";
 
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
-import { SiteHeader } from "@/components/app-header";
+import { ThemeScript } from "@/components/theme-script";
+import { ClientLayout } from "@/components/client-layout";
 
 type Props = {
   children: React.ReactNode;
@@ -11,7 +13,7 @@ type Props = {
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { locale } = params;
+  const { locale } = await params;
 
   const title = lang(
     {
@@ -52,25 +54,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function LocaleLayout({ children, params }: Props) {
-  const { locale } = params;
+export default async function LocaleLayout({ children, params }: Props) {
+  const awaitedParams = await Promise.resolve(params); // Ensure params is awaited
+  const { locale } = awaitedParams;
+  
+  // 从 Cookie 中读取主题设置
+  const headersList = await headers();
+  const cookieHeader = headersList.get('cookie') || '';
+  const themeCookie = cookieHeader
+    .split(';')
+    .find(c => c.trim().startsWith('theme='));
+  
+  const savedTheme = themeCookie ? themeCookie.split('=')[1] : 'dark'; // 默认暗色
+  
+  // 直接根据主题设置决定是否添加 dark 类
+  const htmlClassName = savedTheme === 'dark' ? 'dark' : '';
 
   return (
-    <html lang={locale}>
-      <body>
-        <div className="[--header-height:calc(var(--spacing)*14)]">
-          <SidebarProvider>
-            <SiteHeader locale={locale} />
-            <div className="flex flex-1" style={{ marginTop: 'var(--header-height)' }}>
-              <AppSidebar locale={locale}/>
-              <SidebarInset>
-                <main className="flex flex-1 flex-col p-4">
-                  {children}
-                </main>
-              </SidebarInset>
-            </div>
-          </SidebarProvider>
-        </div>
+    <html lang={locale} className={htmlClassName} suppressHydrationWarning>
+      <body suppressHydrationWarning>
+        <ThemeScript />
+        <ClientLayout locale={locale} savedTheme={savedTheme}>
+          {children}
+        </ClientLayout>
       </body>
     </html>
   );

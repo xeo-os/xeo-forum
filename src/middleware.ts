@@ -141,12 +141,19 @@ function getLocaleFromAcceptLanguage(
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // 检查路径是否已经包含语言前缀
-  const pathnameHasLocale = locales.some(
-    (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
-  );
+  // 检查路径是否已经包含语言前缀或包含 "lang=" 参数
+  const pathnameHasLocale =
+    locales.some(
+      (locale) =>
+        pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
+    ) || request.nextUrl.searchParams.has("lang");
 
-  if (pathnameHasLocale) return;
+  if (pathnameHasLocale) {
+    // 如果已经有语言前缀，添加路径信息到 headers 并继续
+    const response = NextResponse.next();
+    response.headers.set('x-pathname', request.nextUrl.pathname);
+    return response;
+  }
 
   // 优先使用浏览器的Accept-Language头
   const acceptLanguage = request.headers.get("accept-language");
@@ -158,9 +165,21 @@ export function middleware(request: NextRequest) {
     locale = countryToLocale[country || ""] || "en-US";
   }
 
+  // 特殊页面，重定向时保留原有的query参数并添加lang参数
+  if (config.specialPages.includes(pathname)) {
+    const redirectUrl = new URL(pathname, request.url);
+    redirectUrl.search = request.nextUrl.search;
+    redirectUrl.searchParams.set("lang", locale);
+    const response = NextResponse.redirect(redirectUrl);
+    response.headers.set('x-pathname', pathname);
+    return response;
+  }
+
   // 重定向到相应的语言路径
   const redirectUrl = new URL(`/${locale}${pathname}`, request.url);
-  return NextResponse.redirect(redirectUrl);
+  const response = NextResponse.redirect(redirectUrl);
+  response.headers.set('x-pathname', `/${locale}${pathname}`);
+  return response;
 }
 
 export const config = {
@@ -170,6 +189,15 @@ export const config = {
     // - _next/image (图片优化)
     // - favicon.ico (网站图标)
     // - 其他静态资源
-    '/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|.*\\.(?:jpg|jpeg|gif|png|svg|ico|webp|js|css|woff|woff2|ttf|otf)).*)',
+    "/((?!_next/static|_next/image|icon|favicon.ico|manifest.webmanifest|api|.*\\.(?:jpg|jpeg|gif|png|svg|ico|webp|js|css|woff|woff2|ttf|otf)).*)",
+  ],
+  specialPages: [
+    "/signin",
+    "/signup",
+    "/verify",
+    "/reset-password",
+    "/policies",
+    "/contact",
   ],
 };
+
