@@ -71,7 +71,7 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "website",
       images: [
         {
-          url: `https://xeoos.net/api/og?url=/${lang}${pathWithoutLocale}`,
+          url: `https://xeoos.net/api/dynamicImage/og?url=/${lang}${pathWithoutLocale}`,
           width: 1200,
           height: 630,
           alt: "XEO OS - Xchange Everyone's Opinions",
@@ -87,7 +87,7 @@ export async function generateMetadata(): Promise<Metadata> {
       description: "Xchange Everyone's Opinion",
       creator: "@ravellohh",
       images: {
-        url: `https://xeoos.net/api/og?url=/${lang}${pathWithoutLocale}`,
+        url: `https://xeoos.net/api/dynamicImage/og?url=/${lang}${pathWithoutLocale}`,
         alt: "XEO OS - Xchange Everyone's Opinions",
         width: 1200,
         height: 630,

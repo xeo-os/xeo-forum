@@ -1,4 +1,4 @@
-import { LoginForm } from "@/components/login-form";
+import { LoginForm } from "@/components/signin-form";
 import "@/app/globals.css";
 import { Metadata } from "next";
 import lang from "@/lib/lang";

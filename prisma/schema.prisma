@@ -20,7 +20,6 @@ model User {
   birth           String?      @db.VarChar(10)
   country         String?      @db.VarChar(20)
   timearea        String?      @db.VarChar(10)
-  avatar          String?      @db.VarChar(100)
   role            Role         @default(USER)
   updatedAt       DateTime     @updatedAt
   createdAt       DateTime     @default(now())
@@ -35,7 +34,7 @@ model User {
   // messageReceive Message[]    @relation("MessageTo")
   post            Post[]
   reply           Reply[]
-  Avatar          Avatar[]
+  avatar          Avatar[]
 }
 model Post {
   id          Int      @id @default(autoincrement())

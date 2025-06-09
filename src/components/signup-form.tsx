@@ -36,7 +36,7 @@ import {
 import { toast, Toaster } from "sonner";
 
 interface ValidationState {
-  username: { valid: boolean; message: string };
+  username: { valid: boolean; message: string; isChecking?: boolean };
   email: { valid: boolean; message: string };
   password: { valid: boolean; message: string };
 }
@@ -56,7 +56,7 @@ export function SignUpForm({
   const locale = searchParams?.get("lang") || "en-US";
 
   const [validation, setValidation] = useState<ValidationState>({
-    username: { valid: true, message: "" },
+    username: { valid: true, message: "", isChecking: false },
     email: { valid: true, message: "" },
     password: { valid: true, message: "" },
   });
@@ -80,10 +80,16 @@ export function SignUpForm({
       if (!value) {
         setValidation((prev) => ({
           ...prev,
-          username: { valid: true, message: "" },
+          username: { valid: true, message: "", isChecking: false },
         }));
         return;
       }
+
+      // 开始检查，设置loading状态
+      setValidation((prev) => ({
+        ...prev,
+        username: { valid: true, message: "", isChecking: true },
+      }));
 
       // 格式检查
       if (value.length < 3 || value.length > 20) {
@@ -91,6 +97,7 @@ export function SignUpForm({
           ...prev,
           username: {
             valid: false,
+            isChecking: false,
             message: lang(
               {
                 "en-US": "Username must be 3-20 characters",
@@ -118,6 +125,7 @@ export function SignUpForm({
           ...prev,
           username: {
             valid: false,
+            isChecking: false,
             message: lang(
               {
                 "en-US":
@@ -157,6 +165,7 @@ export function SignUpForm({
           ...prev,
           username: {
             valid: result.ok,
+            isChecking: false,
             message: result.ok
               ? ""
               : lang(
@@ -181,6 +190,7 @@ export function SignUpForm({
           ...prev,
           username: {
             valid: false,
+            isChecking: false,
             message: lang(
               {
                 "en-US": "Failed to check username",
@@ -628,23 +638,52 @@ export function SignUpForm({
                     locale
                   )}
                 </Label>
-                <Input
-                  id="username"
-                  name="username"
-                  type="text"
-                  required
-                  ref={(el) => {
-                    inputRefs.current.username = el;
-                  }}
-                  className={cn(
-                    !validation.username.valid &&
-                      validation.username.message &&
-                      "border-red-500"
+                <div className="relative">
+                  <Input
+                    id="username"
+                    name="username"
+                    type="text"
+                    required
+                    ref={(el) => {
+                      inputRefs.current.username = el;
+                    }}
+                    className={cn(
+                      !validation.username.valid &&
+                        validation.username.message &&
+                        "border-red-500",
+                      (validation.username.isChecking ||
+                        (validation.username.valid &&
+                          validation.username.message === "" &&
+                          inputRefs.current.username?.value)) &&
+                        "pr-10"
+                    )}
+                    onChange={(e) =>
+                      handleInputChange("username", e.target.value)
+                    }
+                  />
+                  {inputRefs.current.username?.value && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      {validation.username.isChecking ? (
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" />
+                      ) : validation.username.valid &&
+                        validation.username.message === "" ? (
+                        <svg
+                          className="h-5 w-5 text-green-500"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      ) : null}
+                    </div>
                   )}
-                  onChange={(e) =>
-                    handleInputChange("username", e.target.value)
-                  }
-                />
+                </div>
                 <AnimatePresence>
                   {!validation.username.valid &&
                     validation.username.message && (
@@ -1042,7 +1081,7 @@ export function SignUpForm({
           },
           locale
         )}{" "}
-        <a href="#">
+        <Link href="/policies/terms-of-service">
           {lang(
             {
               "en-US": "Terms of Service",
@@ -1058,7 +1097,7 @@ export function SignUpForm({
             },
             locale
           )}
-        </a>{" "}
+        </Link>{" "}
         {lang(
           {
             "en-US": "and",
@@ -1074,7 +1113,7 @@ export function SignUpForm({
           },
           locale
         )}{" "}
-        <a href="#">
+        <Link href="/policies/privacy-policy">
           {lang(
             {
               "en-US": "Privacy Policy",
@@ -1090,7 +1129,7 @@ export function SignUpForm({
             },
             locale
           )}
-        </a>
+        </Link>
         .
       </div>
     </div>

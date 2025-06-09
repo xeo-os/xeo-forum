@@ -69,10 +69,12 @@ export function SiteHeader({ locale }: { locale?: string }) {
             className="w-40 sm:w-64 transition-all duration-300 ease-in-out focus-within:w-56 focus-within:sm:w-96"
           />
         </div>
-        <Avatar className="ml-auto">
-          <AvatarImage src="https://ravelloh.top/avatar.jpg" />
-          <AvatarFallback>CN</AvatarFallback>
-        </Avatar>
+        <div className="ml-auto">
+          <Avatar className="ml-auto">
+            <AvatarImage src="https://ravelloh.top/avatar.jpg" />
+            <AvatarFallback>CN</AvatarFallback>
+          </Avatar>
+        </div>
       </div>
     </header>
   );

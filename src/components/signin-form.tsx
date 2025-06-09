@@ -10,19 +10,156 @@ import { useSearchParams } from "next/navigation";
 import { EmojiArea } from "./emoji-area";
 import Link from "next/link";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useState } from "react";
+import { toast, Toaster } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
   const searchParams = useSearchParams();
-  const locale = searchParams.get("lang") || "en-US";
+  const locale = searchParams?.get("lang") || "en-US";
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const form = event.target as HTMLFormElement;
+    const formData = new FormData(form);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    // 基本验证
+    if (!email || !password) {
+      toast.error(
+        lang(
+          {
+            "en-US": "Please fill in all fields",
+            "zh-CN": "请填写所有字段",
+            "zh-TW": "請填寫所有字段",
+            "es-ES": "Por favor, complete todos los campos",
+            "fr-FR": "Veuillez remplir tous les champs",
+            "ru-RU": "Пожалуйста, заполните все поля",
+            "ja-JP": "すべてのフィールドを入力してください",
+            "de-DE": "Bitte füllen Sie alle Felder aus",
+            "pt-BR": "Por favor, preencha todos os campos",
+            "ko-KR": "모든 필드를 입력해 주세요",
+          },
+          locale
+        )
+      );
+      return;
+    }
+
+    // 锁定登录按钮
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/user/auth", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          lang: locale,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.ok && data.jwt) {
+        // 登录成功
+        console.log("JWT Token:", data.jwt);
+
+        toast.success(
+          lang(
+            {
+              "en-US": "Login successful! Redirecting...",
+              "zh-CN": "登录成功！正在跳转...",
+              "zh-TW": "登入成功！正在跳轉...",
+              "es-ES": "¡Inicio de sesión exitoso! Redirigiendo...",
+              "fr-FR": "Connexion réussie ! Redirection...",
+              "ru-RU": "Вход выполнен успешно! Перенаправление...",
+              "ja-JP": "ログイン成功！リダイレクト中...",
+              "de-DE": "Anmeldung erfolgreich! Weiterleitung...",
+              "pt-BR": "Login bem-sucedido! Redirecionando...",
+              "ko-KR": "로그인 성공! 리디렉션 중...",
+            },
+            locale
+          )
+        );
+
+        // 延迟跳转
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 1500);
+      } else {
+        // 显示API错误信息
+        setErrorMessage(
+          data.message ||
+            lang(
+              {
+                "en-US": "Login failed. Please check your credentials.",
+                "zh-CN": "登录失败，请检查您的凭据。",
+                "zh-TW": "登入失敗，請檢查您的憑據。",
+                "es-ES": "Error de inicio de sesión. Verifique sus credenciales.",
+                "fr-FR": "Échec de la connexion. Vérifiez vos identifiants.",
+                "ru-RU": "Ошибка входа. Проверьте ваши учетные данные.",
+                "ja-JP": "ログインに失敗しました。認証情報を確認してください。",
+                "de-DE": "Anmeldung fehlgeschlagen. Überprüfen Sie Ihre Anmeldedaten.",
+                "pt-BR": "Falha no login. Verifique suas credenciais.",
+                "ko-KR": "로그인 실패. 자격 증명을 확인해 주세요.",
+              },
+              locale
+            )
+        );
+        setIsErrorDialogOpen(true);
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error("Error during login:", error);
+
+      // 显示网络错误
+      setErrorMessage(
+        lang(
+          {
+            "en-US": "Network error occurred. Please try again.",
+            "zh-CN": "发生网络错误，请重试。",
+            "zh-TW": "發生網路錯誤，請重試。",
+            "es-ES": "Ocurrió un error de red. Por favor, inténtalo de nuevo.",
+            "fr-FR": "Une erreur réseau s'est produite. Veuillez réessayer.",
+            "ru-RU": "Произошла сетевая ошибка. Пожалуйста, попробуйте снова.",
+            "ja-JP": "ネットワークエラーが発生しました。再試行してください。",
+            "de-DE": "Ein Netzwerkfehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+            "pt-BR": "Ocorreu um erro de rede. Por favor, tente novamente.",
+            "ko-KR": "네트워크 오류가 발생했습니다. 다시 시도해 주세요.",
+          },
+          locale
+        )
+      );
+      setIsErrorDialogOpen(true);
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
+      <Toaster theme="dark" position="top-center" richColors />
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form className="p-6 md:p-8">
+          <form className="p-6 md:p-8" onSubmit={handleSubmit}>
             <div className="flex flex-col gap-6">
               <div className="flex flex-col items-center text-center">
                 <h1 className="text-4xl font-bold">XEO OS</h1>
@@ -71,9 +208,11 @@ export function LoginForm({
                 </Label>
                 <Input
                   id="email"
+                  name="email"
                   type="email"
                   placeholder="user@xeoos.net"
                   required
+                  disabled={isLoading}
                 />
               </div>
               <div className="grid gap-3">
@@ -116,23 +255,50 @@ export function LoginForm({
                     )}
                   </Link>
                 </div>
-                <Input id="password" type="password" required />
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  disabled={isLoading}
+                />
               </div>
-              <Button type="submit" className="w-full">
-                {lang(
-                  {
-                    "en-US": "Login",
-                    "zh-CN": "登录",
-                    "zh-TW": "登入",
-                    "es-ES": "Iniciar sesión",
-                    "fr-FR": "Se connecter",
-                    "ru-RU": "Войти",
-                    "ja-JP": "ログイン",
-                    "de-DE": "Anmelden",
-                    "pt-BR": "Entrar",
-                    "ko-KR": "로그인",
-                  },
-                  locale
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    {lang(
+                      {
+                        "en-US": "Signing in...",
+                        "zh-CN": "登录中...",
+                        "zh-TW": "登入中...",
+                        "es-ES": "Iniciando sesión...",
+                        "fr-FR": "Connexion...",
+                        "ru-RU": "Вход...",
+                        "ja-JP": "ログイン中...",
+                        "de-DE": "Anmeldung...",
+                        "pt-BR": "Entrando...",
+                        "ko-KR": "로그인 중...",
+                      },
+                      locale
+                    )}
+                  </>
+                ) : (
+                  lang(
+                    {
+                      "en-US": "Login",
+                      "zh-CN": "登录",
+                      "zh-TW": "登入",
+                      "es-ES": "Iniciar sesión",
+                      "fr-FR": "Se connecter",
+                      "ru-RU": "Войти",
+                      "ja-JP": "ログイン",
+                      "de-DE": "Anmelden",
+                      "pt-BR": "Entrar",
+                      "ko-KR": "로그인",
+                    },
+                    locale
+                  )
                 )}
               </Button>
               <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
@@ -222,6 +388,52 @@ export function LoginForm({
           {useIsMobile() ? null : <EmojiArea />}
         </CardContent>
       </Card>
+
+      {/* 错误对话框 */}
+      <Dialog open={isErrorDialogOpen} onOpenChange={setIsErrorDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-red-600">
+              {lang(
+                {
+                  "en-US": "Login Error",
+                  "zh-CN": "登录错误",
+                  "zh-TW": "登入錯誤",
+                  "es-ES": "Error de Inicio de Sesión",
+                  "fr-FR": "Erreur de Connexion",
+                  "ru-RU": "Ошибка Входа",
+                  "ja-JP": "ログインエラー",
+                  "de-DE": "Anmeldungsfehler",
+                  "pt-BR": "Erro de Login",
+                  "ko-KR": "로그인 오류",
+                },
+                locale
+              )}
+            </DialogTitle>
+            <DialogDescription>{errorMessage}</DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center pt-4">
+            <Button onClick={() => setIsErrorDialogOpen(false)}>
+              {lang(
+                {
+                  "en-US": "OK",
+                  "zh-CN": "确定",
+                  "zh-TW": "確定",
+                  "es-ES": "OK",
+                  "fr-FR": "OK",
+                  "ru-RU": "ОК",
+                  "ja-JP": "OK",
+                  "de-DE": "OK",
+                  "pt-BR": "OK",
+                  "ko-KR": "확인",
+                },
+                locale
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
         {lang(
           {
@@ -238,7 +450,7 @@ export function LoginForm({
           },
           locale
         )}{" "}
-        <a href="#">
+        <Link href="/policies/terms-of-service">
           {lang(
             {
               "en-US": "Terms of Service",
@@ -254,7 +466,7 @@ export function LoginForm({
             },
             locale
           )}
-        </a>{" "}
+        </Link>{" "}
         {lang(
           {
             "en-US": "and",
@@ -270,7 +482,7 @@ export function LoginForm({
           },
           locale
         )}{" "}
-        <a href="#">
+        <Link href="/policies/privacy-policy">
           {lang(
             {
               "en-US": "Privacy Policy",
@@ -286,7 +498,7 @@ export function LoginForm({
             },
             locale
           )}
-        </a>
+        </Link>
         .
       </div>
     </div>
