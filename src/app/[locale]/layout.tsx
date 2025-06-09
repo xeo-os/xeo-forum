@@ -55,19 +55,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function LocaleLayout({ children, params }: Props) {
-  const awaitedParams = await Promise.resolve(params); // Ensure params is awaited
+  const awaitedParams = await Promise.resolve(params);
   const { locale } = awaitedParams;
   
-  // 从 Cookie 中读取主题设置
+  // 从 Cookie 中读取主题设置，改进检测逻辑
   const headersList = await headers();
   const cookieHeader = headersList.get('cookie') || '';
   const themeCookie = cookieHeader
     .split(';')
     .find(c => c.trim().startsWith('theme='));
   
-  const savedTheme = themeCookie ? themeCookie.split('=')[1] : 'dark'; // 默认暗色
+  const savedTheme = themeCookie ? themeCookie.split('=')[1].trim() : 'dark';
   
-  // 直接根据主题设置决定是否添加 dark 类
+  // 确保主题类名正确设置
   const htmlClassName = savedTheme === 'dark' ? 'dark' : '';
 
   return (

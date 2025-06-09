@@ -17,6 +17,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { useEffect, useState } from "react";
 import { useBroadcast } from "@/store/useBroadcast";
+import Link from "next/link";
 
 export function SidebarInner({ locale }: { locale: string }) {
   // 初始化所有话题为展开状态
@@ -57,7 +58,7 @@ export function SidebarInner({ locale }: { locale: string }) {
     setOpenTopics(newOpenTopics);
   };
 
-  const items = [
+  const mainItems = [
     {
       title: lang(
         {
@@ -114,6 +115,85 @@ export function SidebarInner({ locale }: { locale: string }) {
       ),
       url: "#",
       icon: emojiIcon("⭐"),
+    },
+  ];
+
+  const miscList = [
+    {
+      title: lang(
+        {
+          "zh-CN": "服务条款",
+          "zh-TW": "服務條款",
+          "en-US": "Terms of Service",
+          "es-ES": "Términos de Servicio",
+          "fr-FR": "Conditions de Service",
+          "ru-RU": "Условия Обслуживания",
+          "ja-JP": "利用規約",
+          "de-DE": "Nutzungsbedingungen",
+          "pt-BR": "Termos de Serviço",
+          "ko-KR": "서비스 약관",
+        },
+        locale
+      ),
+      url: "/" + locale + "/policies/terms-of-service",
+      icon: emojiIcon("📜"),
+    },
+    {
+      title: lang(
+        {
+          "zh-CN": "隐私政策",
+          "zh-TW": "隱私政策",
+          "en-US": "Privacy Policy",
+          "es-ES": "Política de Privacidad",
+          "fr-FR": "Politique de Confidentialité",
+          "ru-RU": "Политика Конфиденциальности",
+          "ja-JP": "プライバシーポリシー",
+          "de-DE": "Datenschutzrichtlinie",
+          "pt-BR": "Política de Privacidade",
+          "ko-KR": "개인정보 보호정책",
+        },
+        locale
+      ),
+      url: "/" + locale + "/policies/privacy-policy",
+      icon: emojiIcon("🔒"),
+    },
+    {
+      title: lang(
+        {
+          "zh-CN": "关于我们",
+          "zh-TW": "關於我們",
+          "en-US": "About Us",
+          "es-ES": "Sobre Nosotros",
+          "fr-FR": "À Propos de Nous",
+          "ru-RU": "О Нас",
+          "ja-JP": "私たちについて",
+          "de-DE": "Über Uns",
+          "pt-BR": "Sobre Nós",
+          "ko-KR": "회사 소개",
+        },
+        locale
+      ),
+      url: "/" + locale + "/about",
+      icon: emojiIcon("ℹ️"),
+    },
+    {
+      title: lang(
+        {
+          "zh-CN": "联系我们",
+          "zh-TW": "聯繫我們",
+          "en-US": "Contact Us",
+          "es-ES": "Contáctenos",
+          "fr-FR": "Contactez-Nous",
+          "ru-RU": "Свяжитесь с Нами",
+          "ja-JP": "お問い合わせ",
+          "de-DE": "Kontaktieren Sie Uns",
+          "pt-BR": "Fale Conosco",
+          "ko-KR": "문의하기",
+        },
+        locale
+      ),
+      url: "/" + locale + "/contact",
+      icon: emojiIcon("📧"),
     },
   ];
 
@@ -825,7 +905,7 @@ export function SidebarInner({ locale }: { locale: string }) {
     <SidebarGroup>
       <SidebarGroupContent>
         <SidebarMenu>
-          {items.map((item) => (
+          {mainItems.map((item) => (
             <SidebarMenuItem key={item.title}>
               <motion.div
                 whileHover={{ scale: 1.02, x: 4 }}
@@ -835,10 +915,10 @@ export function SidebarInner({ locale }: { locale: string }) {
                   asChild
                   className="transition-all duration-200 hover:bg-primary/10 hover:text-primary"
                 >
-                  <a href={item.url}>
+                  <Link href={item.url}>
                     <item.icon />
                     <span>{item.title}</span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </motion.div>
             </SidebarMenuItem>
@@ -912,10 +992,10 @@ export function SidebarInner({ locale }: { locale: string }) {
                                 asChild
                                 className="pl-8 transition-all duration-200 hover:bg-primary/10 hover:text-primary"
                               >
-                                <a href={subItem.url}>
+                                <Link href={subItem.url}>
                                   <subItem.icon />
                                   <span>{subItem.title}</span>
-                                </a>
+                                </Link>
                               </SidebarMenuButton>
                             </motion.div>
                           </SidebarMenuItem>
@@ -927,6 +1007,29 @@ export function SidebarInner({ locale }: { locale: string }) {
               </AnimatePresence>
             </motion.div>
           ))}
+          <br />
+          <Separator />
+          <br />
+          {
+            miscList.map((item) => (
+              <SidebarMenuItem key={item.title}>
+                <motion.div
+                  whileHover={{ scale: 1.02, x: 4 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                >
+                  <SidebarMenuButton
+                    asChild
+                    className="transition-all duration-200 hover:bg-primary/10 hover:text-primary"
+                  >
+                    <Link href={item.url}>
+                      <item.icon />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </motion.div>
+              </SidebarMenuItem>
+            ))
+          }
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>

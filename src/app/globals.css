@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@plugin "@tailwindcss/typography";  
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -112,7 +114,6 @@
   --sidebar-ring: oklch(0.554 0.135 66.442);
 }
 
-
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -120,24 +121,28 @@
   body {
     @apply bg-background text-foreground;
   }
-  
+
   /* 字体配置 */
   html[lang="zh-CN"] {
-    font-family: var(--font-noto-sans-sc), var(--font-noto-sans), system-ui, sans-serif;
+    font-family:
+      var(--font-noto-sans-sc), var(--font-noto-sans), system-ui, sans-serif;
   }
-  
+
   html[lang="zh-TW"] {
-    font-family: var(--font-noto-sans-tc), var(--font-noto-sans), system-ui, sans-serif;
+    font-family:
+      var(--font-noto-sans-tc), var(--font-noto-sans), system-ui, sans-serif;
   }
-  
+
   html[lang="ja-JP"] {
-    font-family: var(--font-noto-sans-jp), var(--font-noto-sans), system-ui, sans-serif;
+    font-family:
+      var(--font-noto-sans-jp), var(--font-noto-sans), system-ui, sans-serif;
   }
-  
+
   html[lang="ko-KR"] {
-    font-family: var(--font-noto-sans-kr), var(--font-noto-sans), system-ui, sans-serif;
+    font-family:
+      var(--font-noto-sans-kr), var(--font-noto-sans), system-ui, sans-serif;
   }
-  
+
   html[lang="en-US"],
   html[lang="es-ES"],
   html[lang="fr-FR"],

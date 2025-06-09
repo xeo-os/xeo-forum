@@ -2,7 +2,7 @@ import prisma from "@/app/api/_utils/prisma";
 
 import "@/app/globals.css";
 type Props = {
-  params: { locale: string };
+  params: { locale: string; uid: string };
 };
 
 type Post = {
@@ -31,7 +31,6 @@ export default async function HomePage({ params }: Props) {
 
   return (
     <main>
-        Hello
       {posts.map((post) => (
         <article key={post.id}>
           <h2>{post.title}</h2>

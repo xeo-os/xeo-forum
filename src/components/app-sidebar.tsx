@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   Sidebar,
@@ -27,8 +27,15 @@ import { Separator } from "@/components/ui/separator";
 import { useState, useEffect } from "react";
 import { SidebarInner } from "./sidebar-inner";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
-export function AppSidebar({ locale, currentTheme }: { locale: string; currentTheme: string }) {
+export function AppSidebar({
+  locale,
+  currentTheme,
+}: {
+  locale: string;
+  currentTheme: string;
+}) {
   const [theme, setTheme] = useState<string>(currentTheme);
   const router = useRouter();
 
@@ -38,18 +45,18 @@ export function AppSidebar({ locale, currentTheme }: { locale: string; currentTh
 
   const handleThemeChange = async (newTheme: string) => {
     setTheme(newTheme);
-    
+
     // 直接设置 Cookie
     document.cookie = `theme=${newTheme}; path=/; max-age=${60 * 60 * 24 * 365}`;
-    
+
     // 立即应用主题到 DOM
     const root = document.documentElement;
-    root.classList.remove('dark', 'light');
-    
-    if (newTheme === 'dark') {
-      root.classList.add('dark');
+    root.classList.remove("dark", "light");
+
+    if (newTheme === "dark") {
+      root.classList.add("dark");
     }
-    
+
     // 刷新页面以确保服务端渲染的 HTML 类名正确
     router.refresh();
   };
@@ -95,7 +102,6 @@ export function AppSidebar({ locale, currentTheme }: { locale: string; currentTh
     return lang(labels[theme as keyof typeof labels] || labels.light, locale);
   };
 
-  
   return (
     <Sidebar>
       <SidebarContent>
@@ -108,8 +114,7 @@ export function AppSidebar({ locale, currentTheme }: { locale: string; currentTh
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton>
-                  {getThemeIcon()}{" "}
-                  {getThemeLabel()}
+                  {getThemeIcon()} {getThemeLabel()}
                   <RiExpandUpDownLine className="ml-auto" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
@@ -171,9 +176,9 @@ export function AppSidebar({ locale, currentTheme }: { locale: string; currentTh
               <DropdownMenuContent side="top" className="w-full">
                 {langList().map((lang) => (
                   <DropdownMenuItem key={lang}>
-                    <a href={lang} className="block w-full text-center">
+                    <Link href={lang} className="block w-full text-center">
                       {langName(lang)}
-                    </a>
+                    </Link>
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
