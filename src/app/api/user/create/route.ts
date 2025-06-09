@@ -10,6 +10,40 @@ import langs from "@/lib/lang";
 
 const resend = new Resend(process.env.RESEND_API_KEY as string);
 
+const defaultEmojis = [
+    "😀", "😎", "🤓", "😊", "🚀", "🎨", "🌟", "🎸",
+    "🐱", "🦄", "🌈", "🔥", "⚡", "🎯", "🌙", "🌸",
+    "🎭", "🎪", "🎮", "📚", "🌍", "🔮", "🎊", "🌺",
+    "🦋", "🌻", "🎵", "🎪", "🌊", "🍀", "🎈", "🌤️"
+];
+
+const defaultBackgrounds = [
+    "linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%)",
+    "linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)",
+    "linear-gradient(135deg, #ff9966 0%, #ff5e62 100%)",
+    "linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)",
+    "linear-gradient(135deg, #f7971e 0%, #ffd200 100%)",
+    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    "linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%)",
+    "linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%)",
+    "linear-gradient(135deg, #45b7d1 0%, #96c93d 100%)",
+    "linear-gradient(135deg, #96ceb4 0%, #ffeaa7 100%)",
+    "linear-gradient(135deg, #dda0dd 0%, #ff7675 100%)",
+    "linear-gradient(135deg, #74b9ff 0%, #fd79a8 100%)",
+    "radial-gradient(circle, #ff6b6b 0%, #ee5a52 100%)",
+    "radial-gradient(circle, #4ecdc4 0%, #44a08d 100%)",
+    "radial-gradient(circle, #45b7d1 0%, #96c93d 100%)",
+    "radial-gradient(circle, #96ceb4 0%, #ffeaa7 100%)",
+    "radial-gradient(circle, #dda0dd 0%, #ff7675 100%)",
+    "radial-gradient(circle, #74b9ff 0%, #fd79a8 100%)",
+    "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)",
+    "linear-gradient(135deg, #fad0c4 0%, #ffd1ff 100%)",
+    "linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)",
+    "linear-gradient(135deg, #ff8a80 0%, #ff80ab 100%)",
+    "linear-gradient(135deg, #81c784 0%, #aed581 100%)",
+    "linear-gradient(135deg, #64b5f6 0%, #42a5f5 100%)"
+];
+
 async function encrypt(password: string): Promise<string> {
   const options = {
     timeCost: 3,
@@ -287,6 +321,11 @@ export async function POST(request: Request) {
   async function main() {
     try {
       const code = generateCode();
+      
+      // 随机选择一个emoji和背景
+      const randomEmoji = defaultEmojis[Math.floor(Math.random() * defaultEmojis.length)];
+      const randomBackground = defaultBackgrounds[Math.floor(Math.random() * defaultBackgrounds.length)];
+
       await prisma.user.create({
         data: {
           username,
@@ -294,6 +333,12 @@ export async function POST(request: Request) {
           email,
           emailVerifyCode: code,
           nickname: username,
+          avatar: {
+            create: {
+              emoji: randomEmoji,
+              background: randomBackground,
+            },
+          },
         },
       });
 

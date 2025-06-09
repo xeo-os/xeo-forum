@@ -23,7 +23,7 @@ model User {
   role            Role         @default(USER)
   updatedAt       DateTime     @updatedAt
   createdAt       DateTime     @default(now())
-  lastUseAt       String?
+  lastUseAt       DateTime?
   gender          Gender?      @default(UNSET)
   password        String
   exp             Int          @default(0)
@@ -36,6 +36,7 @@ model User {
   reply           Reply[]
   avatar          Avatar[]
 }
+
 model Post {
   id          Int      @id @default(autoincrement())
   published   Boolean  @default(false)
@@ -73,22 +74,22 @@ model Post {
 }
 
 model Topic {
-  name               String          @id @db.VarChar(30)
-  emoji              String          @db.VarChar(5)
-  index              Int             @default(0)
-  posts              Post[]          @relation("PostTopics")
-  nameZHCN           String?         @db.VarChar(30)
-  nameENUS           String?         @db.VarChar(30)
-  nameZHTW           String?         @db.VarChar(30)
-  nameESES           String?         @db.VarChar(30)
-  nameFRFR           String?         @db.VarChar(30)
-  nameRURU           String?         @db.VarChar(30)
-  nameJAJP           String?         @db.VarChar(30)
-  nameDEDE           String?         @db.VarChar(30)
-  namePTBR           String?         @db.VarChar(30)
-  nameKOKR           String?         @db.VarChar(30)
-  classificationName String          @db.VarChar(30)
-  Classification     Classification  @relation(fields: [classificationName], references: [name])
+  name               String         @id @db.VarChar(30)
+  emoji              String         @db.VarChar(5)
+  index              Int            @default(0)
+  posts              Post[]         @relation("PostTopics")
+  nameZHCN           String?        @db.VarChar(30)
+  nameENUS           String?        @db.VarChar(30)
+  nameZHTW           String?        @db.VarChar(30)
+  nameESES           String?        @db.VarChar(30)
+  nameFRFR           String?        @db.VarChar(30)
+  nameRURU           String?        @db.VarChar(30)
+  nameJAJP           String?        @db.VarChar(30)
+  nameDEDE           String?        @db.VarChar(30)
+  namePTBR           String?        @db.VarChar(30)
+  nameKOKR           String?        @db.VarChar(30)
+  classificationName String         @db.VarChar(30)
+  Classification     Classification @relation(fields: [classificationName], references: [name])
 }
 
 model Classification {

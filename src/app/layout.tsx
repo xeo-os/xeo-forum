@@ -1,4 +1,5 @@
 import { ThemeScript } from "@/components/theme-script";
+import { TokenManager } from "@/components/token-manager";
 import { Metadata } from "next";
 import { headers } from "next/headers";
 
@@ -46,11 +47,6 @@ export async function generateMetadata(): Promise<Metadata> {
     title: "XEO OS",
     description: "Xchange Everyone's Opinion",
     applicationName: "XEO OS",
-    themeColor: [
-      { media: "(prefers-color-scheme: light)", color: "#f0b100" },
-      { media: "(prefers-color-scheme: dark)", color: "#f0b100" },
-    ],
-    colorScheme: "light dark",
     generator: "Next.js",
     referrer: "origin-when-cross-origin",
     alternates: {
@@ -109,6 +105,7 @@ export default async function LocaleLayout({ children }: Props) {
       <head></head>
       <body suppressHydrationWarning>
         <ThemeScript />
+        <TokenManager />
         {children}
       </body>
     </html>

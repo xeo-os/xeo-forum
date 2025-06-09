@@ -15,7 +15,7 @@ async function updateTime(uid: number, time: number) {
       uid: uid,
     },
     data: {
-      lastUseAt: time.toString(),
+      lastUseAt: new Date(time),
     },
   });
 }
@@ -108,6 +108,9 @@ export async function POST(request: Request) {
       if (tokenInfo) {
         const result = await prisma.user.findUnique({
           where: { uid: tokenInfo.uid },
+          include: {
+            avatar: true,
+          }
         });
 
         if (!result) {
@@ -130,8 +133,7 @@ export async function POST(request: Request) {
           });
         }
 
-        // 检查此Token是否为最新
-        if (result && result.lastUseAt === tokenInfo.lastUseAt) {
+        if (result) {
           await updateTime(result.uid, startTime);
           return response(200, {
             ok: true,
@@ -223,6 +225,9 @@ export async function POST(request: Request) {
       const result = await prisma.user.findFirst({
         where: {
           OR: [{ email: email }, { username: email }],
+        },
+        include: {
+          avatar: true,
         },
       });
 

@@ -12,10 +12,11 @@ interface UserInfo {
     role: string;
     updatedAt: Date;
     createdAt: Date;
-    lastUseAt?: string | null;
+    lastUseAt?: Date | null;
     gender?: Gender | null;
     timearea?: string | null;
     exp: number;
+    avatar?: { id: string; emoji: string; background: string }[] | null;
 }
 
 type Gender = "MALE" | "FEMALE" | "UNSET";
@@ -23,6 +24,7 @@ type Gender = "MALE" | "FEMALE" | "UNSET";
 interface PackedUserInfo {
     uid: number;
     uuid: string;
+    avatar?: object | null;
     username: string;
     nickname: string;
     email: string;
@@ -34,15 +36,16 @@ interface PackedUserInfo {
     role: string;
     updatedAt: Date;
     createdAt: Date;
-    lastUseAt: string;
+    lastUseAt: Date;
     gender?: Gender | null;
-    userExp: number; // 改名避免与JWT的exp冲突
+    userExp: number;
 }
 
 function pack(userinfo: UserInfo, timestamp: number): PackedUserInfo {
     return {
         uid: userinfo.uid,
         uuid: userinfo.uuid,
+        avatar: userinfo.avatar?.[0] || null,
         username: userinfo.username,
         nickname: userinfo.nickname,
         email: userinfo.email,
@@ -54,7 +57,7 @@ function pack(userinfo: UserInfo, timestamp: number): PackedUserInfo {
         role: userinfo.role,
         updatedAt: userinfo.updatedAt,
         createdAt: userinfo.createdAt,
-        lastUseAt: timestamp.toString(),
+        lastUseAt: new Date(timestamp),
         gender: userinfo.gender,
         userExp: userinfo.exp, // 改名避免与JWT的exp冲突
     };
