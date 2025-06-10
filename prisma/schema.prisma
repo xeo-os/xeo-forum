@@ -47,6 +47,7 @@ model Post {
   published   Boolean  @default(false)
   title       String   @db.VarChar(50)
   updatedAt   DateTime @updatedAt
+  pin         Boolean  @default(false)
   contentDEDE String?
   contentENUS String?
   contentESES String?
@@ -67,7 +68,7 @@ model Post {
   titleRURU   String?
   titleZHCN   String?
   titleZHTW   String?
-  unsafeTags  Json?  @db.JsonB
+  unsafeTags  Json?    @db.JsonB
   likes       Like[]
   User        User?    @relation(fields: [userUid], references: [uid])
   Reply       Reply[]
@@ -87,40 +88,40 @@ model Like {
 }
 
 model Topic {
-  name               String         @id @db.VarChar(50)
-  emoji              String         @db.VarChar(5)
+  name               String         @id @db.VarChar(100)
+  emoji              String         @db.VarChar(10)
   index              Int            @default(0)
-  nameZHCN           String?        @db.VarChar(50)
-  nameENUS           String?        @db.VarChar(50)
-  nameZHTW           String?        @db.VarChar(50)
-  nameESES           String?        @db.VarChar(50)
-  nameFRFR           String?        @db.VarChar(50)
-  nameRURU           String?        @db.VarChar(50)
-  nameJAJP           String?        @db.VarChar(50)
-  nameDEDE           String?        @db.VarChar(50)
-  namePTBR           String?        @db.VarChar(50)
-  nameKOKR           String?        @db.VarChar(50)
-  classificationName String         @db.VarChar(50)
+  nameZHCN           String?        @db.VarChar(100)
+  nameENUS           String?        @db.VarChar(100)
+  nameZHTW           String?        @db.VarChar(100)
+  nameESES           String?        @db.VarChar(100)
+  nameFRFR           String?        @db.VarChar(100)
+  nameRURU           String?        @db.VarChar(100)
+  nameJAJP           String?        @db.VarChar(100)
+  nameDEDE           String?        @db.VarChar(100)
+  namePTBR           String?        @db.VarChar(100)
+  nameKOKR           String?        @db.VarChar(100)
+  classificationName String         @db.VarChar(100)
   Classification     Classification @relation(fields: [classificationName], references: [name])
   posts              Post[]         @relation("PostTopics")
 }
 
 model Classification {
-  name      String   @id @db.VarChar(50)
-  emoji     String   @db.VarChar(5)
+  name      String   @id @db.VarChar(100)
+  emoji     String   @db.VarChar(10)
   index     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  nameZHCN  String?  @db.VarChar(50)
-  nameENUS  String?  @db.VarChar(50)
-  nameZHTW  String?  @db.VarChar(50)
-  nameESES  String?  @db.VarChar(50)
-  nameFRFR  String?  @db.VarChar(50)
-  nameRURU  String?  @db.VarChar(50)
-  nameJAJP  String?  @db.VarChar(50)
-  nameDEDE  String?  @db.VarChar(50)
-  namePTBR  String?  @db.VarChar(50)
-  nameKOKR  String?  @db.VarChar(50)
+  nameZHCN  String?  @db.VarChar(100)
+  nameENUS  String?  @db.VarChar(100)
+  nameZHTW  String?  @db.VarChar(100)
+  nameESES  String?  @db.VarChar(100)
+  nameFRFR  String?  @db.VarChar(100)
+  nameRURU  String?  @db.VarChar(100)
+  nameJAJP  String?  @db.VarChar(100)
+  nameDEDE  String?  @db.VarChar(100)
+  namePTBR  String?  @db.VarChar(100)
+  nameKOKR  String?  @db.VarChar(100)
   topics    Topic[]
 }
 
@@ -146,7 +147,7 @@ model Reply {
   contentRURU String?
   contentZHCN String?
   contentZHTW String?
-  unsafeTags  Json? @db.JsonB
+  unsafeTags  Json?    @db.JsonB
   likes       Like[]
   parentReply Reply?   @relation("CommentReplies", fields: [commentUid], references: [id])
   replies     Reply[]  @relation("CommentReplies")

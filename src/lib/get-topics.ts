@@ -59,8 +59,8 @@ export const getCachedTopics = unstable_cache(
   ["topics-data"],
   {
     tags: ["topics"],
-    // 缓存一年，实际上会在下次部署时被清除
-    revalidate: 365 * 24 * 60 * 60,
+    // 在开发环境下不缓存，生产环境缓存一年
+    revalidate: process.env.NODE_ENV === "development" ? false : 365 * 24 * 60 * 60,
   }
 );
 
