@@ -121,6 +121,9 @@ const token = {
       clearInterval(refreshInterval);
     }
 
+    // 初始化上次刷新时间为当前时间
+    lastRefreshTime = Date.now();
+
     // 立即检查并刷新一次（如果需要）
     const checkAndRefresh = () => {
       const currentTime = Date.now();
