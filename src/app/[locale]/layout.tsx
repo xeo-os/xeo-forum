@@ -68,7 +68,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   const htmlClassName = getHtmlClassName(savedTheme);
 
   return (
-    <html lang={locale} className={htmlClassName} suppressHydrationWarning>
+    <html lang={locale} className={`${htmlClassName} scrollbar-gutter-stable`} suppressHydrationWarning>
       <body suppressHydrationWarning>
         <ThemeScript />
         <ThemeSync serverTheme={savedTheme} />

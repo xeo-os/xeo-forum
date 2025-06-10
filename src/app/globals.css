@@ -167,3 +167,21 @@
     background-color: transparent;
   }
 }
+
+/* 为滚动条预留稳定空间，防止模态框打开时布局移动 */
+@layer base {
+  html {
+    scrollbar-gutter: stable;
+  }
+  
+  /* 确保body始终为滚动条预留空间 */
+  body {
+    overflow-y: scroll;
+  }
+  
+  /* 当模态框打开时，保持滚动条空间但禁用滚动 */
+  body[data-scroll-locked] {
+    overflow: hidden;
+    padding-right: 0; /* 移除之前的padding补偿 */
+  }
+}

@@ -39,6 +39,7 @@ export function ContextMenu({ children, locale = "en-US", onSearch }: ContextMen
   const [contextUrl, setContextUrl] = useState("");
   const [canGoBack, setCanGoBack] = useState(false);
   const [canGoForward, setCanGoForward] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleSelectionChange = () => {
@@ -66,6 +67,19 @@ export function ContextMenu({ children, locale = "en-US", onSearch }: ContextMen
       document.removeEventListener("contextmenu", handleContextMenu);
     };
   }, []);
+
+  // 当右键菜单打开时锁定滚动
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.setAttribute('data-scroll-locked', 'true');
+    } else {
+      document.body.removeAttribute('data-scroll-locked');
+    }
+
+    return () => {
+      document.body.removeAttribute('data-scroll-locked');
+    };
+  }, [isMenuOpen]);
 
   const handleCopy = async () => {
     try {
@@ -196,6 +210,33 @@ export function ContextMenu({ children, locale = "en-US", onSearch }: ContextMen
     window.location.href = `/${locale}`;
   };
 
+  // 添加分享选中文本的处理函数
+  const handleShareText = async () => {
+    try {
+      if (navigator.share && selectedText) {
+        await navigator.share({
+          text: selectedText,
+        });
+      } else if (selectedText) {
+        await navigator.clipboard.writeText(selectedText);
+        toast.success(lang({
+          "zh-CN": "文本已复制到剪贴板",
+          "en-US": "Text copied to clipboard",
+          "ja-JP": "テキストをクリップボードにコピーしました",
+          "ko-KR": "텍스트가 클립보드에 복사됨",
+          "fr-FR": "Texte copié dans le presse-papiers",
+          "es-ES": "Texto copiado al portapapeles",
+          "de-DE": "Text in die Zwischenablage kopiert",
+          "pt-BR": "Texto copiado para a área de transferência",
+          "ru-RU": "Текст скопирован в буфер обмена",
+          "zh-TW": "文本已複製到剪貼簿",
+        }, locale));
+      }
+    } catch (error) {
+      // 处理错误
+    }
+  };
+
   const texts = {
     copy: lang({ "zh-CN": "复制", "en-US": "Copy" }, locale),
     paste: lang({ "zh-CN": "粘贴", "en-US": "Paste" }, locale),
@@ -213,7 +254,7 @@ export function ContextMenu({ children, locale = "en-US", onSearch }: ContextMen
   };
 
   return (
-    <ShadcnContextMenu>
+    <ShadcnContextMenu onOpenChange={setIsMenuOpen}>
       <ContextMenuTrigger asChild>
         {children}
       </ContextMenuTrigger>

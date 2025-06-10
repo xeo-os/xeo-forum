@@ -48,7 +48,7 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import lang from "@/lib/lang";
 import token from "@/utils/userToken";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 
 export function SiteHeader({ locale }: { locale?: string }) {
@@ -108,6 +108,31 @@ export function SiteHeader({ locale }: { locale?: string }) {
       }
     }
   };
+
+  // 使用data属性控制滚动锁定，而不是直接修改样式
+  useEffect(() => {
+    if (showSearchSheet) {
+      document.body.setAttribute('data-scroll-locked', 'true');
+    } else {
+      document.body.removeAttribute('data-scroll-locked');
+    }
+
+    return () => {
+      document.body.removeAttribute('data-scroll-locked');
+    };
+  }, [showSearchSheet]);
+
+  useEffect(() => {
+    if (showLogoutDialog) {
+      document.body.setAttribute('data-scroll-locked', 'true');
+    } else {
+      document.body.removeAttribute('data-scroll-locked');
+    }
+
+    return () => {
+      document.body.removeAttribute('data-scroll-locked');
+    };
+  }, [showLogoutDialog]);
 
   return (
     <>

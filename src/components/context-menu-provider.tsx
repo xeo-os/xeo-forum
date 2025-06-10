@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { ContextMenu } from "@/components/context-menu";
-import { SearchSheet } from "@/components/search-sheet";
 
 interface ContextMenuProviderProps {
   children: React.ReactNode;
@@ -10,36 +9,21 @@ interface ContextMenuProviderProps {
 }
 
 export function ContextMenuProvider({ children, locale = "en-US" }: ContextMenuProviderProps) {
-  const [showSearchSheet, setShowSearchSheet] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    setShowSearchSheet(true);
-  };
-
-  const handleSheetOpenChange = (open: boolean) => {
-    setShowSearchSheet(open);
-    if (!open) {
-      setSearchQuery("");
+    // 直接跳转到搜索页面，而不是打开Sheet
+    // 这样避免与app-header中的SearchSheet冲突
+    if (query.trim()) {
+      window.location.href = `/${locale}/search?q=${encodeURIComponent(query)}`;
     }
   };
 
   return (
-    <>
-      <ContextMenu locale={locale} onSearch={handleSearch}>
-        <div className="min-h-screen w-full">
-          {children}
-        </div>
-      </ContextMenu>
-      
-      <SearchSheet
-        open={showSearchSheet}
-        onOpenChange={handleSheetOpenChange}
-        locale={locale}
-        initialQuery={searchQuery}
-        onQueryChange={setSearchQuery}
-      />
-    </>
+    <ContextMenu locale={locale} onSearch={handleSearch}>
+      <div className="min-h-screen w-full">
+        {children}
+      </div>
+    </ContextMenu>
   );
 }
