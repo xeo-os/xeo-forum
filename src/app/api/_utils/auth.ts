@@ -1,20 +1,49 @@
 import token from "./token";
 
-function auth(request: Request): object | undefined {
-  if (!request.headers.get("authorization")) {
-    return;
-  }
+interface UserAuthData {
+  uid: number;
+  uuid: string;
+  avatar: {
+    id: string;
+    userUid: number;
+    emoji: string;
+    background: string;
+  };
+  username: string;
+  nickname: string;
+  email: string;
+  emailVerified: boolean;
+  bio: string | null;
+  birth: string | null;
+  country: string | null;
+  timearea: string | null;
+  role: string;
+  updatedAt: string;
+  createdAt: string;
+  lastUseAt: string;
+  gender: string;
+  userExp: number;
+  iat: number;
+  exp: number;
+}
+
+function auth(request: Request): UserAuthData | undefined {
   const authorizationHeader = request.headers.get("authorization");
-  const tokenString = authorizationHeader
-    ? authorizationHeader.split(" ")[1]
-    : undefined;
-  let tokenInfo;
+  if (!authorizationHeader) {
+    return undefined;
+  }
+
+  const tokenString = authorizationHeader.split(" ")[1];
+  if (!tokenString) {
+    return undefined;
+  }
+
   try {
-    tokenInfo = tokenString ? token.verify(tokenString) : undefined;
-    return typeof tokenInfo === "object" ? tokenInfo : undefined;
+    const tokenInfo = token.verify(tokenString);
+    return typeof tokenInfo === "object" ? tokenInfo as UserAuthData : undefined;
   } catch (err) {
     console.error("Token verification failed:", err);
-    return;
+    return undefined;
   }
 }
 

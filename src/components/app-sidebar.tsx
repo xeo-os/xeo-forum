@@ -31,9 +31,16 @@ import { useRouter, usePathname } from "next/navigation";
 export function AppSidebar({
   locale,
   currentTheme,
+  topics,
 }: {
   locale: string;
   currentTheme: string;
+  topics: {
+    title: string;
+    icon: string;
+    name: string;
+    items?: { title: string; url: string; icon: string; name: string }[];
+  }[];
 }) {
   const [theme, setTheme] = useState<string>(currentTheme);
   const router = useRouter();
@@ -105,7 +112,7 @@ export function AppSidebar({
   return (
     <Sidebar>
       <SidebarContent>
-        <SidebarInner locale={locale} />
+        <SidebarInner locale={locale} topics={topics} />
       </SidebarContent>
       <SidebarFooter>
         <Separator />
@@ -176,7 +183,10 @@ export function AppSidebar({
               <DropdownMenuContent side="top" className="w-full">
                 {langList().map((lang) => (
                   <DropdownMenuItem key={lang}>
-                    <a href={`/${lang}${pathname.replace(`/${locale}`, "")}`} className="block w-full text-center">
+                    <a
+                      href={`/${lang}${pathname.replace(`/${locale}`, "")}`}
+                      className="block w-full text-center"
+                    >
                       {langName(lang)}
                     </a>
                   </DropdownMenuItem>

@@ -67,10 +67,12 @@ model Post {
   titleRURU   String?
   titleZHCN   String?
   titleZHTW   String?
+  unsafeTags  Json?  @db.JsonB
   likes       Like[]
   User        User?    @relation(fields: [userUid], references: [uid])
   Reply       Reply[]
   topics      Topic[]  @relation("PostTopics")
+  tasks       Task[]
 }
 
 model Like {
@@ -85,45 +87,47 @@ model Like {
 }
 
 model Topic {
-  name               String         @id @db.VarChar(30)
+  name               String         @id @db.VarChar(50)
   emoji              String         @db.VarChar(5)
   index              Int            @default(0)
-  nameZHCN           String?        @db.VarChar(30)
-  nameENUS           String?        @db.VarChar(30)
-  nameZHTW           String?        @db.VarChar(30)
-  nameESES           String?        @db.VarChar(30)
-  nameFRFR           String?        @db.VarChar(30)
-  nameRURU           String?        @db.VarChar(30)
-  nameJAJP           String?        @db.VarChar(30)
-  nameDEDE           String?        @db.VarChar(30)
-  namePTBR           String?        @db.VarChar(30)
-  nameKOKR           String?        @db.VarChar(30)
-  classificationName String         @db.VarChar(30)
+  nameZHCN           String?        @db.VarChar(50)
+  nameENUS           String?        @db.VarChar(50)
+  nameZHTW           String?        @db.VarChar(50)
+  nameESES           String?        @db.VarChar(50)
+  nameFRFR           String?        @db.VarChar(50)
+  nameRURU           String?        @db.VarChar(50)
+  nameJAJP           String?        @db.VarChar(50)
+  nameDEDE           String?        @db.VarChar(50)
+  namePTBR           String?        @db.VarChar(50)
+  nameKOKR           String?        @db.VarChar(50)
+  classificationName String         @db.VarChar(50)
   Classification     Classification @relation(fields: [classificationName], references: [name])
   posts              Post[]         @relation("PostTopics")
 }
 
 model Classification {
-  name      String   @id @db.VarChar(30)
+  name      String   @id @db.VarChar(50)
+  emoji     String   @db.VarChar(5)
   index     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  nameZHCN  String?  @db.VarChar(30)
-  nameENUS  String?  @db.VarChar(30)
-  nameZHTW  String?  @db.VarChar(30)
-  nameESES  String?  @db.VarChar(30)
-  nameFRFR  String?  @db.VarChar(30)
-  nameRURU  String?  @db.VarChar(30)
-  nameJAJP  String?  @db.VarChar(30)
-  nameDEDE  String?  @db.VarChar(30)
-  namePTBR  String?  @db.VarChar(30)
-  nameKOKR  String?  @db.VarChar(30)
+  nameZHCN  String?  @db.VarChar(50)
+  nameENUS  String?  @db.VarChar(50)
+  nameZHTW  String?  @db.VarChar(50)
+  nameESES  String?  @db.VarChar(50)
+  nameFRFR  String?  @db.VarChar(50)
+  nameRURU  String?  @db.VarChar(50)
+  nameJAJP  String?  @db.VarChar(50)
+  nameDEDE  String?  @db.VarChar(50)
+  namePTBR  String?  @db.VarChar(50)
+  nameKOKR  String?  @db.VarChar(50)
   topics    Topic[]
 }
 
 model Reply {
   id          String   @id @default(uuid())
   content     String   @db.VarChar(1000)
+  originLang  String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   postUid     Int?
@@ -142,16 +146,22 @@ model Reply {
   contentRURU String?
   contentZHCN String?
   contentZHTW String?
+  unsafeTags  Json? @db.JsonB
   likes       Like[]
   parentReply Reply?   @relation("CommentReplies", fields: [commentUid], references: [id])
   replies     Reply[]  @relation("CommentReplies")
   post        Post?    @relation(fields: [postUid], references: [id])
   user        User     @relation(fields: [userUid], references: [uid])
+  tasks       Task[]
 }
 
 model Task {
   id        String   @id @default(uuid())
   status    String   @default("PENDING") @db.VarChar(20)
+  post      Post?    @relation(fields: [postId], references: [id])
+  postId    Int?
+  reply     Reply?   @relation(fields: [replyId], references: [id])
+  replyId   String?
   createdAt DateTime @default(now())
 }
 

@@ -23,7 +23,7 @@ interface MarkdownEditorProps {
 
 export function MarkdownEditor({ value, onChange, locale }: MarkdownEditorProps) {
   const insertMarkdown = (before: string, after: string = "", placeholder?: string) => {
-    const textarea = document.querySelector('textarea') as HTMLTextAreaElement;
+    const textarea = document.querySelector('#content-textarea') as HTMLTextAreaElement;
     if (!textarea) return;
 
     const start = textarea.selectionStart;

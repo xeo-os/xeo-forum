@@ -11,11 +11,18 @@ interface ClientLayoutProps {
   children: React.ReactNode;
   locale: string;
   savedTheme: string;
+ topics: {
+    title: string;
+    icon: string;
+    name: string;
+    items?: { title: string; url: string; icon: string }[];
+  }[];
 }
 
 export function ClientLayout({
   children,
   locale,
+  topics,
   savedTheme,
 }: ClientLayoutProps) {
   const [showLoading, setShowLoading] = useState(true);
@@ -50,7 +57,7 @@ export function ClientLayout({
             className="flex flex-1"
             style={{ marginTop: "var(--header-height)" }}
           >
-            <AppSidebar locale={locale} currentTheme={savedTheme} />
+            <AppSidebar locale={locale} currentTheme={savedTheme} topics={topics}/>
             <SidebarInset>
               <main className="flex flex-1 flex-col p-4">{children}</main>
             </SidebarInset>
