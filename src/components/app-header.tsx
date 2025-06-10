@@ -12,7 +12,7 @@ import {
   LogIn,
   Search,
   Edit,
-  Award
+  Award,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SearchForm } from "@/components/search-form";
@@ -112,25 +112,25 @@ export function SiteHeader({ locale }: { locale?: string }) {
   // 使用data属性控制滚动锁定，而不是直接修改样式
   useEffect(() => {
     if (showSearchSheet) {
-      document.body.setAttribute('data-scroll-locked', 'true');
+      document.body.setAttribute("data-scroll-locked", "true");
     } else {
-      document.body.removeAttribute('data-scroll-locked');
+      document.body.removeAttribute("data-scroll-locked");
     }
 
     return () => {
-      document.body.removeAttribute('data-scroll-locked');
+      document.body.removeAttribute("data-scroll-locked");
     };
   }, [showSearchSheet]);
 
   useEffect(() => {
     if (showLogoutDialog) {
-      document.body.setAttribute('data-scroll-locked', 'true');
+      document.body.setAttribute("data-scroll-locked", "true");
     } else {
-      document.body.removeAttribute('data-scroll-locked');
+      document.body.removeAttribute("data-scroll-locked");
     }
 
     return () => {
-      document.body.removeAttribute('data-scroll-locked');
+      document.body.removeAttribute("data-scroll-locked");
     };
   }, [showLogoutDialog]);
 
@@ -194,13 +194,14 @@ export function SiteHeader({ locale }: { locale?: string }) {
             >
               <div onClick={handleSearchClick} className="cursor-pointer">
                 <SearchForm
+                  // @ts-expect-error wtf
                   ref={searchInputRef}
                   locale={locale || "en-US"}
                   className="w-40 sm:w-64 transition-all duration-300 ease-in-out focus-within:w-56 focus-within:sm:w-96"
                   onFocus={handleSearchFocus}
                   onBlur={handleSearchBlur}
                   value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
+                  onChange={(event) => setSearchQuery((event.target as HTMLInputElement).value)}
                 />
               </div>
             </div>
@@ -358,37 +359,37 @@ export function SiteHeader({ locale }: { locale?: string }) {
                     <DropdownMenuItem>
                       <Award className="mr-2 h-4 w-4" />
                       {lang(
-                      {
-                        "en-US": "My Level",
-                        "zh-CN": "我的等级",
-                        "zh-TW": "我的等級",
-                        "es-ES": "Mi nivel",
-                        "fr-FR": "Mon niveau",
-                        "ru-RU": "Мой уровень",
-                        "ja-JP": "私のレベル",
-                        "de-DE": "Mein Level",
-                        "pt-BR": "Meu nível",
-                        "ko-KR": "내 레벨",
-                      },
-                      locale
+                        {
+                          "en-US": "My Level",
+                          "zh-CN": "我的等级",
+                          "zh-TW": "我的等級",
+                          "es-ES": "Mi nivel",
+                          "fr-FR": "Mon niveau",
+                          "ru-RU": "Мой уровень",
+                          "ja-JP": "私のレベル",
+                          "de-DE": "Mein Level",
+                          "pt-BR": "Meu nível",
+                          "ko-KR": "내 레벨",
+                        },
+                        locale
                       )}
                     </DropdownMenuItem>
                     <DropdownMenuItem>
                       <Edit className="mr-2 h-4 w-4" />
                       {lang(
-                      {
-                        "en-US": "Drafts",
-                        "zh-CN": "草稿",
-                        "zh-TW": "草稿",
-                        "es-ES": "Borradores",
-                        "fr-FR": "Brouillons",
-                        "ru-RU": "Черновики",
-                        "ja-JP": "下書き",
-                        "de-DE": "Entwürfe",
-                        "pt-BR": "Rascunhos",
-                        "ko-KR": "초안",
-                      },
-                      locale
+                        {
+                          "en-US": "Drafts",
+                          "zh-CN": "草稿",
+                          "zh-TW": "草稿",
+                          "es-ES": "Borradores",
+                          "fr-FR": "Brouillons",
+                          "ru-RU": "Черновики",
+                          "ja-JP": "下書き",
+                          "de-DE": "Entwürfe",
+                          "pt-BR": "Rascunhos",
+                          "ko-KR": "초안",
+                        },
+                        locale
                       )}
                     </DropdownMenuItem>
                     <DropdownMenuItem>

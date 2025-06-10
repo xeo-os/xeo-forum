@@ -32,11 +32,18 @@ export default function VerifyPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const emailParam = params.get("email");
-    const langParam = params.get("lang") || "zh-CN";
+    const langParam = params.get("lang") || "en-US";
     setLocale(langParam);
     setEmail(emailParam);
 
-    // 动态设置页面标题
+    if (!emailParam) {
+      router.replace("/signin");
+      return;
+    }
+  }, [router]);
+
+  // 添加单独的useEffect来设置页面标题
+  useEffect(() => {
     const title = lang(
       {
         "en-US": "Verify Email | XEO OS - Xchange Everyone's Opinions",
@@ -51,14 +58,10 @@ export default function VerifyPage() {
         "pt-BR": "Verificar email | XEO OS - Troque as opiniões de todos",
         "ko-KR": "이메일 확인 | XEO OS - 모두의 의견을 교환하세요",
       },
-      langParam
+      locale
     );
     document.title = title;
-
-    if (!emailParam) {
-      router.replace("/signin");
-    }
-  }, [router]);
+  }, [locale]);
 
   const handleChange = (val: string) => {
     setCode(val);

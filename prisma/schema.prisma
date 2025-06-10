@@ -13,7 +13,6 @@ model User {
   uuid            String       @default(uuid())
   email           String       @unique
   emailVerified   Boolean      @default(false)
-  emailVerifyCode String?      @db.VarChar(10)
   username        String       @unique @db.VarChar(20)
   nickname        String       @db.VarChar(50)
   bio             String?      @db.VarChar(255)
@@ -23,75 +22,72 @@ model User {
   role            Role         @default(USER)
   updatedAt       DateTime     @updatedAt
   createdAt       DateTime     @default(now())
-  lastUseAt       DateTime?
-  profileEmoji    String?      @db.VarChar(30) // 用户设置的表情符号，用空格分隔，如："🌟 💭 🌍 💬"
   gender          Gender?      @default(UNSET)
   password        String
+  emailVerifyCode String?      @db.VarChar(30)
   exp             Int          @default(0)
+  lastUseAt       DateTime?
+  profileEmoji    String?      @db.VarChar(30)
+  avatar          Avatar[]
   followed        FriendShip[] @relation("Followed")
   following       FriendShip[] @relation("Following")
+  likes           Like[]
   notice          Notice[]
-  // messageSend    Message[]    @relation("MessageFrom")
-  // messageReceive Message[]    @relation("MessageTo")
   post            Post[]
   reply           Reply[]
-  avatar          Avatar[]
-  likes           Like[]
 }
 
 model Post {
   id          Int      @id @default(autoincrement())
-  published   Boolean  @default(false)
-  originLang  String?  @db.VarChar(10)
-  User        User?    @relation(fields: [userUid], references: [uid])
-  userUid     Int?
-  updatedAt   DateTime @updatedAt
-  lastReplyAt DateTime @default(now())
-  createdAt   DateTime @default(now())
-  title       String   @db.VarChar(50)
   origin      String   @db.VarChar(1000)
-  titleZHCN   String?  @db.Text
-  contentZHCN String?  @db.Text
-  titleENUS   String?  @db.Text
-  contentENUS String?  @db.Text
-  titleZHTW   String?  @db.Text
-  contentZHTW String?  @db.Text
-  titleESES   String?  @db.Text
-  contentESES String?  @db.Text
-  titleFRFR   String?  @db.Text
-  contentFRFR String?  @db.Text
-  titleRURU   String?  @db.Text
-  contentRURU String?  @db.Text
-  titleJAJP   String?  @db.Text
-  contentJAJP String?  @db.Text
-  titleDEDE   String?  @db.Text
-  contentDEDE String?  @db.Text
-  titlePTBR   String?  @db.Text
-  contentPTBR String?  @db.Text
-  titleKOKR   String?  @db.Text
-  contentKOKR String?  @db.Text
-
-  Reply  Reply[]
-  topics Topic[] @relation("PostTopics")
-  likes  Like[]
+  userUid     Int?
+  createdAt   DateTime @default(now())
+  lastReplyAt DateTime @default(now())
+  originLang  String?  @db.VarChar(10)
+  published   Boolean  @default(false)
+  title       String   @db.VarChar(50)
+  updatedAt   DateTime @updatedAt
+  contentDEDE String?
+  contentENUS String?
+  contentESES String?
+  contentFRFR String?
+  contentJAJP String?
+  contentKOKR String?
+  contentPTBR String?
+  contentRURU String?
+  contentZHCN String?
+  contentZHTW String?
+  titleDEDE   String?
+  titleENUS   String?
+  titleESES   String?
+  titleFRFR   String?
+  titleJAJP   String?
+  titleKOKR   String?
+  titlePTBR   String?
+  titleRURU   String?
+  titleZHCN   String?
+  titleZHTW   String?
+  likes       Like[]
+  User        User?    @relation(fields: [userUid], references: [uid])
+  Reply       Reply[]
+  topics      Topic[]  @relation("PostTopics")
 }
 
 model Like {
   uuid      String   @id @default(uuid())
-  user      User     @relation(fields: [userUid], references: [uid])
   userUid   Int
-  post      Post?    @relation(fields: [postId], references: [id])
   postId    Int?
-  reply     Reply?   @relation(fields: [replyId], references: [id])
   replyId   String?
   createdAt DateTime @default(now())
+  post      Post?    @relation(fields: [postId], references: [id])
+  reply     Reply?   @relation(fields: [replyId], references: [id])
+  user      User     @relation(fields: [userUid], references: [uid])
 }
 
 model Topic {
   name               String         @id @db.VarChar(30)
   emoji              String         @db.VarChar(5)
   index              Int            @default(0)
-  posts              Post[]         @relation("PostTopics")
   nameZHCN           String?        @db.VarChar(30)
   nameENUS           String?        @db.VarChar(30)
   nameZHTW           String?        @db.VarChar(30)
@@ -104,6 +100,7 @@ model Topic {
   nameKOKR           String?        @db.VarChar(30)
   classificationName String         @db.VarChar(30)
   Classification     Classification @relation(fields: [classificationName], references: [name])
+  posts              Post[]         @relation("PostTopics")
 }
 
 model Classification {
@@ -111,7 +108,6 @@ model Classification {
   index     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  topics    Topic[]
   nameZHCN  String?  @db.VarChar(30)
   nameENUS  String?  @db.VarChar(30)
   nameZHTW  String?  @db.VarChar(30)
@@ -122,21 +118,12 @@ model Classification {
   nameDEDE  String?  @db.VarChar(30)
   namePTBR  String?  @db.VarChar(30)
   nameKOKR  String?  @db.VarChar(30)
+  topics    Topic[]
 }
 
 model Reply {
   id          String   @id @default(uuid())
   content     String   @db.VarChar(1000)
-  contentZHCN String?  @db.Text
-  contentENUS String?  @db.Text
-  contentZHTW String?  @db.Text
-  contentESES String?  @db.Text
-  contentFRFR String?  @db.Text
-  contentRURU String?  @db.Text
-  contentJAJP String?  @db.Text
-  contentDEDE String?  @db.Text
-  contentPTBR String?  @db.Text
-  contentKOKR String?  @db.Text
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   postUid     Int?
@@ -144,12 +131,22 @@ model Reply {
   commentUid  String?
   userUid     Int
   likeUserUid Int[]
-  post        Post?    @relation(fields: [postUid], references: [id])
-  user        User     @relation(fields: [userUid], references: [uid])
+  childReplay Boolean  @default(false)
+  contentDEDE String?
+  contentENUS String?
+  contentESES String?
+  contentFRFR String?
+  contentJAJP String?
+  contentKOKR String?
+  contentPTBR String?
+  contentRURU String?
+  contentZHCN String?
+  contentZHTW String?
+  likes       Like[]
   parentReply Reply?   @relation("CommentReplies", fields: [commentUid], references: [id])
   replies     Reply[]  @relation("CommentReplies")
-  childReplay Boolean  @default(false)
-  likes       Like[]
+  post        Post?    @relation(fields: [postUid], references: [id])
+  user        User     @relation(fields: [userUid], references: [uid])
 }
 
 model Task {
@@ -160,27 +157,27 @@ model Task {
 
 model Avatar {
   id         String @id @default(uuid())
-  user       User   @relation(fields: [userUid], references: [uid])
   userUid    Int
   emoji      String @db.VarChar(10)
   background String @db.VarChar(100)
+  user       User   @relation(fields: [userUid], references: [uid])
 }
 
 model FriendShip {
   id          Int      @id @default(autoincrement())
-  follower    User     @relation("Followed", fields: [followerId], references: [uid])
   followerId  Int
-  following   User     @relation("Following", fields: [followingId], references: [uid])
   followingId Int
   createdAt   DateTime @default(now())
+  follower    User     @relation("Followed", fields: [followerId], references: [uid])
+  following   User     @relation("Following", fields: [followingId], references: [uid])
 }
 
 model Notice {
   id        String   @id @default(uuid())
-  user      User     @relation(fields: [userId], references: [uid])
   userId    Int
   content   String   @db.VarChar(255)
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [uid])
 }
 
 enum Role {

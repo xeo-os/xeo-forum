@@ -71,9 +71,13 @@ export function SignUpForm({
     token: null,
   });
 
+  // 移动token检查到useEffect中，避免阻止组件渲染
+  useEffect(() => {
     if (token.get()) {
-    window.location.href = "/"
-  }
+      window.location.href = "/";
+      return;
+    }
+  }, []);
 
   const timeoutRefs = useRef<{ [key: string]: NodeJS.Timeout }>({});
   const inputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
@@ -333,6 +337,24 @@ export function SignUpForm({
   };
 
   useEffect(() => {
+    // 动态设置页面标题
+    const title = lang(
+      {
+        "en-US": "Sign up | XEO OS - Xchange Everyone's Opinions",
+        "zh-CN": "注册 | XEO OS - 交流每个人的观点",
+        "zh-TW": "註冊 | XEO OS - 交流每個人的觀點",
+        "es-ES": "Registrarse | XEO OS - Intercambia las opiniones de todos",
+        "fr-FR": "S'inscrire | XEO OS - Échangez les opinions de chacun",
+        "ru-RU": "Зарегистрироваться | XEO OS - Обменивайтесь мнениями всех",
+        "ja-JP": "サインアップ | XEO OS - みんなの意見を交換",
+        "de-DE": "Registrieren | XEO OS - Teile die Meinungen aller",
+        "pt-BR": "Registrar | XEO OS - Troque as opiniões de todos",
+        "ko-KR": "회원가입 | XEO OS - 모두의 의견을 교환하세요",
+      },
+      locale
+    );
+    document.title = title;
+
     // 动态加载Turnstile脚本
     const script = document.createElement("script");
     script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
@@ -352,7 +374,7 @@ export function SignUpForm({
         document.head.removeChild(script);
       }
     };
-  }, []);
+  }, [locale]); // 添加locale作为依赖
 
   const initializeTurnstile = () => {
     if (turnstileRef.current && window.turnstile) {
@@ -523,7 +545,7 @@ export function SignUpForm({
 
           // 延迟跳转
           setTimeout(() => {
-            window.location.href = "/verify?email="+email
+            window.location.href = "/verify?email=" + email;
           }, 1500);
         } else {
           // 显示API错误信息
@@ -592,7 +614,7 @@ export function SignUpForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       {/* 隐藏的Turnstile容器，用于初始验证 */}
       <div ref={turnstileRef} className="hidden"></div>
-      <Toaster theme="dark" position="top-center" richColors/>
+      <Toaster theme="dark" position="top-center" richColors />
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
           <form className="p-6 md:p-8" onSubmit={handleSubmit}>

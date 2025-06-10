@@ -7,9 +7,6 @@ import {
   ContextMenuItem,
   ContextMenuSeparator,
   ContextMenuShortcut,
-  ContextMenuSub,
-  ContextMenuSubContent,
-  ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import {
@@ -23,7 +20,6 @@ import {
   ArrowLeft,
   ArrowRight,
   Home,
-  BookmarkPlus,
 } from "lucide-react";
 import { toast } from "sonner";
 import lang from "@/lib/lang";
@@ -99,6 +95,7 @@ export function ContextMenu({ children, locale = "en-US", onSearch }: ContextMen
         }, locale));
       }
     } catch (error) {
+        console.error("Failed to copy text:", error);
       toast.error(lang({
         "zh-CN": "复制失败",
         "en-US": "Failed to copy",
@@ -126,6 +123,7 @@ export function ContextMenu({ children, locale = "en-US", onSearch }: ContextMen
         activeElement.setSelectionRange(start + text.length, start + text.length);
       }
     } catch (error) {
+        console.error("Failed to paste text:", error);
       toast.error(lang({
         "zh-CN": "粘贴失败",
         "en-US": "Failed to paste",
@@ -187,6 +185,7 @@ export function ContextMenu({ children, locale = "en-US", onSearch }: ContextMen
       }
     } catch (error) {
       // 处理错误
+      console.error("Failed to share URL:", error);
     }
   };
 
@@ -233,24 +232,168 @@ export function ContextMenu({ children, locale = "en-US", onSearch }: ContextMen
         }, locale));
       }
     } catch (error) {
+        console.error("Failed to share text:", error);
       // 处理错误
     }
   };
 
   const texts = {
-    copy: lang({ "zh-CN": "复制", "en-US": "Copy" }, locale),
-    paste: lang({ "zh-CN": "粘贴", "en-US": "Paste" }, locale),
-    searchText: lang({ "zh-CN": "搜索", "en-US": "Search for" }, locale),
-    openLink: lang({ "zh-CN": "打开链接", "en-US": "Open link" }, locale),
-    openInNewTab: lang({ "zh-CN": "在新标签页中打开", "en-US": "Open in new tab" }, locale),
-    createPost: lang({ "zh-CN": "创建新帖子", "en-US": "Create new post" }, locale),
-    share: lang({ "zh-CN": "分享", "en-US": "Share" }, locale),
-    shareUrl: lang({ "zh-CN": "分享页面链接", "en-US": "Share page URL" }, locale),
-    refresh: lang({ "zh-CN": "刷新", "en-US": "Refresh" }, locale),
-    back: lang({ "zh-CN": "后退", "en-US": "Back" }, locale),
-    forward: lang({ "zh-CN": "前进", "en-US": "Forward" }, locale),
-    home: lang({ "zh-CN": "首页", "en-US": "Home" }, locale),
-    bookmark: lang({ "zh-CN": "添加书签", "en-US": "Add bookmark" }, locale),
+    copy: lang({
+      "zh-CN": "复制",
+      "en-US": "Copy",
+      "ja-JP": "コピー",
+      "ko-KR": "복사",
+      "fr-FR": "Copier",
+      "es-ES": "Copiar",
+      "de-DE": "Kopieren",
+      "pt-BR": "Copiar",
+      "ru-RU": "Копировать",
+      "zh-TW": "複製",
+    }, locale),
+    paste: lang({
+      "zh-CN": "粘贴",
+      "en-US": "Paste",
+      "ja-JP": "貼り付け",
+      "ko-KR": "붙여넣기",
+      "fr-FR": "Coller",
+      "es-ES": "Pegar",
+      "de-DE": "Einfügen",
+      "pt-BR": "Colar",
+      "ru-RU": "Вставить",
+      "zh-TW": "貼上",
+    }, locale),
+    searchText: lang({
+      "zh-CN": "搜索",
+      "en-US": "Search for",
+      "ja-JP": "検索",
+      "ko-KR": "검색",
+      "fr-FR": "Rechercher",
+      "es-ES": "Buscar",
+      "de-DE": "Suchen nach",
+      "pt-BR": "Pesquisar",
+      "ru-RU": "Искать",
+      "zh-TW": "搜尋",
+    }, locale),
+    openLink: lang({
+      "zh-CN": "打开链接",
+      "en-US": "Open link",
+      "ja-JP": "リンクを開く",
+      "ko-KR": "링크 열기",
+      "fr-FR": "Ouvrir le lien",
+      "es-ES": "Abrir enlace",
+      "de-DE": "Link öffnen",
+      "pt-BR": "Abrir link",
+      "ru-RU": "Открыть ссылку",
+      "zh-TW": "開啟連結",
+    }, locale),
+    openInNewTab: lang({
+      "zh-CN": "在新标签页中打开",
+      "en-US": "Open in new tab",
+      "ja-JP": "新しいタブで開く",
+      "ko-KR": "새 탭에서 열기",
+      "fr-FR": "Ouvrir dans un nouvel onglet",
+      "es-ES": "Abrir en nueva pestaña",
+      "de-DE": "In neuem Tab öffnen",
+      "pt-BR": "Abrir em nova aba",
+      "ru-RU": "Открыть в новой вкладке",
+      "zh-TW": "在新分頁中開啟",
+    }, locale),
+    createPost: lang({
+      "zh-CN": "创建新帖子",
+      "en-US": "Create new post",
+      "ja-JP": "新しい投稿を作成",
+      "ko-KR": "새 게시물 만들기",
+      "fr-FR": "Créer un nouveau post",
+      "es-ES": "Crear nueva publicación",
+      "de-DE": "Neuen Beitrag erstellen",
+      "pt-BR": "Criar nova postagem",
+      "ru-RU": "Создать новый пост",
+      "zh-TW": "建立新帖子",
+    }, locale),
+    shareUrl: lang({
+      "zh-CN": "分享页面链接",
+      "en-US": "Share page URL",
+      "ja-JP": "ページURLを共有",
+      "ko-KR": "페이지 URL 공유",
+      "fr-FR": "Partager l'URL de la page",
+      "es-ES": "Compartir URL de la página",
+      "de-DE": "Seiten-URL teilen",
+      "pt-BR": "Compartilhar URL da página",
+      "ru-RU": "Поделиться URL страницы",
+      "zh-TW": "分享頁面連結",
+    }, locale),
+    shareText: lang({
+      "zh-CN": "分享选中文本",
+      "en-US": "Share selected text",
+      "ja-JP": "選択したテキストを共有",
+      "ko-KR": "선택한 텍스트 공유",
+      "fr-FR": "Partager le texte sélectionné",
+      "es-ES": "Compartir texto seleccionado",
+      "de-DE": "Ausgewählten Text teilen",
+      "pt-BR": "Compartilhar texto selecionado",
+      "ru-RU": "Поделиться выделенным текстом",
+      "zh-TW": "分享選中文字",
+    }, locale),
+    refresh: lang({
+      "zh-CN": "刷新",
+      "en-US": "Refresh",
+      "ja-JP": "更新",
+      "ko-KR": "새로고침",
+      "fr-FR": "Actualiser",
+      "es-ES": "Actualizar",
+      "de-DE": "Aktualisieren",
+      "pt-BR": "Atualizar",
+      "ru-RU": "Обновить",
+      "zh-TW": "重新整理",
+    }, locale),
+    back: lang({
+      "zh-CN": "后退",
+      "en-US": "Back",
+      "ja-JP": "戻る",
+      "ko-KR": "뒤로",
+      "fr-FR": "Retour",
+      "es-ES": "Atrás",
+      "de-DE": "Zurück",
+      "pt-BR": "Voltar",
+      "ru-RU": "Назад",
+      "zh-TW": "返回",
+    }, locale),
+    forward: lang({
+      "zh-CN": "前进",
+      "en-US": "Forward",
+      "ja-JP": "進む",
+      "ko-KR": "앞으로",
+      "fr-FR": "Suivant",
+      "es-ES": "Adelante",
+      "de-DE": "Vorwärts",
+      "pt-BR": "Avançar",
+      "ru-RU": "Вперед",
+      "zh-TW": "前進",
+    }, locale),
+    home: lang({
+      "zh-CN": "首页",
+      "en-US": "Home",
+      "ja-JP": "ホーム",
+      "ko-KR": "홈",
+      "fr-FR": "Accueil",
+      "es-ES": "Inicio",
+      "de-DE": "Startseite",
+      "pt-BR": "Início",
+      "ru-RU": "Главная",
+      "zh-TW": "首頁",
+    }, locale),
+    bookmark: lang({
+      "zh-CN": "添加书签",
+      "en-US": "Add bookmark",
+      "ja-JP": "ブックマークを追加",
+      "ko-KR": "북마크 추가",
+      "fr-FR": "Ajouter un signet",
+      "es-ES": "Añadir marcador",
+      "de-DE": "Lesezeichen hinzufügen",
+      "pt-BR": "Adicionar favorito",
+      "ru-RU": "Добавить закладку",
+      "zh-TW": "加入書籤",
+    }, locale),
   };
 
   return (
@@ -299,7 +442,7 @@ export function ContextMenu({ children, locale = "en-US", onSearch }: ContextMen
         {selectedText && (
           <ContextMenuItem onClick={handleSearch}>
             <Search className="mr-2 h-4 w-4" />
-            {texts.searchText} "{selectedText.slice(0, 20)}{selectedText.length > 20 ? '...' : ''}"
+            {texts.searchText} &quot;{selectedText.slice(0, 20)}{selectedText.length > 20 ? '...' : ''}&quot;
           </ContextMenuItem>
         )}
 
@@ -339,21 +482,6 @@ export function ContextMenu({ children, locale = "en-US", onSearch }: ContextMen
             {texts.shareText}
           </ContextMenuItem>
         )}
-
-        <ContextMenuItem onClick={() => {
-          try {
-            (window as any).external?.AddFavorite?.(window.location.href, document.title);
-          } catch {
-            toast.info(lang({
-              "zh-CN": "请使用 Ctrl+D 添加书签",
-              "en-US": "Please use Ctrl+D to add bookmark",
-            }, locale));
-          }
-        }}>
-          <BookmarkPlus className="mr-2 h-4 w-4" />
-          {texts.bookmark}
-          <ContextMenuShortcut>Ctrl+D</ContextMenuShortcut>
-        </ContextMenuItem>
       </ContextMenuContent>
     </ShadcnContextMenu>
   );

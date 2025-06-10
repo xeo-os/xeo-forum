@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+// import { useState } from "react";
 import { ContextMenu } from "@/components/context-menu";
 
 interface ContextMenuProviderProps {
@@ -8,8 +8,11 @@ interface ContextMenuProviderProps {
   locale?: string;
 }
 
-export function ContextMenuProvider({ children, locale = "en-US" }: ContextMenuProviderProps) {
-  const [searchQuery, setSearchQuery] = useState("");
+export function ContextMenuProvider({
+  children,
+  locale = "en-US",
+}: ContextMenuProviderProps) {
+  //   const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearch = (query: string) => {
     // 直接跳转到搜索页面，而不是打开Sheet
@@ -21,9 +24,7 @@ export function ContextMenuProvider({ children, locale = "en-US" }: ContextMenuP
 
   return (
     <ContextMenu locale={locale} onSearch={handleSearch}>
-      <div className="min-h-screen w-full">
-        {children}
-      </div>
+      <div className="min-h-screen w-full">{children}</div>
     </ContextMenu>
   );
 }
