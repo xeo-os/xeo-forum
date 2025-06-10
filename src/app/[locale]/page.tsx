@@ -293,113 +293,113 @@ export default async function HomePage({ params, searchParams }: Props) {
       </div>
 
       <Card>
-        <CardContent className="p-5">
+        <CardContent className="p-2 sm:p-5">
           <div className="divide-y">
             {posts.map((post, index) => (
               <div
-                key={post.id}
-                className="p-3 hover:bg-muted/50 transition-colors"
+          key={post.id}
+          className="p-2 sm:p-3 hover:bg-muted/50 transition-colors"
               >
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-7 w-7 flex-shrink-0">
-                    <AvatarImage
-                      src={
-                        post.User?.avatar[0]?.id
-                          ? `/api/dynamicImage/emoji/?emoji=${post.User.avatar[0].emoji}&background=${encodeURIComponent(
-                              post.User.avatar[0].background.replaceAll(
-                                "%",
-                                "%25"
-                              )
-                            )}`
-                          : undefined
-                      }
-                      alt={
-                        post.User?.nickname ||
-                        post.User?.username ||
-                        "User Avatar"
-                      }
-                    />
-                    <AvatarFallback
-                      style={{
-                        backgroundColor:
-                          post.User?.avatar[0]?.background || "#e5e7eb",
-                        fontSize: "0.8rem",
-                      }}
-                    >
-                      {post.User?.avatar[0]?.emoji ||
-                        post.User?.profileEmoji ||
-                        post.User?.nickname?.charAt(0) ||
-                        "U"}
-                    </AvatarFallback>
-                  </Avatar>
+          <div className="flex items-center gap-3">
+            <Avatar className="h-7 w-7 flex-shrink-0">
+              <AvatarImage
+                src={
+            post.User?.avatar[0]?.id
+              ? `/api/dynamicImage/emoji/?emoji=${post.User.avatar[0].emoji}&background=${encodeURIComponent(
+                  post.User.avatar[0].background.replaceAll(
+              "%",
+              "%25"
+                  )
+                )}`
+              : undefined
+                }
+                alt={
+            post.User?.nickname ||
+            post.User?.username ||
+            "User Avatar"
+                }
+              />
+              <AvatarFallback
+                style={{
+            backgroundColor:
+              post.User?.avatar[0]?.background || "#e5e7eb",
+            fontSize: "0.8rem",
+                }}
+              >
+                {post.User?.avatar[0]?.emoji ||
+            post.User?.profileEmoji ||
+            post.User?.nickname?.charAt(0) ||
+            "U"}
+              </AvatarFallback>
+            </Avatar>
 
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <Link
-                        href={`/${locale}/post/${post.id}`}
-                        className="font-medium hover:text-primary transition-colors truncate text-sm"
-                      >
-                        {getLocalizedTitle(post, locale)}
-                      </Link>
-                      {post.pin && (
-                        <Pin className="h-3 w-3 text-primary flex-shrink-0" />
-                      )}
-                    </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <Link
+            href={`/${locale}/post/${post.id}`}
+            className="font-medium hover:text-primary transition-colors truncate text-sm"
+                >
+            {getLocalizedTitle(post, locale)}
+                </Link>
+                {post.pin && (
+            <Pin className="h-3 w-3 text-primary flex-shrink-0" />
+                )}
+              </div>
 
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <span className="truncate max-w-16">
-                        {post.User?.nickname || "Anonymous"}
-                      </span>
-                      <span>•</span>
-                      <time dateTime={post.createdAt.toISOString()}>
-                        {new Date(post.createdAt).toLocaleDateString(locale, {
-                          month: "short",
-                          day: "numeric",
-                          year:
-                            new Date(post.createdAt).getFullYear() !==
-                            new Date().getFullYear()
-                              ? "numeric"
-                              : undefined,
-                        })}
-                      </time>
-                      <span>•</span>
-                      <span className="text-xs line-clamp-1 max-w-24 sm:max-w-40">
-                        {post.topics.length > 0 && (
-                          <div className="flex items-center gap-1 flex-shrink-0">
-                            {post.topics.slice(0, 2).map((topic) => (
-                              <Badge
-                                key={topic.name}
-                                variant="secondary"
-                                className="text-xs px-1 py-0.5 h-auto"
-                              >
-                                <span className="mr-0.5">{topic.emoji}</span>
-                                <span className="hidden sm:inline text-xs">
-                                  {getLocalizedTopicName(topic, locale)}
-                                </span>
-                              </Badge>
-                            ))}
-                            {post.topics.length > 2 && (
-                              <span className="text-xs text-muted-foreground">
-                                +{post.topics.length - 2}
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </span>
-                    </div>
-                  </div>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <span className="truncate max-w-16">
+            {post.User?.nickname || "Anonymous"}
+                </span>
+                <span>•</span>
+                <time dateTime={post.createdAt.toISOString()}>
+            {new Date(post.createdAt).toLocaleDateString(locale, {
+              month: "short",
+              day: "numeric",
+              year:
+                new Date(post.createdAt).getFullYear() !==
+                new Date().getFullYear()
+                  ? "numeric"
+                  : undefined,
+            })}
+                </time>
+                <span>•</span>
+                <span className="text-xs line-clamp-1 max-w-24 sm:max-w-40">
+            {post.topics.length > 0 && (
+              <div className="flex items-center gap-1 flex-shrink-0">
+                {post.topics.slice(0, 2).map((topic) => (
+                  <Badge
+              key={topic.name}
+              variant="secondary"
+              className="text-xs px-1 py-0.5 h-auto"
+                  >
+              <span className="mr-0.5">{topic.emoji}</span>
+              <span className="hidden sm:inline text-xs">
+                {getLocalizedTopicName(topic, locale)}
+              </span>
+                  </Badge>
+                ))}
+                {post.topics.length > 2 && (
+                  <span className="text-xs text-muted-foreground">
+              +{post.topics.length - 2}
+                  </span>
+                )}
+              </div>
+            )}
+                </span>
+              </div>
+            </div>
 
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground flex-shrink-0">
-                    <div className="flex items-center gap-1">
-                      <Heart className="h-3 w-3" />
-                      <span>{post._count.likes}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <MessageCircle className="h-3 w-3" />
-                      <span>{post._count.Reply}</span>
-                    </div>
-                  </div>
-                </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground flex-shrink-0">
+              <div className="flex items-center gap-1">
+                <Heart className="h-3 w-3" />
+                <span>{post._count.likes}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <MessageCircle className="h-3 w-3" />
+                <span>{post._count.Reply}</span>
+              </div>
+            </div>
+          </div>
               </div>
             ))}
           </div>
