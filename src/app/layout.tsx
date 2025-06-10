@@ -93,21 +93,18 @@ export async function generateMetadata(): Promise<Metadata> {
       admins: ["100083650946305"],
     },
     appleWebApp: {
-        capable: true,
-        title: "XEO OS",
-    }
+      capable: true,
+      title: "XEO OS",
+    },
   };
 }
 
 export default async function LocaleLayout({ children }: Props) {
   return (
-    <html suppressHydrationWarning>
-      <head></head>
-      <body suppressHydrationWarning>
-        <ThemeScript />
-        <TokenManager />
-        {children}
-      </body>
-    </html>
+    <>
+      <ThemeScript />
+      <TokenManager />
+      {children}
+    </>
   );
 }

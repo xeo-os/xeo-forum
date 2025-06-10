@@ -194,18 +194,21 @@ export default async function TermsOfServicePage({ params }: Props) {
             )}
 
             <Alert>
-              <AlertDescription className="flex items-center justify-between">
-                <RiGithubFill /><span>{githubNotice}</span>
+                <AlertDescription className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+                <div className="flex items-center gap-2">
+                  <RiGithubFill />
+                  <span>{githubNotice}</span>
+                </div>
                 <Button variant="outline" size="sm" asChild>
                   <Link
-                    href="https://github.com/xeo-os/xeoos-policies/blob/main/terms-of-service.md"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  href="https://github.com/xeo-os/xeoos-policies/blob/main/terms-of-service.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   >
-                    GitHub <ExternalLink className="ml-1 h-3 w-3" />
+                  GitHub <ExternalLink className="ml-1 h-3 w-3" />
                   </Link>
                 </Button>
-              </AlertDescription>
+                </AlertDescription>
             </Alert>
 
             <div className="flex items-center gap-2 text-sm text-muted-foreground">

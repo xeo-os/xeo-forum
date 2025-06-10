@@ -32,7 +32,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
+import token from "@/utils/userToken";
 import { toast, Toaster } from "sonner";
 
 interface ValidationState {
@@ -70,6 +70,10 @@ export function SignUpForm({
     hasError: false,
     token: null,
   });
+
+    if (token.get()) {
+    window.location.href = "/"
+  }
 
   const timeoutRefs = useRef<{ [key: string]: NodeJS.Timeout }>({});
   const inputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});

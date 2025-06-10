@@ -151,16 +151,16 @@ export default async function PrivacyPolicyPage({ params }: Props) {
 
   const lastUpdated = lang(
     {
-      "zh-CN": "最后更新时间",
-      "en-US": "Last Updated",
-      "ja-JP": "最終更新日",
-      "ko-KR": "마지막 업데이트",
-      "fr-FR": "Dernière mise à jour",
-      "es-ES": "Última actualización",
-      "de-DE": "Zuletzt aktualisiert",
-      "pt-BR": "Última atualização",
-      "ru-RU": "Последнее обновление",
-      "zh-TW": "最後更新時間",
+      "zh-CN": "页面缓存更新时间",
+      "en-US": "Page Cache Last Updated",
+      "ja-JP": "ページキャッシュの最終更新日時",
+      "ko-KR": "페이지 캐시 마지막 업데이트",
+      "fr-FR": "Dernière mise à jour du cache de la page",
+      "es-ES": "Última actualización de la caché de la página",
+      "de-DE": "Letzte Aktualisierung des Seiten-Caches",
+      "pt-BR": "Última atualização do cache da página",
+      "ru-RU": "Последнее обновление кэша страницы",
+      "zh-TW": "頁面快取最後更新時間",
     },
     locale
   );
@@ -196,8 +196,11 @@ export default async function PrivacyPolicyPage({ params }: Props) {
             )}
 
             <Alert>
-              <AlertDescription className="flex items-center justify-between">
-                <RiGithubFill /><span>{githubNotice}</span>
+              <AlertDescription className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+                <div className="flex items-center gap-2">
+                  <RiGithubFill />
+                  <span>{githubNotice}</span>
+                </div>
                 <Button variant="outline" size="sm" asChild>
                   <Link
                     href="https://github.com/xeo-os/xeoos-policies/blob/main/privacy-policy.md"

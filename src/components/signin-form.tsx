@@ -19,6 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import token from "@/utils/userToken";
 
 export function LoginForm({
   className,
@@ -30,6 +31,10 @@ export function LoginForm({
   const [isLoading, setIsLoading] = useState(false);
   const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  if (token.get()) {
+    window.location.href = "/"
+  }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -82,6 +87,7 @@ export function LoginForm({
       if (data.ok && data.jwt) {
         // 登录成功
         console.log("JWT Token:", data.jwt);
+        token.write(data.jwt, 7 * 24 * 60 * 60);
 
         toast.success(
           lang(
@@ -114,11 +120,13 @@ export function LoginForm({
                 "en-US": "Login failed. Please check your credentials.",
                 "zh-CN": "登录失败，请检查您的凭据。",
                 "zh-TW": "登入失敗，請檢查您的憑據。",
-                "es-ES": "Error de inicio de sesión. Verifique sus credenciales.",
+                "es-ES":
+                  "Error de inicio de sesión. Verifique sus credenciales.",
                 "fr-FR": "Échec de la connexion. Vérifiez vos identifiants.",
                 "ru-RU": "Ошибка входа. Проверьте ваши учетные данные.",
                 "ja-JP": "ログインに失敗しました。認証情報を確認してください。",
-                "de-DE": "Anmeldung fehlgeschlagen. Überprüfen Sie Ihre Anmeldedaten.",
+                "de-DE":
+                  "Anmeldung fehlgeschlagen. Überprüfen Sie Ihre Anmeldedaten.",
                 "pt-BR": "Falha no login. Verifique suas credenciais.",
                 "ko-KR": "로그인 실패. 자격 증명을 확인해 주세요.",
               },
@@ -142,7 +150,8 @@ export function LoginForm({
             "fr-FR": "Une erreur réseau s'est produite. Veuillez réessayer.",
             "ru-RU": "Произошла сетевая ошибка. Пожалуйста, попробуйте снова.",
             "ja-JP": "ネットワークエラーが発生しました。再試行してください。",
-            "de-DE": "Ein Netzwerkfehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+            "de-DE":
+              "Ein Netzwerkfehler ist aufgetreten. Bitte versuchen Sie es erneut.",
             "pt-BR": "Ocorreu um erro de rede. Por favor, tente novamente.",
             "ko-KR": "네트워크 오류가 발생했습니다. 다시 시도해 주세요.",
           },

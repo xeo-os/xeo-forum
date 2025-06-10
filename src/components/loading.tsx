@@ -50,7 +50,7 @@ export function Loading({ theme, onLoadComplete, locale }: LoadingProps) {
           setTimeout(onLoadComplete, 1800);
           return 100;
         }
-        return Math.min(prev + Math.random() * 15 + 5, 100); // 随机增长5-20%，但不超过100
+        return Math.min(prev + Math.random() * 15 + 5, 100); // 随机增长5-20%
       });
     }, 100);
 

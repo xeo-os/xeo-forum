@@ -9,6 +9,7 @@ import { ThemeScript } from "@/components/theme-script";
 import { ClientLayout } from "@/components/client-layout";
 import { ThemeSync } from "@/components/theme-sync";
 import { PageTransition } from "@/components/page-transition";
+import { ContextMenuProvider } from "@/components/context-menu-provider";
 
 type Props = {
   children: React.ReactNode;
@@ -71,11 +72,13 @@ export default async function LocaleLayout({ children, params }: Props) {
       <body suppressHydrationWarning>
         <ThemeScript />
         <ThemeSync serverTheme={savedTheme} />
-        <ClientLayout locale={locale} savedTheme={savedTheme}>
-          <PageTransition>
-            {children}
-          </PageTransition>
-        </ClientLayout>
+        <ContextMenuProvider locale={locale}>
+          <ClientLayout locale={locale} savedTheme={savedTheme}>
+            <PageTransition>
+              {children}
+            </PageTransition>
+          </ClientLayout>
+        </ContextMenuProvider>
       </body>
     </html>
   );
