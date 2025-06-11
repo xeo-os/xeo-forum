@@ -8,6 +8,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 // import { Separator } from "@/components/ui/separator";
 import {
   Heart,
@@ -471,16 +478,17 @@ export default async function HomePage({ params }: Props) {
   return (
     <div className="mx-auto px-4 py-6 max-w-7xl">
       {/* 页面顶部横排Card */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
+      {/* 桌面版：使用原有的grid布局 */}
+      <div className="hidden lg:grid lg:grid-cols-4 gap-4 mb-6">
         {/* 页面介绍 - 50% 宽度 */}
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 bg-primary">
           <CardHeader className="pb-3">
             <CardTitle className="text-xl font-bold">
               {"XEO OS - Xchange Everyone's Opinion"}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground leading-relaxed">
+            <p className="text-sm text-white leading-relaxed">
               {lang(
                 {
                   "zh-CN":
@@ -509,7 +517,7 @@ export default async function HomePage({ params }: Props) {
               <br />
               <Link
                 href={`/${locale}/about`}
-                className="text-primary hover:text-primary/80 hover:underline transition-all duration-200"
+                className="text-white hover:text-white/80 hover:underline transition-all duration-200"
               >
                 {lang(
                   {
@@ -538,16 +546,16 @@ export default async function HomePage({ params }: Props) {
               📢{" "}
               {lang(
                 {
-                  "zh-CN": "服务条款更新",
-                  "en-US": "Terms of Service Update",
-                  "zh-TW": "服務條款更新",
-                  "es-ES": "Actualización de Términos de Servicio",
-                  "fr-FR": "Mise à jour des Conditions de Service",
-                  "ru-RU": "Обновление Условий Обслуживания",
-                  "ja-JP": "サービス利用規約更新",
-                  "de-DE": "Aktualisierung der Nutzungsbedingungen",
-                  "pt-BR": "Atualização dos Termos de Serviço",
-                  "ko-KR": "서비스 약관 업데이트",
+                  "zh-CN": "我们所倡导的",
+                  "en-US": "What We Advocate",
+                  "zh-TW": "我們所倡導的",
+                  "es-ES": "Lo que defendemos",
+                  "fr-FR": "Ce que nous prônons",
+                  "ru-RU": "То, что мы защищаем",
+                  "ja-JP": "私たちが提唱すること",
+                  "de-DE": "Was wir befürworten",
+                  "pt-BR": "O que defendemos",
+                  "ko-KR": "우리가 지지하는 것",
                 },
                 locale
               )}
@@ -630,10 +638,230 @@ export default async function HomePage({ params }: Props) {
                     "2025년 6월 10일에 서비스 약관과 개인정보 처리방침을 업데이트했습니다.",
                 },
                 locale
-              )}
+              )}{" "}
+              <br />
+              <Link
+                href={`/${locale}/policies/privacy-policy`}
+                className="text-primary hover:text-primary/80 hover:underline transition-all duration-200"
+              >
+                {lang(
+                  {
+                    "zh-CN": "> 查看",
+                    "en-US": "> View",
+                    "zh-TW": "> 查看",
+                    "es-ES": "> Ver",
+                    "fr-FR": "> Voir",
+                    "ru-RU": "> Посмотреть",
+                    "ja-JP": "> 表示",
+                    "de-DE": "> Anzeigen",
+                    "pt-BR": "> Visualizar",
+                    "ko-KR": "> 보기",
+                  },
+                  locale
+                )}
+              </Link>
             </p>
           </CardContent>
         </Card>
+      </div>
+
+      {/* 移动版：使用Carousel */}
+      <div className="block lg:hidden mb-6">
+        <Carousel className="w-full">
+          <CarouselContent className="-ml-2 md:-ml-4">
+            {/* 页面介绍 */}
+            <CarouselItem className="pl-2 md:pl-4 basis-[85%] sm:basis-[90%]">
+              <Card className="bg-primary h-full">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg sm:text-xl font-bold">
+                    {"XEO OS - Xchange Everyone's Opinion"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-white leading-relaxed">
+                    {lang(
+                      {
+                        "zh-CN":
+                          "🌍✨XEO OS 致力于打破语言壁垒！🚧💬 借助尖端AI技术，我们实时翻译每篇内容，支持多语言互译，让全球用户都能用最熟悉的母语畅快交流～🌐💖",
+                        "en-US":
+                          "🌎✨XEO OS smashes language barriers! ⚡🤖 Using cutting-edge AI, we instantly translate every post into multiple languages, empowering global conversations in your native tongue! 💬🌍",
+                        "zh-TW":
+                          "🌏✨XEO OS 全力擊破語言高牆！🚀💬 運用頂尖AI技術，即時翻譯每篇內容，讓全球用戶用最熟悉的母語無障礙交流～💫❤️",
+                        "es-ES":
+                          "🌎✨¡XEO OS rompe las barreras idiomáticas! ⚡🤖 Con IA de vanguardia, traducimos al instante todo a múltiples idiomas para conversaciones globales en tu lengua materna. 💬💫",
+                        "fr-FR":
+                          "🌍✨XEO OS brise les barrières linguistiques ! ⚡🤖 Grâce à une IA de pointe, nous traduisons instantanément chaque contenu en plusieurs langues pour des échanges mondiaux dans votre langue ! 💬✨",
+                        "ru-RU":
+                          "🌍✨XEO OS разрушает языковые барьеры! ⚡🤖 С помощью передового ИИ мгновенно переводим любой контент, открывая глобальное общение на родном языке! 💬🚀",
+                        "ja-JP":
+                          "🌏✨XEO OSが言語の壁を打破！⚡🤖 最先端AIで全コンテンツを多言語翻訳。母国語で世界と繋がるグローバルコミュニケーションを実現💬🌸",
+                        "de-DE":
+                          "🌍✨XEO OS durchbricht Sprachbarrieren! ⚡🤖 Mit modernster KI übersetzen wir alle Inhalte in Echtzeit – für weltweite Gespräche in deiner Muttersprache! 💬🚀",
+                        "pt-BR":
+                          "🌎✨XEO OS quebra barreiras linguísticas! ⚡🤖 Com IA avançada, traduzimos instantaneamente para múltiplos idiomas, conectando o mundo na sua língua materna! 💬💫",
+                        "ko-KR":
+                          "🌏✨XEO OS, 언어 장벽을 허물다! ⚡🤖 최첨단 AI로 모든 콘텐츠를 실시간 번역, 모국어로 전 세계와 소통하세요! 💬✨",
+                      },
+                      locale
+                    )}
+                    <br />
+                    <Link
+                      href={`/${locale}/about`}
+                      className="text-white hover:text-white/80 hover:underline transition-all duration-200"
+                    >
+                      {lang(
+                        {
+                          "zh-CN": "> 关于我们",
+                          "en-US": "> About Us",
+                          "zh-TW": "> 關於我們",
+                          "es-ES": "> Acerca de nosotros",
+                          "fr-FR": "> À propos de nous",
+                          "ru-RU": "> О нас",
+                          "ja-JP": "> 私たちについて",
+                          "de-DE": "> Über uns",
+                          "pt-BR": "> Sobre nós",
+                          "ko-KR": "> 소개",
+                        },
+                        locale
+                      )}
+                    </Link>
+                  </p>
+                </CardContent>
+              </Card>
+            </CarouselItem>
+
+            {/* 我们所倡导的 */}
+            <CarouselItem className="pl-2 md:pl-4 basis-[85%] sm:basis-[90%]">
+              <Card className="h-full">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    📢{" "}
+                    {lang(
+                      {
+                        "zh-CN": "我们所倡导的",
+                        "en-US": "What We Advocate",
+                        "zh-TW": "我們所倡導的",
+                        "es-ES": "Lo que defendemos",
+                        "fr-FR": "Ce que nous prônons",
+                        "ru-RU": "То, что мы защищаем",
+                        "ja-JP": "私たちが提唱すること",
+                        "de-DE": "Was wir befürworten",
+                        "pt-BR": "O que defendemos",
+                        "ko-KR": "우리가 지지하는 것",
+                      },
+                      locale
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    {lang(
+                      {
+                        "zh-CN":
+                          "💡💬 我们鼓励用Emoji与文字（而非图片）表达观点——它们是跨越文化的通用符号！✨",
+                        "en-US":
+                          "💡✍️ Express ideas through Emojis & text (not images) – the universal language of digital culture! ✨",
+                        "zh-TW":
+                          "💡💬 擁抱Emoji與文字（非圖片）表達觀點——跨文化的數位共通語！✨",
+                        "es-ES":
+                          "💡✍️ ¡Expresa ideas con Emojis y texto (no imágenes), el lenguaje universal digital! ✨",
+                        "fr-FR":
+                          "💡✍️ Exprimez-vous par Emojis & texte (pas d'images) – le langage universel numérique ! ✨",
+                        "ru-RU":
+                          "💡✍️ Выражайте идеи через Emoji и текст (не картинки) – универсальный цифровой язык! ✨",
+                        "ja-JP":
+                          "💡✍️ 画像ではなく絵文字＆テキストで表現——デジタル時代の共通言語！ ✨",
+                        "de-DE":
+                          "💡✍️ Drücke Ideen durch Emojis & Text aus (keine Bilder) – die universelle Sprache der Digitalkultur! ✨",
+                        "pt-BR":
+                          "💡✍️ Expresse ideias com Emojis & texto (não imagens) – a linguagem universal digital! ✨",
+                        "ko-KR":
+                          "💡✍️ 이모지와 텍스트(이미지 제외)로 아이디어 표현하기——디지털 문화의 보편적 언어! ✨",
+                      },
+                      locale
+                    )}
+                  </p>
+                </CardContent>
+              </Card>
+            </CarouselItem>
+
+            {/* 服务条款更新 */}
+            <CarouselItem className="pl-2 md:pl-4 basis-[85%] sm:basis-[90%]">
+              <Card className="h-full">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    📋{" "}
+                    {lang(
+                      {
+                        "zh-CN": "服务条款更新",
+                        "en-US": "Terms of Service Update",
+                        "zh-TW": "服務條款更新",
+                        "es-ES": "Actualización de Términos de Servicio",
+                        "fr-FR": "Mise à jour des Conditions de Service",
+                        "ru-RU": "Обновление Условий Обслуживания",
+                        "ja-JP": "サービス利用規約更新",
+                        "de-DE": "Aktualisierung der Nutzungsbedingungen",
+                        "pt-BR": "Atualização dos Termos de Serviço",
+                        "ko-KR": "서비스 약관 업데이트",
+                      },
+                      locale
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    {lang(
+                      {
+                        "zh-CN": `我们于2025年6月10日更改了服务条款与隐私策略。`,
+                        "en-US":
+                          "We updated our Terms of Service and Privacy Policy on June 10, 2025.",
+                        "zh-TW": "我們於2025年6月10日更改了服務條款與隱私策略。",
+                        "es-ES":
+                          "Actualizamos nuestros Términos de Servicio y Política de Privacidad el 10 de junio de 2025.",
+                        "fr-FR":
+                          "Nous avons mis à jour nos Conditions de Service et notre Politique de Confidentialité le 10 juin 2025.",
+                        "ru-RU":
+                          "Мы обновили наши Условия Обслуживания и Политику Конфиденциальности 10 июня 2025 года.",
+                        "ja-JP":
+                          "2025年6月10日にサービス利用規約とプライバシーポリシーを更新しました。",
+                        "de-DE":
+                          "Wir haben unsere Nutzungsbedingungen und Datenschutzrichtlinien am 10. Juni 2025 aktualisiert.",
+                        "pt-BR":
+                          "Atualizamos nossos Termos de Serviço e Política de Privacidade em 10 de junho de 2025.",
+                        "ko-KR":
+                          "2025년 6월 10일에 서비스 약관과 개인정보 처리방침을 업데이트했습니다.",
+                      },
+                      locale
+                    )}{" "}
+                    <br />
+                    <Link
+                      href={`/${locale}/policies/privacy-policy`}
+                      className="text-primary hover:text-primary/80 hover:underline transition-all duration-200"
+                    >
+                      {lang(
+                        {
+                          "zh-CN": "> 查看",
+                          "en-US": "> View",
+                          "zh-TW": "> 查看",
+                          "es-ES": "> Ver",
+                          "fr-FR": "> Voir",
+                          "ru-RU": "> Посмотреть",
+                          "ja-JP": "> 表示",
+                          "de-DE": "> Anzeigen",
+                          "pt-BR": "> Visualizar",
+                          "ko-KR": "> 보기",
+                        },
+                        locale
+                      )}
+                    </Link>
+                  </p>
+                </CardContent>
+              </Card>
+            </CarouselItem>
+          </CarouselContent>
+          <CarouselPrevious className="left-2" />
+          <CarouselNext className="right-2" />
+        </Carousel>
       </div>
 
       <div className="mb-6">
