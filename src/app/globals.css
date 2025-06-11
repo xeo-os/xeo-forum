@@ -185,3 +185,8 @@
     padding-right: 0; /* 移除之前的padding补偿 */
   }
 }
+
+/* 添加径向渐变支持 */
+.bg-gradient-radial {
+  background: radial-gradient(circle, var(--tw-gradient-stops));
+}

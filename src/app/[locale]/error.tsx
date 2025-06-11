@@ -10,7 +10,6 @@ import "@/app/globals.css"
 
 export default function Error({
   error,
-  reset,
 }: {
   error: Error & { digest?: string }
   reset: () => void
@@ -121,7 +120,7 @@ export default function Error({
 
           <div className="flex flex-col gap-3">
             <Button 
-              onClick={reset}
+              onClick={window.location.reload}
               className="w-full"
               variant="default"
             >

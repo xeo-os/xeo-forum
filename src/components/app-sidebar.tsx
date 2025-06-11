@@ -54,7 +54,7 @@ export function AppSidebar({
     setTheme(newTheme);
 
     // 直接设置 Cookie
-    document.cookie = `theme=${newTheme}; path=/; max-age=${60 * 60 * 24 * 365}`;
+    document.cookie = `theme=${newTheme}; path=/; max-age=${60 * 60 * 24 * 1}`;
 
     // 立即应用主题到 DOM
     const root = document.documentElement;
