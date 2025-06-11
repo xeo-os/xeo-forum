@@ -51,25 +51,25 @@ export async function generateMetadata({
     const description = lang(
         {
             'zh-CN':
-                '了解 XEO OS 的使命、愿景和价值观。我们致力于打造一个开放、包容、安全的交流平台。',
+                '了解 XEO OS 的使命、愿景和价值观。我们致力于消除语言障碍，让全球用户能够自由地用自己的语言交流和分享观点。',
             'en-US':
-                "Learn about XEO OS's mission, vision, and values. We are committed to creating an open, inclusive, and secure communication platform.",
+                "Learn about XEO OS's mission, vision, and values. We are committed to eliminating language barriers, allowing global users to freely communicate and share perspectives in their own language.",
             'ja-JP':
-                'XEO OSの使命、ビジョン、価値観について学びましょう。私たちはオープンで包括的で安全なコミュニケーションプラットフォームの構築に取り組んでいます。',
+                'XEO OSの使命、ビジョン、価値観について学びましょう。私たちは言語の壁を取り除き、世界中のユーザーが自分の言語で自由にコミュニケーションし、観点を共有できるよう取り組んでいます。',
             'ko-KR':
-                'XEO OS의 사명, 비전, 가치관에 대해 알아보세요. 우리는 열린, 포용적이고 안전한 소통 플랫폼을 만들기 위해 노력하고 있습니다.',
+                'XEO OS의 사명, 비전, 가치관에 대해 알아보세요. 우리는 언어 장벽을 제거하여 전 세계 사용자가 자신의 언어로 자유롭게 소통하고 관점을 공유할 수 있도록 노력하고 있습니다.',
             'fr-FR':
-                'Découvrez la mission, la vision et les valeurs de XEO OS. Nous nous engageons à créer une plateforme de communication ouverte, inclusive et sécurisée.',
+                'Découvrez la mission, la vision et les valeurs de XEO OS. Nous nous engageons à éliminer les barrières linguistiques, permettant aux utilisateurs du monde entier de communiquer librement et de partager leurs perspectives dans leur propre langue.',
             'es-ES':
-                'Conozca la misión, visión y valores de XEO OS. Estamos comprometidos a crear una plataforma de comunicación abierta, inclusiva y segura.',
+                'Conozca la misión, visión y valores de XEO OS. Estamos comprometidos a eliminar las barreras del idioma, permitiendo que los usuarios globales se comuniquen libremente y compartan perspectivas en su propio idioma.',
             'de-DE':
-                "Erfahren Sie mehr über XEO OS's Mission, Vision und Werte. Wir sind der Schaffung einer offenen, inklusiven und sicheren Kommunikationsplattform verpflichtet.",
+                'Erfahren Sie mehr über XEO OS Mission, Vision und Werte. Wir sind der Beseitigung von Sprachbarrieren verpflichtet und ermöglichen es globalen Benutzern, frei zu kommunizieren und Perspektiven in ihrer eigenen Sprache zu teilen.',
             'pt-BR':
-                'Conheça a missão, visão e valores do XEO OS. Estamos comprometidos em criar uma plataforma de comunicação aberta, inclusiva e segura.',
+                'Conheça a missão, visão e valores do XEO OS. Estamos comprometidos em eliminar barreiras linguísticas, permitindo que usuários globais se comuniquem livremente e compartilhem perspectivas em seu próprio idioma.',
             'ru-RU':
-                'Узнайте о миссии, видении и ценностях XEO OS. Мы стремимся создать открытую, инклюзивную и безопасную платформу для общения.',
+                'Узнайте о миссии, видении и ценностях XEO OS. Мы стремимся устранить языковые барьеры, позволяя глобальным пользователям свободно общаться и делиться мнениями на своем родном языке.',
             'zh-TW':
-                '了解 XEO OS 的使命、願景和價值觀。我們致力於打造一個開放、包容、安全的交流平台。',
+                '了解 XEO OS 的使命、願景和價值觀。我們致力於消除語言障礙，讓全球用戶能夠自由地用自己的語言交流和分享觀點。',
         },
         locale,
     );

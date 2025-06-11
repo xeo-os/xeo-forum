@@ -151,7 +151,7 @@ export default function Error({
 
                     <div className='flex flex-col gap-3'>
                         <Button
-                            onClick={window.location.reload}
+                            onClick={() => window.location.reload()}
                             className='w-full'
                             variant='default'
                         >
