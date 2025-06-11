@@ -36,12 +36,12 @@ const token: Token = {
         const signOptions: SignOptions = {
             algorithm: 'RS512',
         };
-        
+
         // 如果inner中没有exp属性，才设置expiresIn
         if (!('exp' in inner)) {
             signOptions.expiresIn = expired as SignOptions['expiresIn'];
         }
-        
+
         return jwt.sign(inner, privateKey, signOptions);
     },
 

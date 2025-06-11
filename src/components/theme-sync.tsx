@@ -4,60 +4,57 @@ import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 
 interface ThemeSyncProps {
-  serverTheme: string;
+    serverTheme: string;
 }
 
 export function ThemeSync({ serverTheme }: ThemeSyncProps) {
-  const pathname = usePathname();
+    const pathname = usePathname();
 
-  useEffect(() => {
-    // 获取当前 cookie 中的主题
-    const getCookieTheme = () => {
-      const themeCookie = document.cookie
-        .split(';')
-        .find(c => c.trim().startsWith('theme='));
-      
-      if (!themeCookie) return 'dark';
-      
-      const themeValue = themeCookie
-        .split('=')[1]
-        .trim()
-        .replace(/['"]/g, '');
-      
-      return themeValue === 'light' ? 'light' : 'dark';
-    };
+    useEffect(() => {
+        // 获取当前 cookie 中的主题
+        const getCookieTheme = () => {
+            const themeCookie = document.cookie
+                .split(';')
+                .find((c) => c.trim().startsWith('theme='));
 
-    // 应用主题到 html 元素
-    const applyTheme = (theme: string) => {
-      const html = document.documentElement;
-      if (theme === 'light') {
-        html.classList.remove('dark');
-      } else {
-        html.classList.add('dark');
-      }
-    };
+            if (!themeCookie) return 'dark';
 
-    // 路径变化时同步主题
-    const currentTheme = getCookieTheme();
-    applyTheme(currentTheme);
+            const themeValue = themeCookie.split('=')[1].trim().replace(/['"]/g, '');
 
-    // 监听主题变化事件
-    const handleThemeChange = () => {
-      const newTheme = getCookieTheme();
-      applyTheme(newTheme);
-    };
+            return themeValue === 'light' ? 'light' : 'dark';
+        };
 
-    // 监听存储变化（其他标签页的主题更改）
-    window.addEventListener('storage', handleThemeChange);
-    
-    // 监听自定义主题变化事件
-    window.addEventListener('themechange', handleThemeChange);
+        // 应用主题到 html 元素
+        const applyTheme = (theme: string) => {
+            const html = document.documentElement;
+            if (theme === 'light') {
+                html.classList.remove('dark');
+            } else {
+                html.classList.add('dark');
+            }
+        };
 
-    return () => {
-      window.removeEventListener('storage', handleThemeChange);
-      window.removeEventListener('themechange', handleThemeChange);
-    };
-  }, [pathname, serverTheme]);
+        // 路径变化时同步主题
+        const currentTheme = getCookieTheme();
+        applyTheme(currentTheme);
 
-  return null;
+        // 监听主题变化事件
+        const handleThemeChange = () => {
+            const newTheme = getCookieTheme();
+            applyTheme(newTheme);
+        };
+
+        // 监听存储变化（其他标签页的主题更改）
+        window.addEventListener('storage', handleThemeChange);
+
+        // 监听自定义主题变化事件
+        window.addEventListener('themechange', handleThemeChange);
+
+        return () => {
+            window.removeEventListener('storage', handleThemeChange);
+            window.removeEventListener('themechange', handleThemeChange);
+        };
+    }, [pathname, serverTheme]);
+
+    return null;
 }

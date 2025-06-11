@@ -1,4 +1,4 @@
-import RLog from "rlog-js";
+import RLog from 'rlog-js';
 
 const rlog = new RLog();
 

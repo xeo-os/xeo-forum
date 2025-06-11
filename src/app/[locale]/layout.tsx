@@ -1,100 +1,99 @@
-"use server";
+'use server';
 
-import type { Metadata } from "next";
-import lang from "@/lib/lang";
-import { headers } from "next/headers";
-import { getThemeFromCookie, getHtmlClassName } from "@/lib/theme-utils";
-import { getCachedTopics, transformTopicsData } from "@/lib/get-topics";
+import type { Metadata } from 'next';
+import lang from '@/lib/lang';
+import { headers } from 'next/headers';
+import { getThemeFromCookie, getHtmlClassName } from '@/lib/theme-utils';
+import { getCachedTopics, transformTopicsData } from '@/lib/get-topics';
 
-import { ThemeScript } from "@/components/theme-script";
-import { ClientLayout } from "@/components/client-layout";
-import { ThemeSync } from "@/components/theme-sync";
-import { PageTransition } from "@/components/page-transition";
-import { ContextMenuProvider } from "@/components/context-menu-provider";
-import { NewPostButton } from "@/components/new-post-button";
-import { Toaster } from "sonner";
+import { ThemeScript } from '@/components/theme-script';
+import { ClientLayout } from '@/components/client-layout';
+import { ThemeSync } from '@/components/theme-sync';
+import { PageTransition } from '@/components/page-transition';
+import { ContextMenuProvider } from '@/components/context-menu-provider';
+import { NewPostButton } from '@/components/new-post-button';
+import { Toaster } from 'sonner';
 
 type Props = {
-  children: React.ReactNode;
-  params: { locale: string };
+    children: React.ReactNode;
+    params: { locale: string };
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { locale } = await params;
+    const { locale } = await params;
 
-  const title = lang(
-    {
-      "en-US": "XEO OS - Xchange Everyone's Opinions",
-      "zh-CN": "XEO OS - 交流每个人的观点",
-      "zh-TW": "XEO OS - 交流每個人的觀點",
-      "es-ES": "XEO OS - Intercambia las opiniones de todos",
-      "fr-FR": "XEO OS - Échangez les opinions de chacun",
-      "ru-RU": "XEO OS - Обменивайтесь мнениями всех",
-      "ja-JP": "XEO OS - みんなの意見を交換",
-      "de-DE": "XEO OS - Teile die Meinungen aller",
-      "pt-BR": "XEO OS - Troque as opiniões de todos",
-      "ko-KR": "XEO OS - 모두의 의견을 교환하세요",
-    },
-    locale
-  );
+    const title = lang(
+        {
+            'en-US': "XEO OS - Xchange Everyone's Opinions",
+            'zh-CN': 'XEO OS - 交流每个人的观点',
+            'zh-TW': 'XEO OS - 交流每個人的觀點',
+            'es-ES': 'XEO OS - Intercambia las opiniones de todos',
+            'fr-FR': 'XEO OS - Échangez les opinions de chacun',
+            'ru-RU': 'XEO OS - Обменивайтесь мнениями всех',
+            'ja-JP': 'XEO OS - みんなの意見を交換',
+            'de-DE': 'XEO OS - Teile die Meinungen aller',
+            'pt-BR': 'XEO OS - Troque as opiniões de todos',
+            'ko-KR': 'XEO OS - 모두의 의견을 교환하세요',
+        },
+        locale,
+    );
 
-  const description = lang(
-    {
-      "zh-CN": "交流每个人的观点，仅使用你的语言。",
-      "zh-TW": "交流每個人的觀點，僅使用你的語言。",
-      "en-US": "Xchange everyone's opinions, using only your language.",
-      "es-ES": "Intercambia las opiniones de todos, usando solo tu idioma.",
-      "fr-FR":
-        "Échangez les opinions de chacun, en utilisant uniquement votre langue.",
-      "ru-RU": "Обменивайтесь мнениями всех, используя только ваш язык.",
-      "ja-JP": "みんなの意見を交換、あなたの言語だけで。",
-      "de-DE": "Teile die Meinungen aller, nur in deiner Sprache.",
-      "pt-BR": "Troque as opiniões de todos, usando apenas seu idioma.",
-      "ko-KR": "모두의 의견을 교환하세요, 당신의 언어만 사용하여.",
-    },
-    locale
-  );
+    const description = lang(
+        {
+            'zh-CN': '交流每个人的观点，仅使用你的语言。',
+            'zh-TW': '交流每個人的觀點，僅使用你的語言。',
+            'en-US': "Xchange everyone's opinions, using only your language.",
+            'es-ES': 'Intercambia las opiniones de todos, usando solo tu idioma.',
+            'fr-FR': 'Échangez les opinions de chacun, en utilisant uniquement votre langue.',
+            'ru-RU': 'Обменивайтесь мнениями всех, используя только ваш язык.',
+            'ja-JP': 'みんなの意見を交換、あなたの言語だけで。',
+            'de-DE': 'Teile die Meinungen aller, nur in deiner Sprache.',
+            'pt-BR': 'Troque as opiniões de todos, usando apenas seu idioma.',
+            'ko-KR': '모두의 의견을 교환하세요, 당신의 언어만 사용하여.',
+        },
+        locale,
+    );
 
-  return {
-    title,
-    description,
-  };
+    return {
+        title,
+        description,
+    };
 }
 
 export default async function LocaleLayout({ children, params }: Props) {
-  const { locale } = await params;
+    const { locale } = await params;
 
-  // 使用统一的主题处理逻辑
-  const headersList = await headers();
-  const cookieHeader = headersList.get("cookie") || "";
-  const savedTheme = getThemeFromCookie(cookieHeader);
-  const htmlClassName = getHtmlClassName(savedTheme);
+    // 使用统一的主题处理逻辑
+    const headersList = await headers();
+    const cookieHeader = headersList.get('cookie') || '';
+    const savedTheme = getThemeFromCookie(cookieHeader);
+    const htmlClassName = getHtmlClassName(savedTheme);
 
-  // 从数据库获取主题数据，已缓存直到下次部署
-  const classificationsData = await getCachedTopics();
-  const topics = transformTopicsData(classificationsData, locale);
+    // 从数据库获取主题数据，已缓存直到下次部署
+    const classificationsData = await getCachedTopics();
+    const topics = transformTopicsData(classificationsData, locale);
 
-  return (
-    <html
-      lang={locale}
-      className={`${htmlClassName} scrollbar-gutter-stable`}
-      suppressHydrationWarning
-    >
-      <body suppressHydrationWarning>
-        <Toaster
-          position="bottom-center"
-          closeButton={false}
-          theme={savedTheme as "light" | "dark" | "system" | undefined}
-        />
-        <ThemeScript />
-        <ThemeSync serverTheme={savedTheme} />
-        <ContextMenuProvider locale={locale}>
-          <ClientLayout locale={locale} savedTheme={savedTheme} topics={topics}>
-            <PageTransition>{children}</PageTransition>
-            <NewPostButton locale={locale} topics={topics} />
-          </ClientLayout>
-        </ContextMenuProvider>
-      </body>
-    </html>
-  );
+    return (
+        <html
+            lang={locale}
+            className={`${htmlClassName} scrollbar-gutter-stable`}
+            suppressHydrationWarning
+        >
+            <body suppressHydrationWarning>
+                <Toaster
+                    position='bottom-center'
+                    closeButton={false}
+                    theme={savedTheme as 'light' | 'dark' | 'system' | undefined}
+                />
+                <ThemeScript />
+                <ThemeSync serverTheme={savedTheme} />
+                <ContextMenuProvider locale={locale}>
+                    <ClientLayout locale={locale} savedTheme={savedTheme} topics={topics}>
+                        <PageTransition>{children}</PageTransition>
+                        <NewPostButton locale={locale} topics={topics} />
+                    </ClientLayout>
+                </ContextMenuProvider>
+            </body>
+        </html>
+    );
 }

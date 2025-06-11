@@ -19,7 +19,7 @@ interface UserInfo {
     avatar?: { id: string; emoji: string; background: string }[] | null;
 }
 
-type Gender = "MALE" | "FEMALE" | "UNSET";
+type Gender = 'MALE' | 'FEMALE' | 'UNSET';
 
 interface PackedUserInfo {
     uid: number;
