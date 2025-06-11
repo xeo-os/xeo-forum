@@ -20,22 +20,31 @@ import {
   ArrowLeft,
   ArrowRight,
   Home,
+  Link,
+  Eye,
 } from "lucide-react";
 import { toast } from "sonner";
 import lang from "@/lib/lang";
+import { useBroadcast } from "@/store/useBroadcast";
 
 interface ContextMenuProps {
   children: React.ReactNode;
   locale?: string;
-  onSearch?: (query: string) => void;
 }
 
-export function ContextMenu({ children, locale = "en-US", onSearch }: ContextMenuProps) {
+export function ContextMenu({ 
+  children, 
+  locale = "en-US", 
+}: ContextMenuProps) {
   const [selectedText, setSelectedText] = useState("");
   const [contextUrl, setContextUrl] = useState("");
+  const [contextLinkText, setContextLinkText] = useState("");
+  const [contextImageUrl, setContextImageUrl] = useState("");
   const [canGoBack, setCanGoBack] = useState(false);
   const [canGoForward, setCanGoForward] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  
+  const { broadcast } = useBroadcast();
 
   useEffect(() => {
     const handleSelectionChange = () => {
@@ -45,10 +54,21 @@ export function ContextMenu({ children, locale = "en-US", onSearch }: ContextMen
 
     const handleContextMenu = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
+      
+      // 检查是否是链接
       if (target.tagName === "A") {
         setContextUrl((target as HTMLAnchorElement).href);
+        setContextLinkText((target as HTMLAnchorElement).textContent || "");
       } else {
         setContextUrl("");
+        setContextLinkText("");
+      }
+      
+      // 检查是否是图片
+      if (target.tagName === "IMG") {
+        setContextImageUrl((target as HTMLImageElement).src);
+      } else {
+        setContextImageUrl("");
       }
       
       setCanGoBack(window.history.length > 1);
@@ -140,8 +160,12 @@ export function ContextMenu({ children, locale = "en-US", onSearch }: ContextMen
   };
 
   const handleSearch = () => {
-    if (selectedText && onSearch) {
-      onSearch(selectedText);
+    if (selectedText) {
+      // 使用广播设置搜索查询并打开搜索Sheet
+      broadcast({ action: 'SET_SEARCH_QUERY', query: selectedText });
+    } else {
+      // 如果没有选中文本，直接打开搜索Sheet
+      broadcast({ action: 'SHOW_SEARCH' });
     }
   };
 
@@ -158,7 +182,8 @@ export function ContextMenu({ children, locale = "en-US", onSearch }: ContextMen
   };
 
   const handleCreatePost = () => {
-    window.location.href = `/${locale}/create`;
+    // 使用广播触发新建帖子
+    broadcast({ action: 'SHOW_NEW_POST' });
   };
 
   const handleShareUrl = async () => {
@@ -234,6 +259,80 @@ export function ContextMenu({ children, locale = "en-US", onSearch }: ContextMen
     } catch (error) {
         console.error("Failed to share text:", error);
       // 处理错误
+    }
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      if (contextUrl) {
+        await navigator.clipboard.writeText(contextUrl);
+        toast.success(lang({
+          "zh-CN": "链接已复制到剪贴板",
+          "en-US": "Link copied to clipboard",
+          "ja-JP": "リンクをクリップボードにコピーしました",
+          "ko-KR": "링크가 클립보드에 복사됨",
+          "fr-FR": "Lien copié dans le presse-papiers",
+          "es-ES": "Enlace copiado al portapapeles",
+          "de-DE": "Link in die Zwischenablage kopiert",
+          "pt-BR": "Link copiado para a área de transferência",
+          "ru-RU": "Ссылка скопирована в буфер обмена",
+          "zh-TW": "連結已複製到剪貼簿",
+        }, locale));
+      }
+    } catch (error) {
+      console.error("Failed to copy link:", error);
+      toast.error(lang({
+        "zh-CN": "复制链接失败",
+        "en-US": "Failed to copy link",
+        "ja-JP": "リンクのコピーに失敗しました",
+        "ko-KR": "링크 복사 실패",
+        "fr-FR": "Échec de la copie du lien",
+        "es-ES": "Error al copiar enlace",
+        "de-DE": "Link kopieren fehlgeschlagen",
+        "pt-BR": "Falha ao copiar link",
+        "ru-RU": "Не удалось скопировать ссылку",
+        "zh-TW": "複製連結失敗",
+      }, locale));
+    }
+  };
+
+  const handleCopyLinkText = async () => {
+    try {
+      if (contextLinkText) {
+        await navigator.clipboard.writeText(contextLinkText);
+        toast.success(lang({
+          "zh-CN": "链接文字已复制到剪贴板",
+          "en-US": "Link text copied to clipboard",
+          "ja-JP": "リンクテキストをクリップボードにコピーしました",
+          "ko-KR": "링크 텍스트가 클립보드에 복사됨",
+          "fr-FR": "Texte du lien copié dans le presse-papiers",
+          "es-ES": "Texto del enlace copiado al portapapeles",
+          "de-DE": "Link-Text in die Zwischenablage kopiert",
+          "pt-BR": "Texto do link copiado para a área de transferência",
+          "ru-RU": "Текст ссылки скопирован в буфер обмена",
+          "zh-TW": "連結文字已複製到剪貼簿",
+        }, locale));
+      }
+    } catch (error) {
+      console.error("Failed to copy link text:", error);
+      toast.error(lang({
+        "zh-CN": "复制链接文字失败",
+        "en-US": "Failed to copy link text",
+        "ja-JP": "リンクテキストのコピーに失敗しました",
+        "ko-KR": "링크 텍스트 복사 실패",
+        "fr-FR": "Échec de la copie du texte du lien",
+        "es-ES": "Error al copiar texto del enlace",
+        "de-DE": "Link-Text kopieren fehlgeschlagen",
+        "pt-BR": "Falha ao copiar texto do link",
+        "ru-RU": "Не удалось скопировать текст ссылки",
+        "zh-TW": "複製連結文字失敗",
+      }, locale));
+    }
+  };
+
+  const handleViewImage = () => {
+    if (contextImageUrl) {
+      window.open(contextImageUrl, '_blank');
     }
   };
 
@@ -394,6 +493,42 @@ export function ContextMenu({ children, locale = "en-US", onSearch }: ContextMen
       "ru-RU": "Добавить закладку",
       "zh-TW": "加入書籤",
     }, locale),
+    copyLink: lang({
+      "zh-CN": "复制链接",
+      "en-US": "Copy link",
+      "ja-JP": "リンクをコピー",
+      "ko-KR": "링크 복사",
+      "fr-FR": "Copier le lien",
+      "es-ES": "Copiar enlace",
+      "de-DE": "Link kopieren",
+      "pt-BR": "Copiar link",
+      "ru-RU": "Копировать ссылку",
+      "zh-TW": "複製連結",
+    }, locale),
+    copyLinkText: lang({
+      "zh-CN": "复制链接文字",
+      "en-US": "Copy link text",
+      "ja-JP": "リンクテキストをコピー",
+      "ko-KR": "링크 텍스트 복사",
+      "fr-FR": "Copier le texte du lien",
+      "es-ES": "Copiar texto del enlace",
+      "de-DE": "Link-Text kopieren",
+      "pt-BR": "Copiar texto do link",
+      "ru-RU": "Копировать текст ссылки",
+      "zh-TW": "複製連結文字",
+    }, locale),
+    viewImage: lang({
+      "zh-CN": "查看图片",
+      "en-US": "View image",
+      "ja-JP": "画像を表示",
+      "ko-KR": "이미지 보기",
+      "fr-FR": "Voir l'image",
+      "es-ES": "Ver imagen",
+      "de-DE": "Bild anzeigen",
+      "pt-BR": "Ver imagem",
+      "ru-RU": "Просмотреть изображение",
+      "zh-TW": "檢視圖片",
+    }, locale),
   };
 
   return (
@@ -439,12 +574,13 @@ export function ContextMenu({ children, locale = "en-US", onSearch }: ContextMen
         </ContextMenuItem>
 
         {/* 搜索相关 */}
-        {selectedText && (
-          <ContextMenuItem onClick={handleSearch}>
-            <Search className="mr-2 h-4 w-4" />
-            {texts.searchText} &quot;{selectedText.slice(0, 20)}{selectedText.length > 20 ? '...' : ''}&quot;
-          </ContextMenuItem>
-        )}
+        <ContextMenuItem onClick={handleSearch}>
+          <Search className="mr-2 h-4 w-4" />
+          {selectedText 
+            ? `${texts.searchText} "${selectedText.slice(0, 20)}${selectedText.length > 20 ? '...' : ''}"`
+            : texts.searchText
+          }
+        </ContextMenuItem>
 
         {/* 链接相关 */}
         {contextUrl && (
@@ -458,6 +594,27 @@ export function ContextMenu({ children, locale = "en-US", onSearch }: ContextMen
               <ExternalLink className="mr-2 h-4 w-4" />
               {texts.openInNewTab}
               <ContextMenuShortcut>Ctrl+Click</ContextMenuShortcut>
+            </ContextMenuItem>
+            <ContextMenuItem onClick={handleCopyLink}>
+              <Link className="mr-2 h-4 w-4" />
+              {texts.copyLink}
+            </ContextMenuItem>
+            {contextLinkText && (
+              <ContextMenuItem onClick={handleCopyLinkText}>
+                <Copy className="mr-2 h-4 w-4" />
+                {texts.copyLinkText}
+              </ContextMenuItem>
+            )}
+          </>
+        )}
+
+        {/* 图片相关 */}
+        {contextImageUrl && (
+          <>
+            <ContextMenuSeparator />
+            <ContextMenuItem onClick={handleViewImage}>
+              <Eye className="mr-2 h-4 w-4" />
+              {texts.viewImage}
             </ContextMenuItem>
           </>
         )}

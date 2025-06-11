@@ -3,6 +3,7 @@ import response from "../../_utils/response";
 import auth from "../../_utils/auth";
 import limitControl from "../../_utils/limit";
 import prisma from "../../_utils/prisma";
+import { revalidatePath } from "next/cache";
 
 export async function POST(request: Request) {
   const JWT = request.headers.get("Authorization")?.replace("Bearer ", "");
@@ -90,6 +91,9 @@ export async function POST(request: Request) {
             task: task.id,
           }),
         });
+        revalidatePath("/[locale]/page");
+        revalidatePath(`/[locale]/topic/${topic.replace("_", "-")}/page`);
+        revalidatePath(`/[locale]/user/${token.uid}}`);
         return response(200, { message: task.id, ok: true });
       }
     } catch (error) {

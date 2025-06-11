@@ -50,8 +50,15 @@ import lang from "@/lib/lang";
 import token from "@/utils/userToken";
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useBroadcast } from "@/store/useBroadcast";
 
-export function SiteHeader({ locale }: { locale?: string }) {
+export function SiteHeader({ locale, onExposeSearchHandlers }: { 
+  locale?: string;
+  onExposeSearchHandlers?: (handlers: {
+    showSearchSheet: () => void;
+    setSearchQuery: (query: string) => void;
+  }) => void;
+}) {
   const { toggleSidebar } = useSidebar();
   const isMobile = useIsMobile();
   const isLoggedIn = token.get();
@@ -60,6 +67,7 @@ export function SiteHeader({ locale }: { locale?: string }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const { registerCallback, unregisterCallback } = useBroadcast();
 
   // 模拟用户数据，实际应该从API获取
   const userData = token.getObject() || {
@@ -133,6 +141,34 @@ export function SiteHeader({ locale }: { locale?: string }) {
       document.body.removeAttribute("data-scroll-locked");
     };
   }, [showLogoutDialog]);
+
+  // 暴露搜索相关的处理函数给父组件
+  useEffect(() => {
+    if (onExposeSearchHandlers) {
+      onExposeSearchHandlers({
+        showSearchSheet: () => setShowSearchSheet(true),
+        setSearchQuery: (query: string) => setSearchQuery(query),
+      });
+    }
+  }, [onExposeSearchHandlers]);
+
+  // 添加广播消息处理
+  useEffect(() => {
+    const handleBroadcastMessage = (message: any) => {
+      if (message.action === 'SHOW_SEARCH') {
+        setShowSearchSheet(true);
+      }
+      if (message.action === 'SET_SEARCH_QUERY' && message.query) {
+        setSearchQuery(message.query);
+        setShowSearchSheet(true);
+      }
+    };
+
+    registerCallback(handleBroadcastMessage);
+    return () => {
+      unregisterCallback(handleBroadcastMessage);
+    };
+  }, [registerCallback, unregisterCallback]);
 
   return (
     <>

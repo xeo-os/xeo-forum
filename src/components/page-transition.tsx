@@ -52,7 +52,7 @@ export function PageTransition({ children }: PageTransitionProps) {
       setNextPath(null);
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [pathname]);
+  }, [pathname, isTransitioning]);
 
   return (
     <AnimatePresence mode="wait" onExitComplete={handleExitComplete}>

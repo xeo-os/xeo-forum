@@ -1,18 +1,12 @@
 import lang from "@/lib/lang";
-import prisma from "../../../api/_utils/prisma";
+import prisma from "../../../../../api/_utils/prisma";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 // import { Separator } from "@/components/ui/separator";
 import {
   Heart,
@@ -26,13 +20,16 @@ import {
   MessageSquare,
   TrendingUp,
   Calendar,
-  Hash,
+  AlertTriangle,
+  Home,
+  Search,
 } from "lucide-react";
 
 import "@/app/globals.css";
+import type { Topic } from "@/generated/prisma";
 
 type Props = {
-  params: { locale: string; page?: number };
+  params: { locale: string; page?: number; topic: string };
   searchParams: { page?: string };
 };
 
@@ -65,26 +62,14 @@ type Post = {
     likes: number;
     Reply: number;
   };
-  topics: {
-    name: string;
-    emoji: string;
-    nameZHCN?: string | null;
-    nameENUS?: string | null;
-    nameZHTW?: string | null;
-    nameESES?: string | null;
-    nameFRFR?: string | null;
-    nameRURU?: string | null;
-    nameJAJP?: string | null;
-    nameDEDE?: string | null;
-    namePTBR?: string | null;
-    nameKOKR?: string | null;
-  }[];
 };
 
 const POSTS_PER_PAGE = 50;
 
 export async function generateStaticParams() {
-  const pages = Array.from({ length: 1 }, (_, i) => ({ page: (i + 1).toString() }));
+  const pages = Array.from({ length: 1 }, (_, i) => ({
+    page: (i + 1).toString(),
+  }));
   return pages;
 }
 export const revalidate = 365 * 24 * 60 * 60;
@@ -106,10 +91,7 @@ function getLocalizedTitle(post: Post, locale: string): string {
   return titleMap[locale] || post.title;
 }
 
-function getLocalizedTopicName(
-  topic: Post["topics"][0],
-  locale: string
-): string {
+function getLocalizedTopicName(topic: Topic, locale: string): string {
   const nameMap: Record<string, string | null | undefined> = {
     "zh-CN": topic.nameZHCN,
     "en-US": topic.nameENUS,
@@ -126,84 +108,193 @@ function getLocalizedTopicName(
   return nameMap[locale] || topic.name;
 }
 
-export default async function HomePage({ params }: Props) {
-  const { locale, page: pageParam = 1 } = await params;
+export default async function Topic({ params }: Props) {
+  const { locale, page: pageParam = 1, topic } = await params;
   const page = Number(pageParam); // 确保页码是数字类型
   const skip = (page - 1) * POSTS_PER_PAGE;
 
-  const [posts, totalPosts, totalUsers, totalReplies, totalLikes]: [
-    Post[],
-    number,
-    number,
-    number,
-    number,
-  ] = await Promise.all([
-    prisma.post.findMany({
-      where: {
-        published: true,
-        originLang: {
-          not: null,
-        },
-      },
-      include: {
-        User: {
-          select: {
-            uid: true,
-            nickname: true,
-            username: true,
-            profileEmoji: true,
-            avatar: {
-              select: {
-                id: true,
-                emoji: true,
-                background: true,
-              },
-              take: 1,
+  const [
+    posts,
+    totalPosts,
+    totalUsers,
+    totalReplies,
+    totalLikes,
+    topicObject,
+  ]: [Post[], number, number, number, number, Topic | null] = await Promise.all(
+    [
+      prisma.post.findMany({
+        where: {
+          published: true,
+          originLang: {
+            not: null,
+          },
+          topics: {
+            some: {
+              name: topic.replaceAll("-", "_"),
             },
           },
         },
-        _count: {
-          select: {
-            likes: true,
-            Reply: true,
+        include: {
+          User: {
+            select: {
+              uid: true,
+              nickname: true,
+              username: true,
+              profileEmoji: true,
+              avatar: {
+                select: {
+                  id: true,
+                  emoji: true,
+                  background: true,
+                },
+                take: 1,
+              },
+            },
+          },
+          _count: {
+            select: {
+              likes: true,
+              Reply: true,
+            },
+          },
+          topics: {
+            select: {
+              name: true,
+              emoji: true,
+              nameZHCN: true,
+              nameENUS: true,
+              nameZHTW: true,
+              nameESES: true,
+              nameFRFR: true,
+              nameRURU: true,
+              nameJAJP: true,
+              nameDEDE: true,
+              namePTBR: true,
+              nameKOKR: true,
+            },
+            take: 3,
           },
         },
-        topics: {
-          select: {
-            name: true,
-            emoji: true,
-            nameZHCN: true,
-            nameENUS: true,
-            nameZHTW: true,
-            nameESES: true,
-            nameFRFR: true,
-            nameRURU: true,
-            nameJAJP: true,
-            nameDEDE: true,
-            namePTBR: true,
-            nameKOKR: true,
+        orderBy: [{ pin: "desc" }, { createdAt: "desc" }],
+        skip,
+        take: POSTS_PER_PAGE,
+      }),
+      prisma.post.count({
+        where: {
+          published: true,
+          originLang: {
+            not: null,
           },
-          take: 3,
         },
-      },
-      orderBy: [{ pin: "desc" }, { createdAt: "desc" }],
-      skip,
-      take: POSTS_PER_PAGE,
-    }),
-    prisma.post.count({
-      where: {
-        published: true,
-        originLang: {
-          not: null,
+      }),
+      prisma.user.count(),
+      prisma.reply.count(),
+      prisma.like.count(),
+      prisma.topic.findUnique({
+        where: {
+          name: topic.replaceAll("-", "_"),
         },
-      },
-    }),
-    prisma.user.count(),
-    prisma.reply.count(),
-    prisma.like.count(),
-  ]);
+      }),
+    ]
+  );
 
   const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE);
+
+  if (topicObject === null) {
+    return (
+      <div className="h-full flex items-center justify-center p-4 bg-background">
+        <Card className="w-full max-w-md mx-auto shadow-lg">
+          <CardHeader className="text-center">
+            <div className="mb-4 flex justify-center">
+              <AlertTriangle className="h-16 w-16 text-destructive" />
+            </div>
+            <CardTitle className="text-xl font-bold text-destructive">
+              {lang(
+                {
+                  "zh-CN": "主题不存在",
+                  "en-US": "Topic Not Found",
+                  "zh-TW": "主題不存在",
+                  "es-ES": "Tema no encontrado",
+                  "fr-FR": "Sujet non trouvé",
+                  "ru-RU": "Тема не найдена",
+                  "ja-JP": "トピックが見つかりません",
+                  "de-DE": "Thema nicht gefunden",
+                  "pt-BR": "Tópico não encontrado",
+                  "ko-KR": "주제를 찾을 수 없습니다",
+                },
+                locale
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert variant="destructive">
+              <AlertDescription>
+                {lang(
+                  {
+                    "zh-CN": `没有找到名为 "${topic}" 的主题。该主题可能已被删除或不存在，请检查主题名称是否正确。`,
+                    "en-US": `No topic found with the name "${topic}". The topic may have been deleted or doesn't exist. Please check if the topic name is correct.`,
+                    "zh-TW": `沒有找到名為 "${topic}" 的主題。該主題可能已被刪除或不存在，請檢查主題名稱是否正確。`,
+                    "es-ES": `No se encontró ningún tema con el nombre "${topic}". El tema puede haber sido eliminado o no existe. Verifique si el nombre del tema es correcto.`,
+                    "fr-FR": `Aucun sujet trouvé avec le nom "${topic}". Le sujet peut avoir été supprimé ou n'existe pas. Veuillez vérifier si le nom du sujet est correct.`,
+                    "ru-RU": `Тема с именем "${topic}" не найдена. Тема могла быть удалена или не существует. Проверьте правильность названия темы.`,
+                    "ja-JP": `"${topic}" という名前のトピックが見つかりませんでした。トピックが削除されたか存在しない可能性があります。トピック名が正しいか確認してください。`,
+                    "de-DE": `Kein Thema mit dem Namen "${topic}" gefunden. Das Thema wurde möglicherweise gelöscht oder existiert nicht. Bitte überprüfen Sie, ob der Themenname korrekt ist.`,
+                    "pt-BR": `Nenhum tópico encontrado com o nome "${topic}". O tópico pode ter sido excluído ou não existe. Verifique se o nome do tópico está correto.`,
+                    "ko-KR": `"${topic}"라는 이름의 주제를 찾을 수 없습니다. 주제가 삭제되었거나 존재하지 않을 수 있습니다. 주제 이름이 올바른지 확인해 주세요.`,
+                  },
+                  locale
+                )}
+              </AlertDescription>
+            </Alert>
+
+            <div className="flex flex-col gap-3">
+              <Button asChild variant="default" className="w-full">
+                <Link href={`/${locale}`}>
+                  <Home className="mr-2 h-4 w-4" />
+                  {lang(
+                    {
+                      "zh-CN": "返回首页",
+                      "zh-TW": "返回首頁",
+                      "en-US": "Go Home",
+                      "es-ES": "Ir al inicio",
+                      "fr-FR": "Aller à l'accueil",
+                      "ru-RU": "На главную",
+                      "ja-JP": "ホームに戻る",
+                      "de-DE": "Zur Startseite",
+                      "pt-BR": "Ir para o início",
+                      "ko-KR": "홈으로 가기",
+                    },
+                    locale
+                  )}
+                </Link>
+              </Button>
+
+              <Button asChild variant="outline" className="w-full">
+                <Link href={`/${locale}/topics`}>
+                  <Search className="mr-2 h-4 w-4" />
+                  {lang(
+                    {
+                      "zh-CN": "浏览所有主题",
+                      "zh-TW": "瀏覽所有主題",
+                      "en-US": "Browse All Topics",
+                      "es-ES": "Explorar todos los temas",
+                      "fr-FR": "Parcourir tous les sujets",
+                      "ru-RU": "Просмотреть все темы",
+                      "ja-JP": "すべてのトピックを見る",
+                      "de-DE": "Alle Themen durchsuchen",
+                      "pt-BR": "Explorar todos os tópicos",
+                      "ko-KR": "모든 주제 찾아보기",
+                    },
+                    locale
+                  )}
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // 统计当前页面数据
   const currentPageStats = {
@@ -224,7 +315,7 @@ export default async function HomePage({ params }: Props) {
 
     // 最多帖子的主题
     topTopics: posts
-      .flatMap((post) => post.topics)
+      .flatMap(() => topicObject)
       .reduce(
         (acc, topic) => {
           const key = topic.name;
@@ -234,7 +325,7 @@ export default async function HomePage({ params }: Props) {
           };
           return acc;
         },
-        {} as Record<string, { topic: Post["topics"][0]; count: number }>
+        {} as Record<string, { topic: Topic; count: number }>
       ),
 
     // 点赞最多的帖子
@@ -382,10 +473,6 @@ export default async function HomePage({ params }: Props) {
     .sort((a, b) => b.count - a.count)
     .slice(0, 5);
 
-  const topTopicsArray = Object.values(currentPageStats.topTopics)
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 3);
-
   const labels = {
     title: lang(
       {
@@ -404,16 +491,16 @@ export default async function HomePage({ params }: Props) {
     ),
     latestPosts: lang(
       {
-        "zh-CN": "最新帖子",
-        "en-US": "Latest Posts",
-        "zh-TW": "最新貼文",
-        "es-ES": "Últimas publicaciones",
-        "fr-FR": "Derniers messages",
-        "ru-RU": "Последние сообщения",
-        "ja-JP": "最新の投稿",
-        "de-DE": "Neueste Beiträge",
-        "pt-BR": "Postagens mais recentes",
-        "ko-KR": "최신 게시물",
+        "zh-CN": `主题: ${getLocalizedTopicName(topicObject, locale)}`,
+        "en-US": `Topic: ${getLocalizedTopicName(topicObject, locale)}`,
+        "zh-TW": `主題: ${getLocalizedTopicName(topicObject, locale)}`,
+        "es-ES": `Tema: ${getLocalizedTopicName(topicObject, locale)}`,
+        "fr-FR": `Sujet: ${getLocalizedTopicName(topicObject, locale)}`,
+        "ru-RU": `Тема: ${getLocalizedTopicName(topicObject, locale)}`,
+        "ja-JP": `トピック: ${getLocalizedTopicName(topicObject, locale)}`,
+        "de-DE": `Thema: ${getLocalizedTopicName(topicObject, locale)}`,
+        "pt-BR": `Tópico: ${getLocalizedTopicName(topicObject, locale)}`,
+        "ko-KR": `주제: ${getLocalizedTopicName(topicObject, locale)}`,
       },
       locale
     ),
@@ -481,393 +568,6 @@ export default async function HomePage({ params }: Props) {
 
   return (
     <div className="mx-auto px-4 py-6 max-w-7xl">
-      {/* 页面顶部横排Card */}
-      {/* 桌面版：使用原有的grid布局 */}
-      <div className="hidden lg:grid lg:grid-cols-4 gap-4 mb-6">
-        {/* 页面介绍 - 50% 宽度 */}
-        <Card className="lg:col-span-2 bg-primary">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-xl font-bold">
-              {"XEO OS - Xchange Everyone's Opinion"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-white leading-relaxed">
-              {lang(
-                {
-                  "zh-CN":
-                    "🌍✨XEO OS 致力于打破语言壁垒！🚧💬 借助尖端AI技术，我们实时翻译每篇内容，支持多语言互译，让全球用户都能用最熟悉的母语畅快交流～🌐💖",
-                  "en-US":
-                    "🌎✨XEO OS smashes language barriers! ⚡🤖 Using cutting-edge AI, we instantly translate every post into multiple languages, empowering global conversations in your native tongue! 💬🌍",
-                  "zh-TW":
-                    "🌏✨XEO OS 全力擊破語言高牆！🚀💬 運用頂尖AI技術，即時翻譯每篇內容，讓全球用戶用最熟悉的母語無障礙交流～💫❤️",
-                  "es-ES":
-                    "🌎✨¡XEO OS rompe las barreras idiomáticas! ⚡🤖 Con IA de vanguardia, traducimos al instante todo a múltiples idiomas para conversaciones globales en tu lengua materna. 💬💫",
-                  "fr-FR":
-                    "🌍✨XEO OS brise les barrières linguistiques ! ⚡🤖 Grâce à une IA de pointe, nous traduisons instantanément chaque contenu en plusieurs langues pour des échanges mondiaux dans votre langue ! 💬✨",
-                  "ru-RU":
-                    "🌍✨XEO OS разрушает языковые барьеры! ⚡🤖 С помощью передового ИИ мгновенно переводим любой контент, открывая глобальное общение на родном языке! 💬🚀",
-                  "ja-JP":
-                    "🌏✨XEO OSが言語の壁を打破！⚡🤖 最先端AIで全コンテンツを多言語翻訳。母国語で世界と繋がるグローバルコミュニケーションを実現💬🌸",
-                  "de-DE":
-                    "🌍✨XEO OS durchbricht Sprachbarrieren! ⚡🤖 Mit modernster KI übersetzen wir alle Inhalte in Echtzeit – für weltweite Gespräche in deiner Muttersprache! 💬🚀",
-                  "pt-BR":
-                    "🌎✨XEO OS quebra barreiras linguísticas! ⚡🤖 Com IA avançada, traduzimos instantaneamente para múltiplos idiomas, conectando o mundo na sua língua materna! 💬💫",
-                  "ko-KR":
-                    "🌏✨XEO OS, 언어 장벽을 허물다! ⚡🤖 최첨단 AI로 모든 콘텐츠를 실시간 번역, 모국어로 전 세계와 소통하세요! 💬✨",
-                },
-                locale
-              )}
-              <br />
-              <Link
-                href={`/${locale}/about`}
-                className="text-white hover:text-white/80 hover:underline transition-all duration-200"
-              >
-                {lang(
-                  {
-                    "zh-CN": "> 关于我们",
-                    "en-US": "> About Us",
-                    "zh-TW": "> 關於我們",
-                    "es-ES": "> Acerca de nosotros",
-                    "fr-FR": "> À propos de nous",
-                    "ru-RU": "> О нас",
-                    "ja-JP": "> 私たちについて",
-                    "de-DE": "> Über uns",
-                    "pt-BR": "> Sobre nós",
-                    "ko-KR": "> 소개",
-                  },
-                  locale
-                )}
-              </Link>
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* 公告1 - 25% 宽度 */}
-        <Card className="lg:col-span-1">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              📢{" "}
-              {lang(
-                {
-                  "zh-CN": "我们所倡导的",
-                  "en-US": "What We Advocate",
-                  "zh-TW": "我們所倡導的",
-                  "es-ES": "Lo que defendemos",
-                  "fr-FR": "Ce que nous prônons",
-                  "ru-RU": "То, что мы защищаем",
-                  "ja-JP": "私たちが提唱すること",
-                  "de-DE": "Was wir befürworten",
-                  "pt-BR": "O que defendemos",
-                  "ko-KR": "우리가 지지하는 것",
-                },
-                locale
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              {lang(
-                {
-                  "zh-CN":
-                    "💡💬 我们鼓励用Emoji与文字（而非图片）表达观点——它们是跨越文化的通用符号！✨",
-                  "en-US":
-                    "💡✍️ Express ideas through Emojis & text (not images) – the universal language of digital culture! ✨",
-                  "zh-TW":
-                    "💡💬 擁抱Emoji與文字（非圖片）表達觀點——跨文化的數位共通語！✨",
-                  "es-ES":
-                    "💡✍️ ¡Expresa ideas con Emojis y texto (no imágenes), el lenguaje universal digital! ✨",
-                  "fr-FR":
-                    "💡✍️ Exprimez-vous par Emojis & texte (pas d'images) – le langage universel numérique ! ✨",
-                  "ru-RU":
-                    "💡✍️ Выражайте идеи через Emoji и текст (не картинки) – универсальный цифровой язык! ✨",
-                  "ja-JP":
-                    "💡✍️ 画像ではなく絵文字＆テキストで表現——デジタル時代の共通言語！ ✨",
-                  "de-DE":
-                    "💡✍️ Drücke Ideen durch Emojis & Text aus (keine Bilder) – die universelle Sprache der Digitalkultur! ✨",
-                  "pt-BR":
-                    "💡✍️ Expresse ideias com Emojis & texto (não imagens) – a linguagem universal digital! ✨",
-                  "ko-KR":
-                    "💡✍️ 이모지와 텍스트(이미지 제외)로 아이디어 표현하기——디지털 문화의 보편적 언어! ✨",
-                },
-                locale
-              )}
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* 2 - 25% 宽度 */}
-        <Card className="lg:col-span-1">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              📋{" "}
-              {lang(
-                {
-                  "zh-CN": "服务条款更新",
-                  "en-US": "Terms of Service Update",
-                  "zh-TW": "服務條款更新",
-                  "es-ES": "Actualización de Términos de Servicio",
-                  "fr-FR": "Mise à jour des Conditions de Service",
-                  "ru-RU": "Обновление Условий Обслуживания",
-                  "ja-JP": "サービス利用規約更新",
-                  "de-DE": "Aktualisierung der Nutzungsbedingungen",
-                  "pt-BR": "Atualização dos Termos de Serviço",
-                  "ko-KR": "서비스 약관 업데이트",
-                },
-                locale
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              {lang(
-                {
-                  "zh-CN": `我们于2025年6月10日更改了服务条款与隐私策略。`,
-                  "en-US":
-                    "We updated our Terms of Service and Privacy Policy on June 10, 2025.",
-                  "zh-TW": "我們於2025年6月10日更改了服務條款與隱私策略。",
-                  "es-ES":
-                    "Actualizamos nuestros Términos de Servicio y Política de Privacidad el 10 de junio de 2025.",
-                  "fr-FR":
-                    "Nous avons mis à jour nos Conditions de Service et notre Politique de Confidentialité le 10 juin 2025.",
-                  "ru-RU":
-                    "Мы обновили наши Условия Обслуживания и Политику Конфиденциальности 10 июня 2025 года.",
-                  "ja-JP":
-                    "2025年6月10日にサービス利用規約とプライバシーポリシーを更新しました。",
-                  "de-DE":
-                    "Wir haben unsere Nutzungsbedingungen und Datenschutzrichtlinien am 10. Juni 2025 aktualisiert.",
-                  "pt-BR":
-                    "Atualizamos nossos Termos de Serviço e Política de Privacidade em 10 de junho de 2025.",
-                  "ko-KR":
-                    "2025년 6월 10일에 서비스 약관과 개인정보 처리방침을 업데이트했습니다.",
-                },
-                locale
-              )}{" "}
-              <br />
-              <Link
-                href={`/${locale}/policies/privacy-policy`}
-                className="text-primary hover:text-primary/80 hover:underline transition-all duration-200"
-              >
-                {lang(
-                  {
-                    "zh-CN": "> 查看",
-                    "en-US": "> View",
-                    "zh-TW": "> 查看",
-                    "es-ES": "> Ver",
-                    "fr-FR": "> Voir",
-                    "ru-RU": "> Посмотреть",
-                    "ja-JP": "> 表示",
-                    "de-DE": "> Anzeigen",
-                    "pt-BR": "> Visualizar",
-                    "ko-KR": "> 보기",
-                  },
-                  locale
-                )}
-              </Link>
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* 移动版：使用Carousel */}
-      <div className="block lg:hidden mb-6">
-        <Carousel className="w-full">
-          <CarouselContent className="-ml-2 md:-ml-4">
-            {/* 页面介绍 */}
-            <CarouselItem className="pl-2 md:pl-4 basis-[85%] sm:basis-[90%]">
-              <Card className="bg-primary h-full">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg sm:text-xl font-bold">
-                    {"XEO OS - Xchange Everyone's Opinion"}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-white leading-relaxed">
-                    {lang(
-                      {
-                        "zh-CN":
-                          "🌍✨XEO OS 致力于打破语言壁垒！🚧💬 借助尖端AI技术，我们实时翻译每篇内容，支持多语言互译，让全球用户都能用最熟悉的母语畅快交流～🌐💖",
-                        "en-US":
-                          "🌎✨XEO OS smashes language barriers! ⚡🤖 Using cutting-edge AI, we instantly translate every post into multiple languages, empowering global conversations in your native tongue! 💬🌍",
-                        "zh-TW":
-                          "🌏✨XEO OS 全力擊破語言高牆！🚀💬 運用頂尖AI技術，即時翻譯每篇內容，讓全球用戶用最熟悉的母語無障礙交流～💫❤️",
-                        "es-ES":
-                          "🌎✨¡XEO OS rompe las barreras idiomáticas! ⚡🤖 Con IA de vanguardia, traducimos al instante todo a múltiples idiomas para conversaciones globales en tu lengua materna. 💬💫",
-                        "fr-FR":
-                          "🌍✨XEO OS brise les barrières linguistiques ! ⚡🤖 Grâce à une IA de pointe, nous traduisons instantanément chaque contenu en plusieurs langues pour des échanges mondiaux dans votre langue ! 💬✨",
-                        "ru-RU":
-                          "🌍✨XEO OS разрушает языковые барьеры! ⚡🤖 С помощью передового ИИ мгновенно переводим любой контент, открывая глобальное общение на родном языке! 💬🚀",
-                        "ja-JP":
-                          "🌏✨XEO OSが言語の壁を打破！⚡🤖 最先端AIで全コンテンツを多言語翻訳。母国語で世界と繋がるグローバルコミュニケーションを実現💬🌸",
-                        "de-DE":
-                          "🌍✨XEO OS durchbricht Sprachbarrieren! ⚡🤖 Mit modernster KI übersetzen wir alle Inhalte in Echtzeit – für weltweite Gespräche in deiner Muttersprache! 💬🚀",
-                        "pt-BR":
-                          "🌎✨XEO OS quebra barreiras linguísticas! ⚡🤖 Com IA avançada, traduzimos instantaneamente para múltiplos idiomas, conectando o mundo na sua língua materna! 💬💫",
-                        "ko-KR":
-                          "🌏✨XEO OS, 언어 장벽을 허물다! ⚡🤖 최첨단 AI로 모든 콘텐츠를 실시간 번역, 모국어로 전 세계와 소통하세요! 💬✨",
-                      },
-                      locale
-                    )}
-                    <br />
-                    <Link
-                      href={`/${locale}/about`}
-                      className="text-white hover:text-white/80 hover:underline transition-all duration-200"
-                    >
-                      {lang(
-                        {
-                          "zh-CN": "> 关于我们",
-                          "en-US": "> About Us",
-                          "zh-TW": "> 關於我們",
-                          "es-ES": "> Acerca de nosotros",
-                          "fr-FR": "> À propos de nous",
-                          "ru-RU": "> О нас",
-                          "ja-JP": "> 私たちについて",
-                          "de-DE": "> Über uns",
-                          "pt-BR": "> Sobre nós",
-                          "ko-KR": "> 소개",
-                        },
-                        locale
-                      )}
-                    </Link>
-                  </p>
-                </CardContent>
-              </Card>
-            </CarouselItem>
-
-            {/* 我们所倡导的 */}
-            <CarouselItem className="pl-2 md:pl-4 basis-[85%] sm:basis-[90%]">
-              <Card className="h-full">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    📢{" "}
-                    {lang(
-                      {
-                        "zh-CN": "我们所倡导的",
-                        "en-US": "What We Advocate",
-                        "zh-TW": "我們所倡導的",
-                        "es-ES": "Lo que defendemos",
-                        "fr-FR": "Ce que nous prônons",
-                        "ru-RU": "То, что мы защищаем",
-                        "ja-JP": "私たちが提唱すること",
-                        "de-DE": "Was wir befürworten",
-                        "pt-BR": "O que defendemos",
-                        "ko-KR": "우리가 지지하는 것",
-                      },
-                      locale
-                    )}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    {lang(
-                      {
-                        "zh-CN":
-                          "💡💬 我们鼓励用Emoji与文字（而非图片）表达观点——它们是跨越文化的通用符号！✨",
-                        "en-US":
-                          "💡✍️ Express ideas through Emojis & text (not images) – the universal language of digital culture! ✨",
-                        "zh-TW":
-                          "💡💬 擁抱Emoji與文字（非圖片）表達觀點——跨文化的數位共通語！✨",
-                        "es-ES":
-                          "💡✍️ ¡Expresa ideas con Emojis y texto (no imágenes), el lenguaje universal digital! ✨",
-                        "fr-FR":
-                          "💡✍️ Exprimez-vous par Emojis & texte (pas d'images) – le langage universel numérique ! ✨",
-                        "ru-RU":
-                          "💡✍️ Выражайте идеи через Emoji и текст (не картинки) – универсальный цифровой язык! ✨",
-                        "ja-JP":
-                          "💡✍️ 画像ではなく絵文字＆テキストで表現——デジタル時代の共通言語！ ✨",
-                        "de-DE":
-                          "💡✍️ Drücke Ideen durch Emojis & Text aus (keine Bilder) – die universelle Sprache der Digitalkultur! ✨",
-                        "pt-BR":
-                          "💡✍️ Expresse ideias com Emojis & texto (não imagens) – a linguagem universal digital! ✨",
-                        "ko-KR":
-                          "💡✍️ 이모지와 텍스트(이미지 제외)로 아이디어 표현하기——디지털 문화의 보편적 언어! ✨",
-                      },
-                      locale
-                    )}
-                  </p>
-                </CardContent>
-              </Card>
-            </CarouselItem>
-
-            {/* 服务条款更新 */}
-            <CarouselItem className="pl-2 md:pl-4 basis-[85%] sm:basis-[90%]">
-              <Card className="h-full">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    📋{" "}
-                    {lang(
-                      {
-                        "zh-CN": "服务条款更新",
-                        "en-US": "Terms of Service Update",
-                        "zh-TW": "服務條款更新",
-                        "es-ES": "Actualización de Términos de Servicio",
-                        "fr-FR": "Mise à jour des Conditions de Service",
-                        "ru-RU": "Обновление Условий Обслуживания",
-                        "ja-JP": "サービス利用規約更新",
-                        "de-DE": "Aktualisierung der Nutzungsbedingungen",
-                        "pt-BR": "Atualização dos Termos de Serviço",
-                        "ko-KR": "서비스 약관 업데이트",
-                      },
-                      locale
-                    )}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    {lang(
-                      {
-                        "zh-CN": `我们于2025年6月10日更改了服务条款与隐私策略。`,
-                        "en-US":
-                          "We updated our Terms of Service and Privacy Policy on June 10, 2025.",
-                        "zh-TW": "我們於2025年6月10日更改了服務條款與隱私策略。",
-                        "es-ES":
-                          "Actualizamos nuestros Términos de Servicio y Política de Privacidad el 10 de junio de 2025.",
-                        "fr-FR":
-                          "Nous avons mis à jour nos Conditions de Service et notre Politique de Confidentialité le 10 juin 2025.",
-                        "ru-RU":
-                          "Мы обновили наши Условия Обслуживания и Политику Конфиденциальности 10 июня 2025 года.",
-                        "ja-JP":
-                          "2025年6月10日にサービス利用規約とプライバシーポリシーを更新しました。",
-                        "de-DE":
-                          "Wir haben unsere Nutzungsbedingungen und Datenschutzrichtlinien am 10. Juni 2025 aktualisiert.",
-                        "pt-BR":
-                          "Atualizamos nossos Termos de Serviço e Política de Privacidade em 10 de junho de 2025.",
-                        "ko-KR":
-                          "2025년 6월 10일에 서비스 약관과 개인정보 처리방침을 업데이트했습니다.",
-                      },
-                      locale
-                    )}{" "}
-                    <br />
-                    <Link
-                      href={`/${locale}/policies/privacy-policy`}
-                      className="text-primary hover:text-primary/80 hover:underline transition-all duration-200"
-                    >
-                      {lang(
-                        {
-                          "zh-CN": "> 查看",
-                          "en-US": "> View",
-                          "zh-TW": "> 查看",
-                          "es-ES": "> Ver",
-                          "fr-FR": "> Voir",
-                          "ru-RU": "> Посмотреть",
-                          "ja-JP": "> 表示",
-                          "de-DE": "> Anzeigen",
-                          "pt-BR": "> Visualizar",
-                          "ko-KR": "> 보기",
-                        },
-                        locale
-                      )}
-                    </Link>
-                  </p>
-                </CardContent>
-              </Card>
-            </CarouselItem>
-          </CarouselContent>
-          <CarouselPrevious className="left-2" />
-          <CarouselNext className="right-2" />
-        </Carousel>
-      </div>
-
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-1">{labels.latestPosts}</h1>
         <p className="text-sm text-muted-foreground">
@@ -957,51 +657,40 @@ export default async function HomePage({ params }: Props) {
 
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <div className="flex items-center gap-1 flex-1 min-w-0">
-                            {post.topics.length > 0 && (
-                              <>
-                                {post.topics.slice(0, 2).map((topic) => (
-                                  <Link
-                                    key={topic.name}
-                                    href={`/${locale}/topic/${topic.name}`}
-                                    className="hover:opacity-80 transition-opacity"
-                                    title={`${lang(
-                                      {
-                                        "zh-CN": "主题",
-                                        "en-US": "Topic",
-                                        "zh-TW": "主題",
-                                        "es-ES": "Tema",
-                                        "fr-FR": "Sujet",
-                                        "ru-RU": "Тема",
-                                        "ja-JP": "トピック",
-                                        "de-DE": "Thema",
-                                        "pt-BR": "Tópico",
-                                        "ko-KR": "주제",
-                                      },
-                                      locale
-                                    )}: ${getLocalizedTopicName(topic, locale)}`}
-                                    rel="noopener"
-                                  >
-                                    <Badge
-                                      variant="secondary"
-                                      className="text-xs px-1 py-0.5 h-auto flex-shrink-0"
-                                    >
-                                      <span className="mr-0.5">
-                                        {topic.emoji}
-                                      </span>
-                                      <span className="hidden sm:inline text-xs">
-                                        {getLocalizedTopicName(topic, locale)}
-                                      </span>
-                                    </Badge>
-                                  </Link>
-                                ))}
-                                {post.topics.length > 2 && (
-                                  <span className="text-xs text-muted-foreground flex-shrink-0">
-                                    +{post.topics.length - 2}
-                                  </span>
-                                )}
-                                <span className="flex-shrink-0">•</span>
-                              </>
-                            )}
+                            <Link
+                              key={topicObject.name}
+                              href={`/${locale}/topic/${topicObject.name}`}
+                              className="hover:opacity-80 transition-opacity"
+                              title={`${lang(
+                                {
+                                  "zh-CN": "主题",
+                                  "en-US": "Topic",
+                                  "zh-TW": "主題",
+                                  "es-ES": "Tema",
+                                  "fr-FR": "Sujet",
+                                  "ru-RU": "Тема",
+                                  "ja-JP": "トピック",
+                                  "de-DE": "Thema",
+                                  "pt-BR": "Tópico",
+                                  "ko-KR": "주제",
+                                },
+                                locale
+                              )}: ${getLocalizedTopicName(topicObject, locale)}`}
+                              rel="noopener"
+                            >
+                              <Badge
+                                variant="secondary"
+                                className="text-xs px-1 py-0.5 h-auto flex-shrink-0"
+                              >
+                                <span className="mr-0.5">
+                                  {topicObject.emoji}
+                                </span>
+                                <span className="hidden sm:inline text-xs">
+                                  {getLocalizedTopicName(topicObject, locale)}
+                                </span>
+                              </Badge>
+                            </Link>
+                            <span className="flex-shrink-0">•</span>
                             <Link
                               href={`/${locale}/user/${post.User?.uid}`}
                               className="truncate max-w-20 flex-shrink-0 hover:text-primary transition-colors"
@@ -1414,74 +1103,6 @@ export default async function HomePage({ params }: Props) {
                     </div>
                   );
                 })}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* 热门主题 */}
-          {topTopicsArray.length > 0 && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Hash className="h-5 w-5" />
-                  {lang(
-                    {
-                      "zh-CN": "本页热门主题",
-                      "en-US": "Popular Topics",
-                      "zh-TW": "本頁熱門主題",
-                      "es-ES": "Temas populares",
-                      "fr-FR": "Sujets populaires",
-                      "ru-RU": "Популярные темы",
-                      "ja-JP": "人気のトピック",
-                      "de-DE": "Beliebte Themen",
-                      "pt-BR": "Tópicos populares",
-                      "ko-KR": "인기 주제",
-                    },
-                    locale
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {topTopicsArray.map(({ topic, count }) => (
-                  <div
-                    key={topic.name}
-                    className="flex items-center justify-between"
-                  >
-                    <Link
-                      href={`/${locale}/topic/${topic.name}`}
-                      className="hover:opacity-80 transition-opacity"
-                      title={`${lang(
-                        {
-                          "zh-CN": "查看主题",
-                          "en-US": "View topic",
-                          "zh-TW": "查看主題",
-                          "es-ES": "Ver tema",
-                          "fr-FR": "Voir le sujet",
-                          "ru-RU": "Посмотреть тему",
-                          "ja-JP": "トピックを表示",
-                          "de-DE": "Thema anzeigen",
-                          "pt-BR": "Ver tópico",
-                          "ko-KR": "주제 보기",
-                        },
-                        locale
-                      )}: ${getLocalizedTopicName(topic, locale)}`}
-                      rel="noopener"
-                    >
-                      <Badge
-                        variant="secondary"
-                        className="flex items-center gap-1"
-                      >
-                        <span>{topic.emoji}</span>
-                        <span className="text-xs">
-                          {getLocalizedTopicName(topic, locale)}
-                        </span>
-                      </Badge>
-                    </Link>
-                    <span className="text-xs text-muted-foreground">
-                      {count}
-                    </span>
-                  </div>
-                ))}
               </CardContent>
             </Card>
           )}

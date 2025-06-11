@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,22 +14,15 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 import {
   RiAddLine,
   RiSendPlaneLine,
@@ -35,6 +30,7 @@ import {
   RiArrowDownSLine,
   RiCheckLine,
   RiEditLine,
+  RiSearchLine,
 } from "@remixicon/react";
 import { motion, useDragControls } from "motion/react";
 import { toast } from "sonner";
@@ -43,6 +39,7 @@ import { MarkdownEditor } from "@/components/markdown-editor";
 import { EmojiPicker } from "@/components/emoji-picker";
 import { markdownToHtml } from "@/lib/markdown-utils";
 import token from "@/utils/userToken";
+import { useBroadcast } from "@/store/useBroadcast";
 
 interface NewPostButtonProps {
   locale: string;
@@ -54,6 +51,9 @@ interface NewPostButtonProps {
       name: string;
     }>;
   }>;
+  onExposeHandlers?: (handlers: {
+    showNewPostSheet: () => void;
+  }) => void;
 }
 
 interface PostDraft {
@@ -63,8 +63,9 @@ interface PostDraft {
   topicName: string; // 添加topicName字段
 }
 
-export function NewPostButton({ locale, topics }: NewPostButtonProps) {
+export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButtonProps) {
   const [open, setOpen] = useState(false);
+  const [loginPromptOpen, setLoginPromptOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [selectedTopic, setSelectedTopic] = useState("");
@@ -73,12 +74,15 @@ export function NewPostButton({ locale, topics }: NewPostButtonProps) {
   const [activeTab, setActiveTab] = useState("edit");
   const [sheetHeight, setSheetHeight] = useState(85);
   const [isDragging, setIsDragging] = useState(false);
-  const [topicPopoverOpen, setTopicPopoverOpen] = useState(false);
+  const [topicDialogOpen, setTopicDialogOpen] = useState(false);
+  const [topicSearchQuery, setTopicSearchQuery] = useState("");
   const [hasDraft, setHasDraft] = useState(false);
   const [hasShownDraftToast, setHasShownDraftToast] = useState(false);
 
   const dragControls = useDragControls();
   const sheetRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+  const { registerCallback, unregisterCallback } = useBroadcast();
 
   const STORAGE_KEY = "xeo-forum-draft";
 
@@ -263,6 +267,25 @@ export function NewPostButton({ locale, topics }: NewPostButtonProps) {
       }
     });
     return allTopics;
+  };
+
+  // 过滤主题选项
+  const getFilteredTopics = () => {
+    const allTopics = getAllTopics();
+    if (!topicSearchQuery.trim()) {
+      return allTopics;
+    }
+    return allTopics.filter(topic => 
+      topic.display.toLowerCase().includes(topicSearchQuery.toLowerCase())
+    );
+  };
+
+  // 选择主题
+  const handleTopicSelect = (topicName: string, topicDisplay: string) => {
+    setSelectedTopic(topicDisplay);
+    setSelectedTopicName(topicName);
+    setTopicDialogOpen(false);
+    setTopicSearchQuery("");
   };
 
   // 验证表单
@@ -474,6 +497,54 @@ export function NewPostButton({ locale, topics }: NewPostButtonProps) {
     }
   }, []);
 
+  // 处理按钮点击
+  const handleButtonClick = () => {
+    if (!token.get()) {
+      // 未登录，显示登录提示
+      setLoginPromptOpen(true);
+      return;
+    }
+    
+    // 已登录，正常打开编辑器
+    if (!open) loadDraft();
+    setOpen(true);
+  };
+
+  // 暴露新建帖子相关的处理函数给父组件
+  useEffect(() => {
+    if (onExposeHandlers) {
+      onExposeHandlers({
+        showNewPostSheet: () => {
+          if (!token.get()) {
+            setLoginPromptOpen(true);
+          } else {
+            if (!open) loadDraft();
+            setOpen(true);
+          }
+        },
+      });
+    }
+  }, [onExposeHandlers, open, loadDraft]);
+
+  // 添加广播消息处理
+  useEffect(() => {
+    const handleBroadcastMessage = (message: any) => {
+      if (message.action === 'SHOW_NEW_POST') {
+        if (!token.get()) {
+          setLoginPromptOpen(true);
+        } else {
+          if (!open) loadDraft();
+          setOpen(true);
+        }
+      }
+    };
+
+    registerCallback(handleBroadcastMessage);
+    return () => {
+      unregisterCallback(handleBroadcastMessage);
+    };
+  }, [registerCallback, unregisterCallback, open, loadDraft]);
+
   return (
     <>
       {/* 浮动按钮 */}
@@ -482,23 +553,114 @@ export function NewPostButton({ locale, topics }: NewPostButtonProps) {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
       >
+        <Button
+          size="lg"
+          style={{ backgroundColor: "#f0b100" }}
+          className="h-14 w-14 rounded-full shadow-xl hover:shadow-2xl border-0 text-white hover:opacity-90 transition-all duration-300"
+          onClick={handleButtonClick}
+        >
+          {hasDraft ? (
+            <RiEditLine className="h-6 w-6" />
+          ) : (
+            <RiAddLine className="h-6 w-6" />
+          )}
+        </Button>
+
+        {/* 登录提示 Sheet */}
+        <Sheet open={loginPromptOpen} onOpenChange={setLoginPromptOpen}>
+          <SheetContent
+            side="bottom"
+            className="h-[40vh] p-0 border-t-0 shadow-2xl"
+          >
+            <div className="h-full flex flex-col justify-center items-center px-6 text-center space-y-6">
+              <div className="space-y-3">
+                <div className="text-4xl">👋</div>
+                <h2 className="text-xl font-semibold">
+                  {lang(
+                    {
+                      "zh-CN": "欢迎来到社区！",
+                      "zh-TW": "歡迎來到社區！",
+                      "en-US": "Welcome to the Community!",
+                      "es-ES": "¡Bienvenido a la Comunidad!",
+                      "fr-FR": "Bienvenue dans la Communauté !",
+                      "ru-RU": "Добро пожаловать в сообщество!",
+                      "ja-JP": "コミュニティへようこそ！",
+                      "de-DE": "Willkommen in der Community!",
+                      "pt-BR": "Bem-vindo à Comunidade!",
+                      "ko-KR": "커뮤니티에 오신 것을 환영합니다!",
+                    },
+                    locale
+                  )}
+                </h2>
+                <p className="text-muted-foreground">
+                  {lang(
+                    {
+                      "zh-CN": "请先登录或注册账号，然后就可以发布帖子啦！",
+                      "zh-TW": "請先登錄或註冊賬號，然後就可以發布帖子啦！",
+                      "en-US": "Please sign in or create an account to start posting!",
+                      "es-ES": "¡Por favor inicia sesión o crea una cuenta para comenzar a publicar!",
+                      "fr-FR": "Veuillez vous connecter ou créer un compte pour commencer à publier !",
+                      "ru-RU": "Пожалуйста, войдите или создайте учетную запись, чтобы начать публиковать!",
+                      "ja-JP": "投稿を開始するには、サインインまたはアカウントを作成してください！",
+                      "de-DE": "Bitte melden Sie sich an oder erstellen Sie ein Konto, um mit dem Posten zu beginnen!",
+                      "pt-BR": "Por favor, faça login ou crie uma conta para começar a postar!",
+                      "ko-KR": "게시물을 작성하려면 로그인하거나 계정을 만드세요!",
+                    },
+                    locale
+                  )}
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 w-full max-w-sm">
+                <Button
+                  asChild
+                  className="flex-1"
+                  style={{ backgroundColor: "#f0b100" }}
+                >
+                  <Link href={`/signin?url=${encodeURIComponent(pathname)}`}>
+                    {lang(
+                      {
+                        "zh-CN": "登录",
+                        "zh-TW": "登錄",
+                        "en-US": "Sign In",
+                        "es-ES": "Iniciar Sesión",
+                        "fr-FR": "Se Connecter",
+                        "ru-RU": "Войти",
+                        "ja-JP": "サインイン",
+                        "de-DE": "Anmelden",
+                        "pt-BR": "Entrar",
+                        "ko-KR": "로그인",
+                      },
+                      locale
+                    )}
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="flex-1">
+                  <Link href={`/signup?url=${encodeURIComponent(pathname)}`}>
+                    {lang(
+                      {
+                        "zh-CN": "注册",
+                        "zh-TW": "註冊",
+                        "en-US": "Sign Up",
+                        "es-ES": "Registrarse",
+                        "fr-FR": "S'inscrire",
+                        "ru-RU": "Регистрация",
+                        "ja-JP": "サインアップ",
+                        "de-DE": "Registrieren",
+                        "pt-BR": "Cadastrar",
+                        "ko-KR": "회원가입",
+                      },
+                      locale
+                    )}
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
+
+        {/* 原有的创建帖子 Sheet */}
         <Sheet open={open} onOpenChange={handleSheetOpenChange}>
-          <SheetTrigger asChild>
-            <Button
-              size="lg"
-              style={{ backgroundColor: "#f0b100" }}
-              className="h-14 w-14 rounded-full shadow-xl hover:shadow-2xl border-0 text-white hover:opacity-90 transition-all duration-300"
-              onClick={() => {
-                if (!open) loadDraft();
-              }}
-            >
-              {hasDraft ? (
-                <RiEditLine className="h-6 w-6" />
-              ) : (
-                <RiAddLine className="h-6 w-6" />
-              )}
-            </Button>
-          </SheetTrigger>
           <SheetContent
             side="bottom"
             className="p-0 border-t-0 shadow-2xl"
@@ -617,39 +779,60 @@ export function NewPostButton({ locale, topics }: NewPostButtonProps) {
                           locale
                         )}
                       </Label>
-                      <Popover
-                        open={topicPopoverOpen}
-                        onOpenChange={setTopicPopoverOpen}
-                      >
-                        <PopoverTrigger asChild>
-                          <div className="relative">
-                            <Input
-                              readOnly
-                              value={selectedTopic}
-                              placeholder={lang(
+                      <div className="relative">
+                        <Input
+                          readOnly
+                          value={selectedTopic}
+                          placeholder={lang(
+                            {
+                              "zh-CN": "选择一个主题...",
+                              "zh-TW": "選擇一個主題...",
+                              "en-US": "Select a topic...",
+                              "es-ES": "Selecciona un tema...",
+                              "fr-FR": "Sélectionnez un sujet...",
+                              "ru-RU": "Выберите тему...",
+                              "ja-JP": "トピックを選択...",
+                              "de-DE": "Wählen Sie ein Thema...",
+                              "pt-BR": "Selecione um tópico...",
+                              "ko-KR": "주제를 선택하세요...",
+                            },
+                            locale
+                          )}
+                          className="h-10 md:h-12 text-sm md:text-base border-2 focus:border-[#f0b100] transition-colors cursor-pointer pr-10"
+                          onClick={() => setTopicDialogOpen(true)}
+                        />
+                        <RiArrowDownSLine className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                      </div>
+
+                      {/* 主题选择 Dialog */}
+                      <Dialog open={topicDialogOpen} onOpenChange={setTopicDialogOpen}>
+                        <DialogContent className="max-w-md max-h-[80vh] flex flex-col">
+                          <DialogHeader>
+                            <DialogTitle>
+                              {lang(
                                 {
-                                  "zh-CN": "选择一个主题...",
-                                  "zh-TW": "選擇一個主題...",
-                                  "en-US": "Select a topic...",
-                                  "es-ES": "Selecciona un tema...",
-                                  "fr-FR": "Sélectionnez un sujet...",
-                                  "ru-RU": "Выберите тему...",
-                                  "ja-JP": "トピックを選択...",
-                                  "de-DE": "Wählen Sie ein Thema...",
-                                  "pt-BR": "Selecione um tópico...",
-                                  "ko-KR": "주제를 선택하세요...",
+                                  "zh-CN": "选择主题分类",
+                                  "zh-TW": "選擇主題分類",
+                                  "en-US": "Select Topic Category",
+                                  "es-ES": "Seleccionar Categoría del Tema",
+                                  "fr-FR": "Sélectionner la Catégorie du Sujet",
+                                  "ru-RU": "Выберите Категорию Темы",
+                                  "ja-JP": "トピックカテゴリを選択",
+                                  "de-DE": "Themenkategorie Auswählen",
+                                  "pt-BR": "Selecionar Categoria do Tópico",
+                                  "ko-KR": "주제 카테고리 선택",
                                 },
                                 locale
                               )}
-                              className="h-10 md:h-12 text-sm md:text-base border-2 focus:border-[#f0b100] transition-colors cursor-pointer pr-10"
-                              onClick={() => setTopicPopoverOpen(true)}
-                            />
-                            <RiArrowDownSLine className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                          </div>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-full p-0" align="start">
-                          <Command>
-                            <CommandInput
+                            </DialogTitle>
+                          </DialogHeader>
+                          
+                          {/* 搜索框 */}
+                          <div className="relative mb-4">
+                            <RiSearchLine className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              value={topicSearchQuery}
+                              onChange={(e) => setTopicSearchQuery(e.target.value)}
                               placeholder={lang(
                                 {
                                   "zh-CN": "搜索主题...",
@@ -665,48 +848,79 @@ export function NewPostButton({ locale, topics }: NewPostButtonProps) {
                                 },
                                 locale
                               )}
+                              className="pl-10"
                             />
-                            <CommandList>
-                              <CommandEmpty>
-                                {lang(
-                                  {
-                                    "zh-CN": "未找到主题",
-                                    "zh-TW": "未找到主題",
-                                    "en-US": "No topics found",
-                                    "es-ES": "No se encontraron temas",
-                                    "fr-FR": "Aucun sujet trouvé",
-                                    "ru-RU": "Темы не найдены",
-                                    "ja-JP": "トピックが見つかりません",
-                                    "de-DE": "Keine Themen gefunden",
-                                    "pt-BR": "Nenhum tópico encontrado",
-                                    "ko-KR": "주제를 찾을 수 없습니다",
-                                  },
-                                  locale
-                                )}
-                              </CommandEmpty>
-                              <CommandGroup>
-                                {getAllTopics().map((topic) => (
-                                  <CommandItem
-                                    key={topic.name}
-                                    value={topic.display}
-                                    onSelect={() => {
-                                      setSelectedTopic(topic.display);
-                                      setSelectedTopicName(topic.name);
-                                      setTopicPopoverOpen(false);
-                                    }}
-                                    className="flex items-center justify-between"
-                                  >
-                                    <span>{topic.display}</span>
-                                    {selectedTopic === topic.display && (
-                                      <RiCheckLine className="h-4 w-4" />
-                                    )}
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
+                          </div>
+
+                          {/* 主题列表 */}
+                          <div className="flex-1 overflow-y-auto space-y-1 pr-2">
+                            {getFilteredTopics().length > 0 ? (
+                              getFilteredTopics().map((topic) => (
+                                <div
+                                  key={topic.name}
+                                  onClick={() => handleTopicSelect(topic.name, topic.display)}
+                                  className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors hover:bg-muted ${
+                                    selectedTopicName === topic.name ? 'bg-[#f0b100]/10 border border-[#f0b100]' : 'border border-transparent'
+                                  }`}
+                                >
+                                  <span className="text-sm">{topic.display}</span>
+                                  {selectedTopicName === topic.name && (
+                                    <RiCheckLine className="h-4 w-4 text-[#f0b100]" />
+                                  )}
+                                </div>
+                              ))
+                            ) : (
+                              <div className="text-center py-8 text-muted-foreground">
+                                <div className="text-2xl mb-2">🔍</div>
+                                <p className="text-sm">
+                                  {lang(
+                                    {
+                                      "zh-CN": "未找到匹配的主题",
+                                      "zh-TW": "未找到匹配的主題",
+                                      "en-US": "No matching topics found",
+                                      "es-ES": "No se encontraron temas coincidentes",
+                                      "fr-FR": "Aucun sujet correspondant trouvé",
+                                      "ru-RU": "Подходящие темы не найдены",
+                                      "ja-JP": "一致するトピックが見つかりません",
+                                      "de-DE": "Keine passenden Themen gefunden",
+                                      "pt-BR": "Nenhum tópico correspondente encontrado",
+                                      "ko-KR": "일치하는 주제를 찾을 수 없습니다",
+                                    },
+                                    locale
+                                  )}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* 底部按钮 */}
+                          <div className="flex justify-end pt-4 border-t">
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                setTopicDialogOpen(false);
+                                setTopicSearchQuery("");
+                              }}
+                            >
+                              {lang(
+                                {
+                                  "zh-CN": "取消",
+                                  "zh-TW": "取消",
+                                  "en-US": "Cancel",
+                                  "es-ES": "Cancelar",
+                                  "fr-FR": "Annuler",
+                                  "ru-RU": "Отмена",
+                                  "ja-JP": "キャンセル",
+                                  "de-DE": "Abbrechen",
+                                  "pt-BR": "Cancelar",
+                                  "ko-KR": "취소",
+                                },
+                                locale
+                              )}
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     </div>
                   </div>
 
