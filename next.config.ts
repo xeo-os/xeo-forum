@@ -11,6 +11,10 @@ const nextConfig: NextConfig = {
       source: "/:locale/topic/:topic",
       destination: "/:locale/topic/:topic/page/1",
     },
+    {
+      source: "/:locale/post/:postId/:postSlug",
+      destination: "/:locale/post/:postId/:postSlug/page/1",
+    }
   ],
   redirects: async () => [
     {
@@ -23,6 +27,11 @@ const nextConfig: NextConfig = {
       destination: "/:locale/topic/:topic",
       permanent: true,
     },
+    {
+      source: "/:locale/post/:postId/:postSlug/page/1",
+      destination: "/:locale/post/:postId/:postSlug",
+      permanent: true,
+    }
   ],
 };
 

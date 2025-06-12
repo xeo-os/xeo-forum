@@ -1041,8 +1041,8 @@ export default async function HomePage({ params }: Props) {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <Link
-                            href={`/${locale}/post/${post.id}`}
-                            className="font-medium hover:text-primary transition-colors truncate text-sm"
+                            href={`/${locale}/post/${post.id}/${post.titleENUS?.toLowerCase().replaceAll(" ","-").replace(/[^a-z-]/g, '')}`}
+                            className="font-medium hover:text-primary transition-colors text-sm leading-tight break-words"
                             title={getLocalizedTitle(post, locale)}
                             rel="noopener"
                           >
@@ -1273,15 +1273,15 @@ export default async function HomePage({ params }: Props) {
                 <TrendingUp className="h-5 w-5" />
                 {lang(
                   {
-                    "zh-CN": "总体统计",
-                    "en-US": "Overall Stats",
-                    "zh-TW": "總體統計",
-                    "es-ES": "Estadísticas generales",
-                    "fr-FR": "Statistiques générales",
-                    "ru-RU": "Общая статистика",
+                    "zh-CN": "全站统计",
+                    "en-US": "Global Statistics",
+                    "zh-TW": "全站統計",
+                    "es-ES": "Estadísticas globales",
+                    "fr-FR": "Statistiques globales",
+                    "ru-RU": "Глобальная статистика",
                     "ja-JP": "全体統計",
-                    "de-DE": "Gesamtstatistik",
-                    "pt-BR": "Estatísticas gerais",
+                    "de-DE": "Globale Statistiken",
+                    "pt-BR": "Estatísticas globais",
                     "ko-KR": "전체 통계",
                   },
                   locale,
@@ -1620,7 +1620,7 @@ export default async function HomePage({ params }: Props) {
                     className="flex items-center justify-between"
                   >
                     <Link
-                      href={`/${locale}/post/${post.id}`}
+                      href={`/${locale}/post/${post.id}/${post.titleENUS?.toLowerCase().replaceAll(" ","-").replace(/[^a-z-]/g, '')}`}
                       className="text-xs hover:text-primary transition-colors truncate flex-1 mr-2"
                       title={`${lang(
                         {
@@ -1681,7 +1681,7 @@ export default async function HomePage({ params }: Props) {
                     className="flex items-center justify-between"
                   >
                     <Link
-                      href={`/${locale}/post/${post.id}`}
+                      href={`/${locale}/post/${post.id}/${post.titleENUS?.toLowerCase().replaceAll(" ","-").replace(/[^a-z-]/g, '')}`}
                       className="text-xs hover:text-primary transition-colors truncate flex-1 mr-2"
                       title={`${lang(
                         {

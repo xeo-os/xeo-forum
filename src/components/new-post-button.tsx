@@ -337,20 +337,20 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
             return false;
         }
 
-        if (content.length > 1000) {
+        if (content.length > 200) {
             toast.error(
                 lang(
                     {
-                        'zh-CN': '内容不能超过1000个字符',
-                        'zh-TW': '內容不能超過1000個字符',
-                        'en-US': 'Content cannot exceed 1000 characters',
-                        'es-ES': 'El contenido no puede exceder 1000 caracteres',
-                        'fr-FR': 'Le contenu ne peut pas dépasser 1000 caractères',
-                        'ru-RU': 'Содержание не может превышать 1000 символов',
-                        'ja-JP': '内容は1000文字を超えることはできません',
-                        'de-DE': 'Der Inhalt darf 1000 Zeichen nicht überschreiten',
-                        'pt-BR': 'O conteúdo não pode exceder 1000 caracteres',
-                        'ko-KR': '내용은 1000자를 초과할 수 없습니다',
+                        'zh-CN': '内容不能超过200个字符',
+                        'zh-TW': '內容不能超過200個字符',
+                        'en-US': 'Content cannot exceed 200 characters',
+                        'es-ES': 'El contenido no puede exceder 200 caracteres',
+                        'fr-FR': 'Le contenu ne peut pas dépasser 200 caractères',
+                        'ru-RU': 'Содержание не может превышать 200 символов',
+                        'ja-JP': '内容は200文字を超えることはできません',
+                        'de-DE': 'Der Inhalt darf 200 Zeichen nicht überschreiten',
+                        'pt-BR': 'O conteúdo não pode exceder 200 caracteres',
+                        'ko-KR': '내용은 200자를 초과할 수 없습니다',
                     },
                     locale,
                 ),
@@ -539,7 +539,7 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
                 <Button
                     size='lg'
                     style={{ backgroundColor: '#f0b100' }}
-                    className='h-14 w-14 rounded-full shadow-xl hover:shadow-2xl border-0 text-white hover:opacity-90 transition-all duration-300'
+                    className='h-14 w-14 rounded-full shadow-xl hover:shadow-2xl border-0 text-white hover:opacity-90 transition-all duration-200'
                     onClick={handleButtonClick}
                 >
                     {hasDraft ? (
@@ -664,7 +664,7 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
                             dragElastic={0}
                             onDrag={handleDrag}
                         >
-                            <div className='w-12 h-1 bg-muted-foreground/20 group-hover:bg-[#f0b100]/50 rounded-full transition-colors duration-200' />
+                            <div className='w-12 h-1 bg-muted-foreground/20 group-hover:bg-[#f0b100]/50 rounded-full transition-colors duration-300' />
                         </motion.div>
 
                         {/* 可滚动的主内容区域 */}
@@ -970,13 +970,13 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
                                                 )}
                                                 <Badge
                                                     variant={
-                                                        content.length > 800
+                                                        content.length > 150
                                                             ? 'destructive'
                                                             : 'secondary'
                                                     }
                                                     className='text-xs'
                                                 >
-                                                    {content.length}/1000
+                                                    {content.length}/200
                                                 </Badge>
                                             </Label>
                                             <EmojiPicker
@@ -994,7 +994,7 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
 
                                         <div
                                             className='border-2 rounded-lg overflow-hidden bg-background transition-colors'
-                                            style={{ height: '300px' }}
+                                            style={{ height: '350px' }}
                                         >
                                             <Tabs
                                                 value={activeTab}
@@ -1080,7 +1080,7 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
                                                             locale,
                                                         )}
                                                         className='h-full resize-none border-0 focus-visible:ring-0 focus:ring-0 focus:ring-offset-0 focus:outline-none text-sm md:text-base leading-relaxed'
-                                                        maxLength={1000}
+                                                        maxLength={200}
                                                     />
                                                 </TabsContent>
 

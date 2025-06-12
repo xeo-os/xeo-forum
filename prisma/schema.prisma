@@ -39,7 +39,7 @@ model User {
 
 model Post {
   id          Int      @id @default(autoincrement())
-  origin      String   @db.VarChar(1000)
+  origin      String   @db.VarChar(200)
   userUid     Int?
   createdAt   DateTime @default(now())
   lastReplyAt DateTime @default(now())
@@ -126,34 +126,34 @@ model Classification {
 }
 
 model Reply {
-  id          String   @id @default(uuid())
-  content     String   @db.VarChar(1000)
-  originLang  String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  postUid     Int?
-  noteUid     String?
-  commentUid  String?
-  userUid     Int
-  likeUserUid Int[]
-  childReplay Boolean  @default(false)
-  contentDEDE String?
-  contentENUS String?
-  contentESES String?
-  contentFRFR String?
-  contentJAJP String?
-  contentKOKR String?
-  contentPTBR String?
-  contentRURU String?
-  contentZHCN String?
-  contentZHTW String?
-  unsafeTags  Json?    @db.JsonB
-  likes       Like[]
-  parentReply Reply?   @relation("CommentReplies", fields: [commentUid], references: [id])
-  replies     Reply[]  @relation("CommentReplies")
-  post        Post?    @relation(fields: [postUid], references: [id])
-  user        User     @relation(fields: [userUid], references: [uid])
-  tasks       Task[]
+  id           String   @id @default(uuid())
+  content      String   @db.VarChar(200)
+  originLang   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  postUid      Int?
+  commentUid   String?
+  userUid      Int
+  likeUserUid  Int[]
+  belongPostid Int?
+  childReplay  Boolean  @default(false)
+  contentDEDE  String?
+  contentENUS  String?
+  contentESES  String?
+  contentFRFR  String?
+  contentJAJP  String?
+  contentKOKR  String?
+  contentPTBR  String?
+  contentRURU  String?
+  contentZHCN  String?
+  contentZHTW  String?
+  unsafeTags   Json?    @db.JsonB
+  likes        Like[]
+  parentReply  Reply?   @relation("CommentReplies", fields: [commentUid], references: [id])
+  replies      Reply[]  @relation("CommentReplies")
+  post         Post?    @relation(fields: [postUid], references: [id])
+  user         User     @relation(fields: [userUid], references: [uid])
+  tasks        Task[]
 }
 
 model Task {

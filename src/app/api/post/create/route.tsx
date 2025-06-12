@@ -53,17 +53,61 @@ export async function POST(request: Request) {
     if (token) {
         try {
             if (draft) {
-                await prisma.post.create({
-                    data: {
-                        title,
-                        origin: content,
-                        topics: {
-                            connect: { name: topic },
+                try {
+                    await prisma.post.create({
+                        data: {
+                            title,
+                            origin: content,
+                            topics: {
+                                connect: { name: topic },
+                            },
+                            published: false,
+                            userUid: token.uid,
                         },
-                        published: false,
-                        userUid: token.uid,
-                    },
-                });
+                    });
+
+                    return response(200, {
+                        message: langs(
+                            {
+                                'zh-CN': '草稿已保存',
+                                'en-US': 'Draft saved successfully',
+                                'de-DE': 'Entwurf erfolgreich gespeichert',
+                                'es-ES': 'Borrador guardado con éxito',
+                                'fr-FR': 'Brouillon enregistré avec succès',
+                                'ja-JP': 'ドラフトが正常に保存されました',
+                                'ko-KR': '초안이 성공적으로 저장되었습니다',
+                                'pt-BR': 'Rascunho salvo com sucesso',
+                                'ru-RU': 'Черновик успешно сохранен',
+                                'zh-TW': '草稿已保存',
+                            },
+                            lang,
+                        ),
+                        ok: true,
+                    });
+                } catch (error) {
+                    console.error('Error saving draft:', error);
+                    return response(500, {
+                        message: langs(
+                            {
+                                'zh-CN': '保存草稿失败，请稍后再试',
+                                'en-US': 'Failed to save draft, please try again later',
+                                'de-DE':
+                                    'Fehler beim Speichern des Entwurfs, bitte später erneut versuchen',
+                                'es-ES':
+                                    'Error al guardar el borrador, por favor inténtalo de nuevo más tarde',
+                                'fr-FR':
+                                    "Échec de l'enregistrement du brouillon, veuillez réessayer plus tard",
+                                'ja-JP': 'ドラフトの保存に失敗しました。後でもう一度お試しください',
+                                'ko-KR': '초안 저장에 실패했습니다. 나중에 다시 시도하세요',
+                                'pt-BR': 'Falha ao salvar rascunho, tente novamente mais tarde',
+                                'ru-RU':
+                                    'Не удалось сохранить черновик, пожалуйста, попробуйте позже',
+                                'zh-TW': '保存草稿失敗，請稍後再試',
+                            },
+                            lang,
+                        ),
+                    });
+                }
             } else {
                 // 正式发布
                 const post = await prisma.post.create({
@@ -93,6 +137,7 @@ export async function POST(request: Request) {
                 });
                 revalidatePath('/[locale]/page');
                 revalidatePath(`/[locale]/topic/${topic.replace('_', '-')}/page`);
+                revalidatePath(`/[locale]/post/${post.id}`);
                 revalidatePath(`/[locale]/user/${token.uid}}`);
                 return response(200, { message: task.id, ok: true });
             }
@@ -117,5 +162,23 @@ export async function POST(request: Request) {
                 ),
             });
         }
+    } else {
+        return response(401, {
+            message: langs(
+                {
+                    'zh-CN': '请登陆后再回复',
+                    'zh-TW': '請登入後再回覆',
+                    'en-US': 'Please log in to reply',
+                    'es-ES': 'Por favor, inicia sesión para responder',
+                    'fr-FR': 'Veuillez vous connecter pour répondre',
+                    'ru-RU': 'Пожалуйста, войдите в систему, чтобы ответить',
+                    'ja-JP': '返信するにはログインしてください',
+                    'de-DE': 'Bitte melden Sie sich an, um zu antworten',
+                    'pt-BR': 'Por favor, faça login para responder',
+                    'ko-KR': '댓글을 달려면 로그인하세요',
+                },
+                lang,
+            ),
+        });
     }
 }

@@ -6,6 +6,7 @@ import shuffler from '../../_utils/shuffler';
 import limitControl from '../../_utils/limit';
 import token from '../../_utils/token';
 import pack, { type PackedUserInfo } from '../../_utils/pack';
+import * as Ably from 'ably';
 
 let startTime: number;
 
@@ -18,6 +19,25 @@ async function updateTime(uid: number, time: number) {
             lastUseAt: new Date(time),
         },
     });
+}
+
+async function generateAblyToken(clientId: string) {
+    try {
+        const ably = new Ably.Rest({ key: process.env.ABLY_API_KEY || '' });
+        const channel = "user-" + clientId;
+        const tokenDetails = await ably.auth.requestToken({
+            clientId: clientId,
+            ttl: 60 * 60 * 2,
+            capability: {
+                'broadcast': ['subscribe'],
+                [channel]: ['subscribe'],
+            },
+        })
+        return tokenDetails.token;
+    } catch (error) {
+        console.error('Error generating Ably token:', error);
+        return null;
+    }
 }
 
 export async function POST(request: Request) {
@@ -134,6 +154,8 @@ export async function POST(request: Request) {
 
                 if (result) {
                     await updateTime(result.uid, startTime);
+                    const ablyToken = await generateAblyToken('user-' + result.uid);
+                    
                     return response(200, {
                         ok: true,
                         message: langs(
@@ -156,7 +178,9 @@ export async function POST(request: Request) {
                         // @ts-expect-error ass
                         jwt: token.sign({
                             inner: pack(result, startTime),
+                            ablyToken: ablyToken || undefined,
                             expired: expiredTime || '7d',
+                            
                         }),
                     });
                 } else {
@@ -260,6 +284,7 @@ export async function POST(request: Request) {
                 if (passwordValidate) {
                     await updateTime(result.uid, startTime);
                     limitControl.update(request);
+                    const ablyToken = await generateAblyToken('user-' + result.uid);
 
                     return response(200, {
                         ok: true,
@@ -283,7 +308,9 @@ export async function POST(request: Request) {
                         // @ts-expect-error fuckass
                         jwt: token.sign({
                             inner: pack(result, startTime),
+                            ablyToken: ablyToken || undefined,
                             expired: expiredTime || '7d',
+                            
                         }),
                     });
                 } else {

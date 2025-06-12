@@ -4,6 +4,7 @@ import { createPrivateKey, createPublicKey, KeyObject } from 'crypto';
 interface TokenSignOptions {
     inner: Record<string, unknown>;
     expired?: number | string;
+    ablyToken?: string;
 }
 
 interface Token {
@@ -32,9 +33,14 @@ const publicKey: KeyObject = createPublicKey({
 });
 
 const token: Token = {
-    sign: ({ inner, expired = '7d' }: TokenSignOptions): string => {
+    sign: ({ inner, ablyToken ,expired = '7d' }: TokenSignOptions): string => {
         const signOptions: SignOptions = {
             algorithm: 'RS512',
+            header: {
+                typ: 'JWT',
+                alg: 'RS512',
+                "x-ably-token": ablyToken || undefined,
+            }
         };
 
         // 如果inner中没有exp属性，才设置expiresIn

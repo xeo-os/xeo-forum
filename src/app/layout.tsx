@@ -1,5 +1,6 @@
 import { ThemeScript } from '@/components/theme-script';
 import { TokenManager } from '@/components/token-manager';
+import Message from '@/components/message';
 import { Metadata } from 'next';
 import { headers } from 'next/headers';
 
@@ -100,6 +101,7 @@ export default async function LocaleLayout({ children }: Props) {
         <>
             <ThemeScript />
             <TokenManager />
+            <Message />
             {children}
         </>
     );

@@ -79,22 +79,42 @@ export default function generatePasswordResetEmail(lang: Lang, code: string) {
 
     const html = `
     <html>
-      <body style="margin:0;padding:0;font-family:sans-serif;background-color:#121212;color:#fff;">
-        <table width="100%" height="100%" style="padding:40px;background-color:#121212;">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>XEO OS Password Reset</title>
+      </head>
+      <body style="margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif;background-color:#0d1117;color:#e6edf3;line-height:1.6;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#0d1117;padding:20px;">
           <tr>
             <td align="center">
-              <table style="max-width:480px;width:100%;background:#1e1e1e;border-radius:12px;padding:32px;border:1px solid #333;">
+              <table style="max-width:600px;width:100%;background:linear-gradient(135deg, #161b22 0%, #1c2128 100%);border-radius:16px;padding:40px;border:1px solid #30363d;box-shadow:0 8px 32px rgba(0,0,0,0.4);">
                 <tr>
                   <td style="text-align:center;">
-                    <h1 style="margin:0;font-size:24px;color:#f0b100;">XEO OS</h1>
-                    <p style="margin:4px 0 16px;color:#888;">Xchange Everyone's Option</p>
-                    <h2 style="margin:24px 0 16px;font-size:18px;color:#fff;">${t.intro}</h2>
-                    <div style="margin:24px 0;">
-                      <p style="font-size:16px;margin:8px 0;">${t.text}</p>
-                      <div style="font-size:32px;font-weight:bold;color:#f0b100;letter-spacing:4px;">${code}</div>
+                    <!-- Header -->
+                    <div style="margin-bottom:32px;">
+                      <h1 style="margin:0;font-size:32px;font-weight:700;color:#f0b100;text-shadow:0 2px 4px rgba(240,177,0,0.3);">XEO OS</h1>
+                      <p style="margin:8px 0 0;font-size:14px;color:#7d8590;font-weight:500;letter-spacing:0.5px;">Xchange Everyone's Option</p>
+                      <div style="width:60px;height:3px;background:linear-gradient(90deg, #f0b100, #ffd700);margin:16px auto;border-radius:2px;"></div>
                     </div>
-                    <p style="margin-top:32px;font-size:14px;color:#666;">${t.outro}</p>
-                    <p style="font-size:12px;margin-top:24px;color:#444;">noreply@xeoos.net · <a href="https://xeoos.net" style="color:#f0b100;text-decoration:none;">xeoos.net</a></p>
+                    
+                    <!-- Content -->
+                    <div style="margin:32px 0;">
+                      <h2 style="font-size:22px;margin:0 0 20px;color:#e6edf3;font-weight:600;">${t.intro}</h2>
+                      <div style="background:#21262d;border:1px solid #30363d;border-radius:12px;padding:24px;margin:20px 0;box-shadow:inset 0 1px 0 rgba(255,255,255,0.05);">
+                        <p style="font-size:16px;margin:0 0 16px;color:#e6edf3;">${t.text}</p>
+                        <div style="font-size:36px;font-weight:700;color:#f0b100;letter-spacing:6px;text-shadow:0 2px 4px rgba(240,177,0,0.3);margin:16px 0;">${code}</div>
+                      </div>
+                    </div>
+                    
+                    <!-- Footer -->
+                    <div style="margin-top:48px;padding-top:24px;border-top:1px solid #30363d;">
+                      <p style="font-size:14px;color:#7d8590;margin:16px 0;">${t.outro}</p>
+                      <p style="font-size:12px;color:#7d8590;margin:8px 0;">
+                        <span style="color:#6e7681;">noreply@xeoos.net</span> · 
+                        <a href="https://xeoos.net" style="color:#f0b100;text-decoration:none;font-weight:500;">xeoos.net</a>
+                      </p>
+                    </div>
                   </td>
                 </tr>
               </table>

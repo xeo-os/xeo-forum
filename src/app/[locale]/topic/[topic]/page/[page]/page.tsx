@@ -10,24 +10,26 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Metadata } from "next";
 import { cache } from "react";
 import {
-    Heart,
-    MessageCircle,
-    Pin,
-    ChevronLeft,
-    ChevronRight,
-    Users,
-    FileText,
-    ThumbsUp,
-    MessageSquare,
-    TrendingUp,
-    Calendar,
-    AlertTriangle,
-    Home,
-    Search,
-} from 'lucide-react';
+  Heart,
+  MessageCircle,
+  Pin,
+  ChevronLeft,
+  ChevronRight,
+  Users,
+  FileText,
+  ThumbsUp,
+  MessageSquare,
+  TrendingUp,
+  Calendar,
+  AlertTriangle,
+  Home,
+  Search,
+} from "lucide-react";
 
 import "@/app/globals.css";
 import type { Topic } from "@/generated/prisma";
+
+
 
 type Props = {
   params: { locale: string; page?: number; topic: string };
@@ -150,19 +152,39 @@ const getPageData = cache(async (topic: string, page: number) => {
         },
       },
     }),
-    // 合并多个统计查询为一次原生查询
     prisma.$queryRaw`
       SELECT 
-        (SELECT COUNT(*) FROM "User") as "totalUsers",
-        (SELECT COUNT(*) FROM "Reply") as "totalReplies", 
-        (SELECT COUNT(*) FROM "Like") as "totalLikes"
-    ` as Promise<[{ totalUsers: bigint; totalReplies: bigint; totalLikes: bigint }]>,
+        (SELECT COUNT(DISTINCT "Post"."userUid") FROM "Post" 
+         JOIN "_PostTopics" ON "Post"."id" = "_PostTopics"."A"
+         JOIN "Topic" ON "_PostTopics"."B" = "Topic"."name"
+         WHERE "Topic"."name" = ${topic.replaceAll("-", "_")} 
+         AND "Post"."published" = true 
+         AND "Post"."originLang" IS NOT NULL
+         AND "Post"."userUid" IS NOT NULL) as "topicUsers",
+        (SELECT COUNT("Reply"."id") FROM "Reply"
+         JOIN "Post" ON "Reply"."postUid" = "Post"."id"
+         JOIN "_PostTopics" ON "Post"."id" = "_PostTopics"."A"
+         JOIN "Topic" ON "_PostTopics"."B" = "Topic"."name"
+         WHERE "Topic"."name" = ${topic.replaceAll("-", "_")}
+         AND "Post"."published" = true 
+         AND "Post"."originLang" IS NOT NULL) as "topicReplies",
+        (SELECT COUNT("Like"."uuid") FROM "Like"
+         JOIN "Post" ON "Like"."postId" = "Post"."id"
+         JOIN "_PostTopics" ON "Post"."id" = "_PostTopics"."A"
+         JOIN "Topic" ON "_PostTopics"."B" = "Topic"."name"
+         WHERE "Topic"."name" = ${topic.replaceAll("-", "_")}
+         AND "Post"."published" = true 
+         AND "Post"."originLang" IS NOT NULL) as "topicLikes"
+    ` as Promise<
+      [{ topicUsers: bigint; topicReplies: bigint; topicLikes: bigint }]
+    >,
   ]);
 });
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // read route params
   const { page, locale, topic } = await params;
+  
 
   const topicObject: Topic | null = await prisma.topic.findUnique({
     where: {
@@ -174,68 +196,68 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     // 首页
     return {
       title: lang(
-      {
-        "zh-CN": `主题: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - 交流每个人的观点`,
-        "en-US": `Topic: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - Xchange Everyone's Opinions`,
-        "zh-TW": `主題: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - 交流每個人的觀點`,
-        "es-ES": `Tema: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - Intercambia las opiniones de todos`,
-        "fr-FR": `Sujet: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - Échangez les opinions de chacun`,
-        "ru-RU": `Тема: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - Обменивайтесь мнениями всех`,
-        "ja-JP": `トピック: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - みんなの意見を交換`,
-        "de-DE": `Thema: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - Teile die Meinungen aller`,
-        "pt-BR": `Tópico: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - Troque as opiniões de todos`,
-        "ko-KR": `주제: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - 모두의 의견을 교환하세요`,
-      },
-      locale,
+        {
+          "zh-CN": `主题: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - 交流每个人的观点`,
+          "en-US": `Topic: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - Xchange Everyone's Opinions`,
+          "zh-TW": `主題: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - 交流每個人的觀點`,
+          "es-ES": `Tema: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - Intercambia las opiniones de todos`,
+          "fr-FR": `Sujet: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - Échangez les opinions de chacun`,
+          "ru-RU": `Тема: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - Обменивайтесь мнениями всех`,
+          "ja-JP": `トピック: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - みんなの意見を交換`,
+          "de-DE": `Thema: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - Teile die Meinungen aller`,
+          "pt-BR": `Tópico: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - Troque as opiniões de todos`,
+          "ko-KR": `주제: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - 모두의 의견을 교환하세요`,
+        },
+        locale,
       ),
       description: lang(
-      {
-        "zh-CN": `看看全球用户正在"${getLocalizedTopicName(topicObject, locale)}"主题上讨论什么。XEO OS 致力于打破语言壁垒，借助尖端AI技术实时翻译每篇内容，让全球用户都能用最熟悉的母语畅快交流。`,
-        "en-US": `See what global users are discussing on the "${getLocalizedTopicName(topicObject, locale)}" topic. XEO OS is dedicated to breaking down language barriers, using cutting-edge AI technology to translate every piece of content in real-time, allowing global users to communicate freely in their most familiar native language.`,
-        "zh-TW": `看看全球用戶正在"${getLocalizedTopicName(topicObject, locale)}"主題上討論什麼。XEO OS 致力於打破語言壁壘，借助尖端AI技術實時翻譯每篇內容，讓全球用戶都能用最熟悉的母語暢快交流。`,
-        "es-ES": `Ve lo que los usuarios globales están discutiendo en el tema "${getLocalizedTopicName(topicObject, locale)}". XEO OS se dedica a romper las barreras del idioma, utilizando tecnología de IA de vanguardia para traducir cada contenido en tiempo real, permitiendo que los usuarios globales se comuniquen libremente en su idioma nativo más familiar.`,
-        "fr-FR": `Voyez ce que les utilisateurs du monde entier discutent sur le sujet "${getLocalizedTopicName(topicObject, locale)}". XEO OS se consacre à briser les barrières linguistiques, en utilisant une technologie d'IA de pointe pour traduire chaque contenu en temps réel, permettant aux utilisateurs du monde entier de communiquer librement dans leur langue maternelle la plus familière.`,
-        "ru-RU": `Посмотрите, что обсуждают пользователи со всего мира по теме "${getLocalizedTopicName(topicObject, locale)}". XEO OS стремится разрушить языковые барьеры, используя передовые технологии ИИ для перевода каждого контента в реальном времени, позволяя глобальным пользователям свободно общаться на своем самом знакомом родном языке.`,
-        "ja-JP": `グローバルユーザーが"${getLocalizedTopicName(topicObject, locale)}"トピックで何を議論しているかご覧ください。XEO OSは言語の壁を打ち破ることに専念し、最先端のAI技術を使用してすべてのコンテンツをリアルタイムで翻訳し、グローバルユーザーが最も慣れ親しんだ母国語で自由にコミュニケーションできるようにします。`,
-        "de-DE": `Sehen Sie, was globale Nutzer zum Thema "${getLocalizedTopicName(topicObject, locale)}" diskutieren. XEO OS widmet sich der Überwindung von Sprachbarrieren und nutzt modernste KI-Technologie, um jeden Inhalt in Echtzeit zu übersetzen, damit globale Nutzer frei in ihrer vertrautesten Muttersprache kommunizieren können.`,
-        "pt-BR": `Veja o que os usuários globais estão discutindo no tópico "${getLocalizedTopicName(topicObject, locale)}". XEO OS se dedica a quebrar barreiras linguísticas, usando tecnologia de IA de ponta para traduzir cada conteúdo em tempo real, permitindo que usuários globais se comuniquem livremente em sua língua nativa mais familiar.`,
-        "ko-KR": `전 세계 사용자들이 "${getLocalizedTopicName(topicObject, locale)}" 주제에서 무엇을 논의하고 있는지 확인해보세요. XEO OS는 언어 장벽을 허무는 데 전념하며, 최첨단 AI 기술을 사용하여 모든 콘텐츠를 실시간으로 번역하여 전 세계 사용자들이 가장 친숙한 모국어로 자유롭게 소통할 수 있도록 합니다.`,
-      },
-      locale,
+        {
+          "zh-CN": `看看全球用户正在"${getLocalizedTopicName(topicObject, locale)}"主题上讨论什么。XEO OS 致力于打破语言壁垒，借助尖端AI技术实时翻译每篇内容，让全球用户都能用最熟悉的母语畅快交流。`,
+          "en-US": `See what global users are discussing on the "${getLocalizedTopicName(topicObject, locale)}" topic. XEO OS is dedicated to breaking down language barriers, using cutting-edge AI technology to translate every piece of content in real-time, allowing global users to communicate freely in their most familiar native language.`,
+          "zh-TW": `看看全球用戶正在"${getLocalizedTopicName(topicObject, locale)}"主題上討論什麼。XEO OS 致力於打破語言壁壘，借助尖端AI技術實時翻譯每篇內容，讓全球用戶都能用最熟悉的母語暢快交流。`,
+          "es-ES": `Ve lo que los usuarios globales están discutiendo en el tema "${getLocalizedTopicName(topicObject, locale)}". XEO OS se dedica a romper las barreras del idioma, utilizando tecnología de IA de vanguardia para traducir cada contenido en tiempo real, permitiendo que los usuarios globales se comuniquen libremente en su idioma nativo más familiar.`,
+          "fr-FR": `Voyez ce que les utilisateurs du monde entier discutent sur le sujet "${getLocalizedTopicName(topicObject, locale)}". XEO OS se consacre à briser les barrières linguistiques, en utilisant une technologie d'IA de pointe pour traduire chaque contenu en temps réel, permettant aux utilisateurs du monde entier de communiquer librement dans leur langue maternelle la plus familière.`,
+          "ru-RU": `Посмотрите, что обсуждают пользователи со всего мира по теме "${getLocalizedTopicName(topicObject, locale)}". XEO OS стремится разрушить языковые барьеры, используя передовые технологии ИИ для перевода каждого контента в реальном времени, позволяя глобальным пользователям свободно общаться на своем самом знакомом родном языке.`,
+          "ja-JP": `グローバルユーザーが"${getLocalizedTopicName(topicObject, locale)}"トピックで何を議論しているかご覧ください。XEO OSは言語の壁を打ち破ることに専念し、最先端のAI技術を使用してすべてのコンテンツをリアルタイムで翻訳し、グローバルユーザーが最も慣れ親しんだ母国語で自由にコミュニケーションできるようにします。`,
+          "de-DE": `Sehen Sie, was globale Nutzer zum Thema "${getLocalizedTopicName(topicObject, locale)}" diskutieren. XEO OS widmet sich der Überwindung von Sprachbarrieren und nutzt modernste KI-Technologie, um jeden Inhalt in Echtzeit zu übersetzen, damit globale Nutzer frei in ihrer vertrautesten Muttersprache kommunizieren können.`,
+          "pt-BR": `Veja o que os usuários globais estão discutindo no tópico "${getLocalizedTopicName(topicObject, locale)}". XEO OS se dedica a quebrar barreiras linguísticas, usando tecnologia de IA de ponta para traduzir cada conteúdo em tempo real, permitindo que usuários globais se comuniquem livremente em sua língua nativa mais familiar.`,
+          "ko-KR": `전 세계 사용자들이 "${getLocalizedTopicName(topicObject, locale)}" 주제에서 무엇을 논의하고 있는지 확인해보세요. XEO OS는 언어 장벽을 허무는 데 전념하며, 최첨단 AI 기술을 사용하여 모든 콘텐츠를 실시간으로 번역하여 전 세계 사용자들이 가장 친숙한 모국어로 자유롭게 소통할 수 있도록 합니다.`,
+        },
+        locale,
       ),
     };
   }
 
   return {
     title: lang(
-    {
-      "zh-CN": `第${page}页 | 主题: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - 交流每个人的观点`,
-      "en-US": `Page ${page} | Topic: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - Xchange Everyone's Opinions`,
-      "zh-TW": `第${page}頁 | 主題: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - 交流每個人的觀點`,
-      "es-ES": `Página ${page} | Tema: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - Intercambia las opiniones de todos`,
-      "fr-FR": `Page ${page} | Sujet: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - Échangez les opinions de chacun`,
-      "ru-RU": `Страница ${page} | Тема: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - Обменивайтесь мнениями всех`,
-      "ja-JP": `${page}ページ | トピック: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - みんなの意見を交換`,
-      "de-DE": `Seite ${page} | Thema: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - Teile die Meinungen aller`,
-      "pt-BR": `Página ${page} | Tópico: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - Troque as opiniões de todos`,
-      "ko-KR": `${page}페이지 | 주제: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - 모두의 의견을 교환하세요`,
-    },
-    locale,
+      {
+        "zh-CN": `第${page}页 | 主题: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - 交流每个人的观点`,
+        "en-US": `Page ${page} | Topic: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - Xchange Everyone's Opinions`,
+        "zh-TW": `第${page}頁 | 主題: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - 交流每個人的觀點`,
+        "es-ES": `Página ${page} | Tema: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - Intercambia las opiniones de todos`,
+        "fr-FR": `Page ${page} | Sujet: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - Échangez les opinions de chacun`,
+        "ru-RU": `Страница ${page} | Тема: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - Обменивайтесь мнениями всех`,
+        "ja-JP": `${page}ページ | トピック: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - みんなの意見を交換`,
+        "de-DE": `Seite ${page} | Thema: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - Teile die Meinungen aller`,
+        "pt-BR": `Página ${page} | Tópico: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - Troque as opiniões de todos`,
+        "ko-KR": `${page}페이지 | 주제: ${getLocalizedTopicName(topicObject, locale)} | XEO OS - 모두의 의견을 교환하세요`,
+      },
+      locale,
     ),
     description: lang(
-    {
-      "zh-CN": `看看全球用户正在"${getLocalizedTopicName(topicObject, locale)}"主题的第${page}页上讨论什么。XEO OS 致力于打破语言壁垒，借助尖端AI技术实时翻译每篇内容，让全球用户都能用最熟悉的母语畅快交流。`,
-      "en-US": `See what global users are discussing on page ${page} of the "${getLocalizedTopicName(topicObject, locale)}" topic. XEO OS is dedicated to breaking down language barriers, using cutting-edge AI technology to translate every piece of content in real-time, allowing global users to communicate freely in their most familiar native language.`,
-      "zh-TW": `看看全球用戶正在"${getLocalizedTopicName(topicObject, locale)}"主題的第${page}頁上討論什麼。XEO OS 致力於打破語言壁壘，借助尖端AI技術實時翻譯每篇內容，讓全球用戶都能用最熟悉的母語暢快交流。`,
-      "es-ES": `Ve lo que los usuarios globales están discutiendo en la página ${page} del tema "${getLocalizedTopicName(topicObject, locale)}". XEO OS se dedica a romper las barreras del idioma, utilizando tecnología de IA de vanguardia para traducir cada contenido en tiempo real, permitiendo que los usuarios globales se comuniquen libremente en su idioma nativo más familiar.`,
-      "fr-FR": `Voyez ce que les utilisateurs du monde entier discutent sur la page ${page} du sujet "${getLocalizedTopicName(topicObject, locale)}". XEO OS se consacre à briser les barrières linguistiques, en utilisant une technologie d'IA de pointe pour traduire chaque contenu en temps réel, permettant aux utilisateurs du monde entier de communiquer librement dans leur langue maternelle la plus familière.`,
-      "ru-RU": `Посмотрите, что обсуждают пользователи со всего мира на странице ${page} темы "${getLocalizedTopicName(topicObject, locale)}". XEO OS стремится разрушить языковые барьеры, используя передовые технологии ИИ для перевода каждого контента в реальном времени, позволяя глобальным пользователям свободно общаться на своем самом знакомом родном языке.`,
-      "ja-JP": `グローバルユーザーが"${getLocalizedTopicName(topicObject, locale)}"トピックの${page}ページで何を議論しているかご覧ください。XEO OSは言語の壁を打ち破ることに専念し、最先端のAI技術を使用してすべてのコンテンツをリアルタイムで翻訳し、グローバルユーザーが最も慣れ親しんだ母国語で自由にコミュニケーションできるようにします。`,
-      "de-DE": `Sehen Sie, was globale Nutzer auf Seite ${page} des Themas "${getLocalizedTopicName(topicObject, locale)}" diskutieren. XEO OS widmet sich der Überwindung von Sprachbarrieren und nutzt modernste KI-Technologie, um jeden Inhalt in Echtzeit zu übersetzen, damit globale Nutzer frei in ihrer vertrautesten Muttersprache kommunizieren können.`,
-      "pt-BR": `Veja o que os usuários globais estão discutindo na página ${page} do tópico "${getLocalizedTopicName(topicObject, locale)}". XEO OS se dedica a quebrar barreiras linguísticas, usando tecnologia de IA de ponta para traduzir cada conteúdo em tempo real, permitindo que usuários globais se comuniquem livremente em sua língua nativa mais familiar.`,
-      "ko-KR": `전 세계 사용자들이 "${getLocalizedTopicName(topicObject, locale)}" 주제의 ${page}페이지에서 무엇을 논의하고 있는지 확인해보세요. XEO OS는 언어 장벽을 허무는 데 전념하며, 최첨단 AI 기술을 사용하여 모든 콘텐츠를 실시간으로 번역하여 전 세계 사용자들이 가장 친숙한 모국어로 자유롭게 소통할 수 있도록 합니다.`,
-    },
-    locale,
+      {
+        "zh-CN": `看看全球用户正在"${getLocalizedTopicName(topicObject, locale)}"主题的第${page}页上讨论什么。XEO OS 致力于打破语言壁垒，借助尖端AI技术实时翻译每篇内容，让全球用户都能用最熟悉的母语畅快交流。`,
+        "en-US": `See what global users are discussing on page ${page} of the "${getLocalizedTopicName(topicObject, locale)}" topic. XEO OS is dedicated to breaking down language barriers, using cutting-edge AI technology to translate every piece of content in real-time, allowing global users to communicate freely in their most familiar native language.`,
+        "zh-TW": `看看全球用戶正在"${getLocalizedTopicName(topicObject, locale)}"主題的第${page}頁上討論什麼。XEO OS 致力於打破語言壁壘，借助尖端AI技術實時翻譯每篇內容，讓全球用戶都能用最熟悉的母語暢快交流。`,
+        "es-ES": `Ve lo que los usuarios globales están discutiendo en la página ${page} del tema "${getLocalizedTopicName(topicObject, locale)}". XEO OS se dedica a romper las barreras del idioma, utilizando tecnología de IA de vanguardia para traducir cada contenido en tiempo real, permitiendo que los usuarios globales se comuniquen libremente en su idioma nativo más familiar.`,
+        "fr-FR": `Voyez ce que les utilisateurs du monde entier discutent sur la page ${page} du sujet "${getLocalizedTopicName(topicObject, locale)}". XEO OS se consacre à briser les barrières linguistiques, en utilisant une technologie d'IA de pointe pour traduire chaque contenu en temps réel, permettant aux utilisateurs du monde entier de communiquer librement dans leur langue maternelle la plus familière.`,
+        "ru-RU": `Посмотрите, что обсуждают пользователи со всего мира на странице ${page} темы "${getLocalizedTopicName(topicObject, locale)}". XEO OS стремится разрушить языковые барьеры, используя передовые технологии ИИ для перевода каждого контента в реальном времени, позволяя глобальным пользователям свободно общаться на своем самом знакомом родном языке.`,
+        "ja-JP": `グローバルユーザーが"${getLocalizedTopicName(topicObject, locale)}"トピックの${page}ページで何を議論しているかご覧ください。XEO OSは言語の壁を打ち破ることに専念し、最先端のAI技術を使用してすべてのコンテンツをリアルタイムで翻訳し、グローバルユーザーが最も慣れ親しんだ母国語で自由にコミュニケーションできるようにします。`,
+        "de-DE": `Sehen Sie, was globale Nutzer auf Seite ${page} des Themas "${getLocalizedTopicName(topicObject, locale)}" diskutieren. XEO OS widmet sich der Überwindung von Sprachbarrieren und nutzt modernste KI-Technologie, um jeden Inhalt in Echtzeit zu übersetzen, damit globale Nutzer frei in ihrer vertrautesten Muttersprache kommunizieren können.`,
+        "pt-BR": `Veja o que os usuários globais estão discutindo na página ${page} do tópico "${getLocalizedTopicName(topicObject, locale)}". XEO OS se dedica a quebrar barreiras linguísticas, usando tecnologia de IA de ponta para traduzir cada conteúdo em tempo real, permitindo que usuários globais se comuniquem livremente em sua língua nativa mais familiar.`,
+        "ko-KR": `전 세계 사용자들이 "${getLocalizedTopicName(topicObject, locale)}" 주제의 ${page}페이지에서 무엇을 논의하고 있는지 확인해보세요. XEO OS는 언어 장벽을 허무는 데 전념하며, 최첨단 AI 기술을 사용하여 모든 콘텐츠를 실시간으로 번역하여 전 세계 사용자들이 가장 친숙한 모국어로 자유롭게 소통할 수 있도록 합니다.`,
+      },
+      locale,
     ),
   };
 }
@@ -267,7 +289,7 @@ function getLocalizedTitle(post: Post, locale: string): string {
 
 function getLocalizedTopicName(topic: Topic | null, locale: string): string {
   if (!topic) return "";
-  
+
   const nameMap: Record<string, string | null | undefined> = {
     "zh-CN": topic.nameZHCN,
     "en-US": topic.nameENUS,
@@ -288,131 +310,17 @@ export default async function Topic({ params }: Props) {
   const { locale, page: pageParam = 1, topic } = await params;
   const page = Number(pageParam);
 
-  const [
-    posts,
-    totalPosts,
-    globalStatsResult,
-  ] = await getPageData(topic, page);
-  
+  const [posts, totalPosts, topicStatsResult] = await getPageData(topic, page);
+
   // 转换 BigInt 为 number
-  const { totalUsers, totalReplies, totalLikes } = {
-    totalUsers: Number(globalStatsResult[0].totalUsers),
-    totalReplies: Number(globalStatsResult[0].totalReplies),
-    totalLikes: Number(globalStatsResult[0].totalLikes),
+  const { topicUsers, topicReplies, topicLikes } = {
+    topicUsers: Number(topicStatsResult[0].topicUsers),
+    topicReplies: Number(topicStatsResult[0].topicReplies),
+    topicLikes: Number(topicStatsResult[0].topicLikes),
   };
-  
+
   const topicObject = await getTopicData(topic);
   const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE);
-
-  if (posts.length === 0) {
-    return (
-      <div className="h-full flex items-center justify-center p-4 bg-background">
-        <Card className="w-full max-w-md mx-auto shadow-lg">
-          <CardHeader className="text-center">
-            <div className="mb-4 flex justify-center">
-              <div className="text-8xl">📝</div>
-            </div>
-            <CardTitle className="text-xl font-bold">
-              {lang(
-                {
-                  "zh-CN": "暂无帖子",
-                  "en-US": "No Posts Yet",
-                  "zh-TW": "暫無貼文",
-                  "es-ES": "Aún no hay publicaciones",
-                  "fr-FR": "Aucun message pour le moment",
-                  "ru-RU": "Пока нет сообщений",
-                  "ja-JP": "まだ投稿がありません",
-                  "de-DE": "Noch keine Beiträge",
-                  "pt-BR": "Ainda não há postagens",
-                  "ko-KR": "아직 게시물이 없습니다",
-                },
-                locale,
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-center space-y-4">
-            <p className="text-muted-foreground">
-              {topicObject
-                ? lang(
-                    {
-                      "zh-CN": `"${getLocalizedTopicName(topicObject, locale)}" 主题下还没有任何帖子`,
-                      "en-US": `No posts found in "${getLocalizedTopicName(topicObject, locale)}" topic yet`,
-                      "zh-TW": `"${getLocalizedTopicName(topicObject, locale)}" 主題下還沒有任何貼文`,
-                      "es-ES": `Aún no se encontraron publicaciones en el tema "${getLocalizedTopicName(topicObject, locale)}"`,
-                      "fr-FR": `Aucun message trouvé dans le sujet "${getLocalizedTopicName(topicObject, locale)}" pour le moment`,
-                      "ru-RU": `В теме "${getLocalizedTopicName(topicObject, locale)}" пока нет сообщений`,
-                      "ja-JP": `"${getLocalizedTopicName(topicObject, locale)}" トピックにはまだ投稿がありません`,
-                      "de-DE": `Noch keine Beiträge im Thema "${getLocalizedTopicName(topicObject, locale)}" gefunden`,
-                      "pt-BR": `Ainda não foram encontradas postagens no tópico "${getLocalizedTopicName(topicObject, locale)}"`,
-                      "ko-KR": `"${getLocalizedTopicName(topicObject, locale)}" 주제에서 아직 게시물을 찾을 수 없습니다`,
-                    },
-                    locale,
-                  )
-                : lang(
-                    {
-                      "zh-CN": "这里还没有任何帖子",
-                      "en-US": "No posts found here",
-                      "zh-TW": "這裡還沒有任何貼文",
-                      "es-ES": "No se encontraron publicaciones aquí",
-                      "fr-FR": "Aucun message trouvé ici",
-                      "ru-RU": "Здесь нет сообщений",
-                      "ja-JP": "ここには投稿がありません",
-                      "de-DE": "Hier wurden keine Beiträge gefunden",
-                      "pt-BR": "Nenhuma postagem encontrada aqui",
-                      "ko-KR": "여기에서 게시물을 찾을 수 없습니다",
-                    },
-                    locale,
-                  )}
-            </p>
-
-            <div className="flex flex-col gap-3">
-              <Button asChild variant="default" className="w-full">
-                <Link href={`/${locale}`}>
-                  <Home className="mr-2 h-4 w-4" />
-                  {lang(
-                    {
-                      "zh-CN": "返回首页",
-                      "zh-TW": "返回首頁",
-                      "en-US": "Go Home",
-                      "es-ES": "Ir al inicio",
-                      "fr-FR": "Aller à l'accueil",
-                      "ru-RU": "На главную",
-                      "ja-JP": "ホームに戻る",
-                      "de-DE": "Zur Startseite",
-                      "pt-BR": "Ir para o início",
-                      "ko-KR": "홈으로 가기",
-                    },
-                    locale,
-                  )}
-                </Link>
-              </Button>
-
-              <Button asChild variant="outline" className="w-full">
-                <Link href={`/${locale}/topics`}>
-                  <Search className="mr-2 h-4 w-4" />
-                  {lang(
-                    {
-                      "zh-CN": "浏览其他主题",
-                      "zh-TW": "瀏覽其他主題",
-                      "en-US": "Browse Other Topics",
-                      "es-ES": "Explorar otros temas",
-                      "fr-FR": "Parcourir d'autres sujets",
-                      "ru-RU": "Просмотреть другие темы",
-                      "ja-JP": "他のトピックを見る",
-                      "de-DE": "Andere Themen durchsuchen",
-                      "pt-BR": "Explorar outros tópicos",
-                      "ko-KR": "다른 주제 찾아보기",
-                    },
-                    locale,
-                  )}
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   if (topicObject === null) {
     return (
@@ -804,11 +712,51 @@ export default async function Topic({ params }: Props) {
       </div>
 
       <div className="flex gap-6">
-        {/* 主要内容区域 - 使用 Page 组件包裹，参与动画 */}
         <div className="flex-1">
           <Card>
             <CardContent className="p-2 sm:p-5">
-              <div className="divide-y">
+                <div className="divide-y">
+                {posts.length === 0 && (
+                  <div className="text-center py-12">
+                  <div className="mb-4">
+                    <span className="text-6xl opacity-50">📭</span>
+                  </div>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">
+                    {lang(
+                    {
+                      "zh-CN": "暂无帖子",
+                      "en-US": "No posts yet",
+                      "zh-TW": "暫無帖子",
+                      "es-ES": "Aún no hay publicaciones",
+                      "fr-FR": "Aucun post pour l'instant",
+                      "ru-RU": "Пока нет постов",
+                      "ja-JP": "まだ投稿がありません",
+                      "de-DE": "Noch keine Beiträge",
+                      "pt-BR": "Ainda não há postagens",
+                      "ko-KR": "아직 게시물이 없습니다",
+                    },
+                    locale,
+                    )}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {lang(
+                    {
+                      "zh-CN": "成为第一个在此主题下发帖的用户吧",
+                      "en-US": "Be the first to post in this topic",
+                      "zh-TW": "成為第一個在此主題下發帖的用戶吧",
+                      "es-ES": "Sé el primero en publicar en este tema",
+                      "fr-FR": "Soyez le premier à publier dans ce sujet",
+                      "ru-RU": "Станьте первым, кто опубликует в этой теме",
+                      "ja-JP": "このトピックで最初の投稿者になりましょう",
+                      "de-DE": "Seien Sie der Erste, der in diesem Thema postet",
+                      "pt-BR": "Seja o primeiro a postar neste tópico",
+                      "ko-KR": "이 주제에서 첫 번째 게시자가 되어보세요",
+                    },
+                    locale,
+                    )}
+                  </p>
+                  </div>
+                )}
                 {posts.map((post) => (
                   <div
                     key={post.id}
@@ -856,14 +804,14 @@ export default async function Topic({ params }: Props) {
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <Link
-                            href={`/${locale}/post/${post.id}`}
-                            className="font-medium hover:text-primary transition-colors truncate text-sm"
+                            <Link
+                            href={`/${locale}/post/${post.id}/${post.titleENUS?.toLowerCase().replaceAll(" ","-").replace(/[^a-z-]/g, '')}`}
+                            className="font-medium hover:text-primary transition-colors text-sm leading-tight break-words"
                             title={getLocalizedTitle(post, locale)}
                             rel="noopener"
-                          >
+                            >
                             {getLocalizedTitle(post, locale)}
-                          </Link>
+                            </Link>
                           {post.pin && (
                             <Pin className="h-3 w-3 text-primary flex-shrink-0" />
                           )}
@@ -1065,23 +1013,22 @@ export default async function Topic({ params }: Props) {
 
         {/* 右侧统计区域 - 不使用 Page 包裹，不参与动画 */}
         <div className="hidden xl:block w-80 space-y-4">
-          {/* 总体统计 */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
                 {lang(
                   {
-                    "zh-CN": "总体统计",
-                    "en-US": "Overall Stats",
-                    "zh-TW": "總體統計",
-                    "es-ES": "Estadísticas generales",
-                    "fr-FR": "Statistiques générales",
-                    "ru-RU": "Общая статистика",
-                    "ja-JP": "全体統計",
-                    "de-DE": "Gesamtstatistik",
-                    "pt-BR": "Estatísticas gerais",
-                    "ko-KR": "전체 통계",
+                    "zh-CN": "当前主题统计",
+                    "en-US": "Current Topic Stats",
+                    "zh-TW": "當前主題統計",
+                    "es-ES": "Estadísticas del tema actual",
+                    "fr-FR": "Statistiques du sujet actuel",
+                    "ru-RU": "Статистика текущей темы",
+                    "ja-JP": "現在のトピック統計",
+                    "de-DE": "Aktuelle Thema-Statistiken",
+                    "pt-BR": "Estatísticas do tópico atual",
+                    "ko-KR": "현재 주제 통계",
                   },
                   locale,
                 )}
@@ -1099,16 +1046,16 @@ export default async function Topic({ params }: Props) {
                   <div className="text-xs text-muted-foreground mt-1">
                     {lang(
                       {
-                        "zh-CN": "总帖子",
-                        "en-US": "Total Posts",
-                        "zh-TW": "總貼文",
-                        "es-ES": "Total de publicaciones",
-                        "fr-FR": "Total des messages",
-                        "ru-RU": "Всего сообщений",
-                        "ja-JP": "総投稿数",
-                        "de-DE": "Gesamte Beiträge",
-                        "pt-BR": "Total de postagens",
-                        "ko-KR": "총 게시물",
+                        "zh-CN": "主题帖子",
+                        "en-US": "Topic Posts",
+                        "zh-TW": "主題貼文",
+                        "es-ES": "Publicaciones del tema",
+                        "fr-FR": "Messages du sujet",
+                        "ru-RU": "Сообщения темы",
+                        "ja-JP": "トピック投稿",
+                        "de-DE": "Thema-Beiträge",
+                        "pt-BR": "Postagens do tópico",
+                        "ko-KR": "주제 게시물",
                       },
                       locale,
                     )}
@@ -1119,21 +1066,21 @@ export default async function Topic({ params }: Props) {
                     <Users className="h-4 w-4" />
                   </div>
                   <div className="text-2xl font-bold text-primary">
-                    {totalUsers.toLocaleString()}
+                    {topicUsers.toLocaleString()}
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
                     {lang(
                       {
-                        "zh-CN": "总用户",
-                        "en-US": "Total Users",
-                        "zh-TW": "總用戶",
-                        "es-ES": "Total de usuarios",
-                        "fr-FR": "Total des utilisateurs",
-                        "ru-RU": "Всего пользователей",
-                        "ja-JP": "総ユーザー数",
-                        "de-DE": "Gesamte Benutzer",
-                        "pt-BR": "Total de usuários",
-                        "ko-KR": "총 사용자",
+                        "zh-CN": "参与用户",
+                        "en-US": "Participants",
+                        "zh-TW": "參與用戶",
+                        "es-ES": "Participantes",
+                        "fr-FR": "Participants",
+                        "ru-RU": "Участники",
+                        "ja-JP": "参加者",
+                        "de-DE": "Teilnehmer",
+                        "pt-BR": "Participantes",
+                        "ko-KR": "참여자",
                       },
                       locale,
                     )}
@@ -1144,21 +1091,21 @@ export default async function Topic({ params }: Props) {
                     <MessageSquare className="h-4 w-4" />
                   </div>
                   <div className="text-2xl font-bold text-primary">
-                    {totalReplies.toLocaleString()}
+                    {topicReplies.toLocaleString()}
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
                     {lang(
                       {
-                        "zh-CN": "总回复",
-                        "en-US": "Total Replies",
-                        "zh-TW": "總回覆",
-                        "es-ES": "Total de respuestas",
-                        "fr-FR": "Total des réponses",
-                        "ru-RU": "Всего ответов",
-                        "ja-JP": "総返信数",
-                        "de-DE": "Gesamte Antworten",
-                        "pt-BR": "Total de respostas",
-                        "ko-KR": "총 답글",
+                        "zh-CN": "主题回复",
+                        "en-US": "Topic Replies",
+                        "zh-TW": "主題回覆",
+                        "es-ES": "Respuestas del tema",
+                        "fr-FR": "Réponses du sujet",
+                        "ru-RU": "Ответы темы",
+                        "ja-JP": "トピック返信",
+                        "de-DE": "Thema-Antworten",
+                        "pt-BR": "Respostas do tópico",
+                        "ko-KR": "주제 답글",
                       },
                       locale,
                     )}
@@ -1169,21 +1116,21 @@ export default async function Topic({ params }: Props) {
                     <ThumbsUp className="h-4 w-4" />
                   </div>
                   <div className="text-2xl font-bold text-primary">
-                    {totalLikes.toLocaleString()}
+                    {topicLikes.toLocaleString()}
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
                     {lang(
                       {
-                        "zh-CN": "总点赞",
-                        "en-US": "Total Likes",
-                        "zh-TW": "總按讚",
-                        "es-ES": "Total de me gusta",
-                        "fr-FR": "Total des j'aime",
-                        "ru-RU": "Всего лайков",
-                        "ja-JP": "総いいね数",
-                        "de-DE": "Gesamte Gefällt mir",
-                        "pt-BR": "Total de curtidas",
-                        "ko-KR": "총 좋아요",
+                        "zh-CN": "主题点赞",
+                        "en-US": "Topic Likes",
+                        "zh-TW": "主題按讚",
+                        "es-ES": "Me gusta del tema",
+                        "fr-FR": "J'aime du sujet",
+                        "ru-RU": "Лайки темы",
+                        "ja-JP": "トピックいいね",
+                        "de-DE": "Thema-Gefällt mir",
+                        "pt-BR": "Curtidas do tópico",
+                        "ko-KR": "주제 좋아요",
                       },
                       locale,
                     )}
@@ -1351,7 +1298,7 @@ export default async function Topic({ params }: Props) {
                     className="flex items-center justify-between"
                   >
                     <Link
-                      href={`/${locale}/post/${post.id}`}
+                      href={`/${locale}/post/${post.id}/${post.titleENUS?.toLowerCase().replaceAll(" ","-").replace(/[^a-z-]/g, '')}`}
                       className="text-xs hover:text-primary transition-colors truncate flex-1 mr-2"
                       title={`${lang(
                         {
@@ -1412,7 +1359,7 @@ export default async function Topic({ params }: Props) {
                     className="flex items-center justify-between"
                   >
                     <Link
-                      href={`/${locale}/post/${post.id}`}
+                      href={`/${locale}/post/${post.id}/${post.titleENUS?.toLowerCase().replaceAll(" ","-").replace(/[^a-z-]/g, '')}`}
                       className="text-xs hover:text-primary transition-colors truncate flex-1 mr-2"
                       title={`${lang(
                         {
