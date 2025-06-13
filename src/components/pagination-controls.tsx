@@ -16,7 +16,7 @@ type Props = {
 
 export function PaginationControls({ currentPage, totalPages, basePath }: Props) {
     const generatePageUrl = (page: number) => {
-        return `${basePath}?page=${page}`;
+        return `${basePath}/page/${page}`;
     };
 
     const getVisiblePages = () => {

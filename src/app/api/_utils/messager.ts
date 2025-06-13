@@ -90,7 +90,7 @@ export default async function messager(
     const channel = ably.channels.get('user-' + user.uid);
     const presence = await channel.presence.get();
     const isOnline = presence.items.some(
-        (member: { clientId: string }) => member.clientId === 'user-' + user.uid,
+        (member: { clientId: string }) => member.clientId === user.uid.toString(),
     );
 
     if (isOnline) {
