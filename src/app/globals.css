@@ -178,7 +178,18 @@
     /* 当模态框打开时，保持滚动条空间但禁用滚动 */
     body[data-scroll-locked] {
         overflow: hidden;
-        padding-right: 0; /* 移除之前的padding补偿 */
+        scrollbar-gutter: stable;
+    }
+
+    /* 针对不支持 scrollbar-gutter 的浏览器，使用 padding 补偿 */
+    @supports not (scrollbar-gutter: stable) {
+        body {
+            padding-right: env(scrollbar-width, 0px);
+        }
+        
+        body[data-scroll-locked] {
+            padding-right: env(scrollbar-width, 0px);
+        }
     }
 }
 

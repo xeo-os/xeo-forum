@@ -125,6 +125,7 @@ export async function POST(request: Request) {
                 const task = await prisma.task.create({
                     data: {
                         postId: post.id,
+                        userUid: token.uid,
                     },
                 });
                 // 开始翻译Task

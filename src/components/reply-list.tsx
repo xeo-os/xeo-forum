@@ -383,7 +383,10 @@ export function ReplyList({ replies, locale, onRepliesUpdate }: ReplyListProps) 
     const result: any[] = [];
     
     const processReply = (reply: any, level: number = 0) => {
+      // 添加当前回复到结果中
       result.push({ ...reply, level });
+      
+      // 递归处理子回复
       if (reply.replies && reply.replies.length > 0) {
         reply.replies.forEach((subReply: any) => {
           processReply(subReply, level + 1);
@@ -391,13 +394,14 @@ export function ReplyList({ replies, locale, onRepliesUpdate }: ReplyListProps) 
       }
     };
     
+    // 处理所有顶级回复
     replies.forEach(reply => processReply(reply));
     return result;
   };
 
   const allReplies = flattenReplies(localReplies);
 
-  if (replies.length === 0) {
+  if (allReplies.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
         <div className="text-4xl mb-4">💬</div>
@@ -443,7 +447,14 @@ export function ReplyList({ replies, locale, onRepliesUpdate }: ReplyListProps) 
             const isTranslated = reply.originLang !== locale;
             
             return (
-              <div key={reply.id} className={`flex gap-3 ${reply.level > 0 ? `ml-${reply.level * 4} pl-4 border-l-2 border-muted` : ''}`}>
+              <div 
+                key={reply.id} 
+                className={`flex gap-3 ${
+                  reply.level > 0 
+                    ? `ml-${Math.min(reply.level * 4, 16)} pl-4 border-l-2 border-muted` 
+                    : ''
+                }`}
+              >
                 <Link
                   href={`/${locale}/user/${reply.user.uid}`}
                   className="flex-shrink-0 hover:opacity-80 transition-opacity"
@@ -555,6 +566,22 @@ export function ReplyList({ replies, locale, onRepliesUpdate }: ReplyListProps) 
                       {reply.formattedTime}
                     </span>
                     <span className="text-xs text-muted-foreground">#{reply.id.slice(-8)}</span>
+                    {reply.level > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        {lang({
+                          'zh-CN': '回复',
+                          'en-US': 'Reply',
+                          'zh-TW': '回覆',
+                          'es-ES': 'Respuesta',
+                          'fr-FR': 'Réponse',
+                          'ru-RU': 'Ответ',
+                          'ja-JP': '返信',
+                          'de-DE': 'Antwort',
+                          'pt-BR': 'Resposta',
+                          'ko-KR': '답글',
+                        }, locale)}
+                      </span>
+                    )}
                   </div>
 
                   <div

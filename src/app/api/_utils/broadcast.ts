@@ -1,14 +1,12 @@
 import * as Ably from 'ably';
 type Message = {
     title: string;
-    content: string;
+    content: string | { [key: string]: string };
     link: string;
-    locale: string;
+    type: string;
 };
 
-export default async function broadcast(
-    message: Message,
-) {
+export default async function broadcast(message: Message) {
     const ably = new Ably.Rest(process.env.ABLY_API_KEY || '');
     const channel = ably.channels.get('broadcast');
     await channel.publish('new-message', {

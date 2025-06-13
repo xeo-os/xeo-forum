@@ -17,6 +17,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { SearchForm } from '@/components/search-form';
 import { SearchSheet } from '@/components/search-sheet';
+import TaskListSheet from '@/components/task-list-sheet';
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -72,7 +73,6 @@ export function SiteHeader({
     const searchInputRef = useRef<HTMLInputElement>(null);
     const { registerCallback, unregisterCallback } = useBroadcast();
 
-    // 模拟用户数据，实际应该从API获取
     const userData = token.getObject() || {
         nickname: 'Guest',
         email: 'guest@xeoos.net',
@@ -159,7 +159,7 @@ export function SiteHeader({
     useEffect(() => {
         const handleBroadcastMessage = (message: unknown) => {
             if (typeof message === 'object' && message !== null && 'action' in message) {
-                const msg = message as { action: string; query?: string };
+                const msg = message as { action: string; query?: string; data?: {type: string; } };
                 if (msg.action === 'SHOW_SEARCH') {
                     setShowSearchSheet(true);
                 }
@@ -167,6 +167,21 @@ export function SiteHeader({
                     setSearchQuery(msg.query);
                     setShowSearchSheet(true);
                 }
+                if (msg.action === 'broadcast') {
+                    const messageData = msg.data;
+                    if (!messageData) return;
+                    if (messageData.type == "task") {
+                        // 任务状态更新已在TaskListSheet中处理
+                        console.log('Task status updated:', messageData);
+                    }
+                    if (messageData.type == "message") {
+
+                    }
+                    if (messageData.type == "post") {
+
+                    }
+                }
+                
             }
         };
 
@@ -189,8 +204,7 @@ export function SiteHeader({
                             <BreadcrumbItem>
                                 <BreadcrumbLink
                                     href={`/${locale || '/en-US'}`}
-                                    className='font-bold text-primary hover:underline'
-                                >
+                                    className='font-bold text-primary hover:underline'>
                                     XEO OS
                                 </BreadcrumbLink>
                             </BreadcrumbItem>
@@ -221,14 +235,12 @@ export function SiteHeader({
                             variant='ghost'
                             size='icon'
                             onClick={handleSearchClick}
-                            className='h-8 w-8 ml-2'
-                        >
+                            className='h-8 w-8 ml-2'>
                             <Search className='h-4 w-4' />
                         </Button>
                     ) : (
                         <div
-                            className={`absolute left-1/2 transform -translate-x-1/2 transition-all duration-200 ${searchFocused ? 'z-[60]' : 'z-10'}`}
-                        >
+                            className={`absolute left-1/2 transform -translate-x-1/2 transition-all duration-200 ${searchFocused ? 'z-[60]' : 'z-10'}`}>
                             <div onClick={handleSearchClick} className='cursor-pointer'>
                                 <SearchForm
                                     // @ts-expect-error wtf
@@ -254,8 +266,7 @@ export function SiteHeader({
                                     onClick={() => {
                                         window.location.href = '/signup';
                                     }}
-                                    className='transition-transform transform hover:scale-105 active:scale-95'
-                                >
+                                    className='transition-transform transform hover:scale-105 active:scale-95'>
                                     <UserPlus className='h-4 w-4 mr-1' />
                                     {!isMobile &&
                                         lang(
@@ -279,8 +290,7 @@ export function SiteHeader({
                                     onClick={() => {
                                         window.location.href = '/signin';
                                     }}
-                                    className='transition-transform transform hover:scale-105 active:scale-95'
-                                >
+                                    className='transition-transform transform hover:scale-105 active:scale-95'>
                                     <LogIn className='h-4 w-4 mr-1' />
                                     {!isMobile &&
                                         lang(
@@ -452,24 +462,26 @@ export function SiteHeader({
                                                 locale,
                                             )}
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem>
-                                            <List className='mr-2 h-4 w-4' />
-                                            {lang(
-                                                {
-                                                    'en-US': 'Task Queue',
-                                                    'zh-CN': '任务队列',
-                                                    'zh-TW': '任務隊列',
-                                                    'es-ES': 'Cola de tareas',
-                                                    'fr-FR': "File d'attente",
-                                                    'ru-RU': 'Очередь задач',
-                                                    'ja-JP': 'タスクキュー',
-                                                    'de-DE': 'Aufgabenwarteschlange',
-                                                    'pt-BR': 'Fila de tarefas',
-                                                    'ko-KR': '작업 대기열',
-                                                },
-                                                locale,
-                                            )}
-                                        </DropdownMenuItem>
+                                        <TaskListSheet>
+                                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                                <List className='mr-2 h-4 w-4' />
+                                                {lang(
+                                                    {
+                                                        'en-US': 'Task Queue',
+                                                        'zh-CN': '任务队列',
+                                                        'zh-TW': '任務隊列',
+                                                        'es-ES': 'Cola de tareas',
+                                                        'fr-FR': "File d'attente",
+                                                        'ru-RU': 'Очередь задач',
+                                                        'ja-JP': 'タスクキュー',
+                                                        'de-DE': 'Aufgabenwarteschlange',
+                                                        'pt-BR': 'Fila de tarefas',
+                                                        'ko-KR': '작업 대기열',
+                                                    },
+                                                    locale,
+                                                )}
+                                            </DropdownMenuItem>
+                                        </TaskListSheet>
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem>
                                             <Settings className='mr-2 h-4 w-4' />
@@ -560,8 +572,7 @@ export function SiteHeader({
                                         <DropdownMenuItem
                                             onClick={() => {
                                                 window.location.href = '/signin';
-                                            }}
-                                        >
+                                            }}>
                                             <LogIn className='mr-2 h-4 w-4' />
                                             {lang(
                                                 {
@@ -582,8 +593,7 @@ export function SiteHeader({
                                         <DropdownMenuItem
                                             onClick={() => {
                                                 window.location.href = '/signup';
-                                            }}
-                                        >
+                                            }}>
                                             <UserPlus className='mr-2 h-4 w-4' />
                                             {lang(
                                                 {

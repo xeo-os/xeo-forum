@@ -144,32 +144,39 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
 
     // 处理Sheet关闭
     const handleSheetOpenChange = (isOpen: boolean) => {
-        if (!isOpen && (title.trim() || content.trim())) {
-            // 关闭时有内容，保存草稿并提示
-            saveDraft();
-            toast.success(
-                lang(
-                    {
-                        'zh-CN': '已将您的草稿保存在本地',
-                        'zh-TW': '已將您的草稿保存在本地',
-                        'en-US': 'Your draft has been saved locally',
-                        'es-ES': 'Su borrador ha sido guardado localmente',
-                        'fr-FR': 'Votre brouillon a été sauvegardé localement',
-                        'ru-RU': 'Ваш черновик был сохранен локально',
-                        'ja-JP': '下書きがローカルに保存されました',
-                        'de-DE': 'Ihr Entwurf wurde lokal gespeichert',
-                        'pt-BR': 'Seu rascunho foi salvo localmente',
-                        'ko-KR': '초안이 로컬에 저장되었습니다',
-                    },
-                    locale,
-                ),
-            );
+        // 管理滚动锁定状态
+        if (isOpen) {
+            document.body.setAttribute('data-scroll-locked', 'true');
+        } else {
+            document.body.removeAttribute('data-scroll-locked');
+            if (title.trim() || content.trim()) {
+                // 关闭时有内容，保存草稿并提示
+                saveDraft();
+                toast.success(
+                    lang(
+                        {
+                            'zh-CN': '已将您的草稿保存在本地',
+                            'zh-TW': '已將您的草稿保存在本地',
+                            'en-US': 'Your draft has been saved locally',
+                            'es-ES': 'Su borrador ha sido guardado localmente',
+                            'fr-FR': 'Votre brouillon a été sauvegardé localement',
+                            'ru-RU': 'Ваш черновик был сохранен локально',
+                            'ja-JP': '下書きがローカルに保存されました',
+                            'de-DE': 'Ihr Entwurf wurde lokal gespeichert',
+                            'pt-BR': 'Seu rascunho foi salvo localmente',
+                            'ko-KR': '초안이 로컬에 저장되었습니다',
+                        },
+                        locale,
+                    ),
+                );
+            }
         }
         setOpen(isOpen);
     };
 
     // 打开Sheet并加载草稿
     const openSheetWithDraft = () => {
+        document.body.setAttribute('data-scroll-locked', 'true');
         loadDraft();
         setOpen(true);
     };
@@ -486,7 +493,10 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
         }
 
         // 已登录，正常打开编辑器
-        if (!open) loadDraft();
+        if (!open) {
+            document.body.setAttribute('data-scroll-locked', 'true');
+            loadDraft();
+        }
         setOpen(true);
     };
 
@@ -498,7 +508,10 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
                     if (!token.get()) {
                         setLoginPromptOpen(true);
                     } else {
-                        if (!open) loadDraft();
+                        if (!open) {
+                            document.body.setAttribute('data-scroll-locked', 'true');
+                            loadDraft();
+                        }
                         setOpen(true);
                     }
                 },
@@ -515,7 +528,10 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
                     if (!token.get()) {
                         setLoginPromptOpen(true);
                     } else {
-                        if (!open) loadDraft();
+                        if (!open) {
+                            document.body.setAttribute('data-scroll-locked', 'true');
+                            loadDraft();
+                        }
                         setOpen(true);
                     }
                 }
@@ -527,6 +543,13 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
             unregisterCallback(handleBroadcastMessage);
         };
     }, [registerCallback, unregisterCallback, open, loadDraft]);
+
+    // 组件卸载时清理滚动锁定状态
+    useEffect(() => {
+        return () => {
+            document.body.removeAttribute('data-scroll-locked');
+        };
+    }, []);
 
     return (
         <>

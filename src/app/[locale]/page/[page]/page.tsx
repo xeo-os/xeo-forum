@@ -40,7 +40,6 @@ type Props = {
 type Post = {
   id: number;
   title: string;
-  origin: string;
   createdAt: Date;
   published: boolean;
   pin: boolean;
@@ -231,7 +230,23 @@ export default async function HomePage({ params }: Props) {
           not: null,
         },
       },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        createdAt: true,
+        published: true,
+        pin: true,
+        originLang: true,
+        titleDEDE: true,
+        titleENUS: true,
+        titleESES: true,
+        titleFRFR: true,
+        titleJAJP: true,
+        titleKOKR: true,
+        titlePTBR: true,
+        titleRURU: true,
+        titleZHCN: true,
+        titleZHTW: true,
         User: {
           select: {
             uid: true,
@@ -300,9 +315,11 @@ export default async function HomePage({ params }: Props) {
     totalLikes: Number(globalStatsResult[0].totalLikes),
   };
 
+  console.log(posts)
+
   const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE);
 
-  // 统计当前页面数据
+  // 统计当前页面数据 - 使用数组副本避免影响原数组
   const currentPageStats = {
     // 发帖最多的用户
     topPosters: posts.reduce(
@@ -334,13 +351,13 @@ export default async function HomePage({ params }: Props) {
         {} as Record<string, { topic: Post["topics"][0]; count: number }>,
       ),
 
-    // 点赞最多的帖子
-    topLikedPosts: posts
+    // 点赞最多的帖子 - 使用数组副本
+    topLikedPosts: [...posts]
       .sort((a, b) => b._count.likes - a._count.likes)
       .slice(0, 3),
 
-    // 回复最多的帖子
-    topRepliedPosts: posts
+    // 回复最多的帖子 - 使用数组副本
+    topRepliedPosts: [...posts]
       .sort((a, b) => b._count.Reply - a._count.Reply)
       .slice(0, 3),
 
@@ -736,7 +753,7 @@ export default async function HomePage({ params }: Props) {
                   "pt-BR":
                     "Atualizamos nossos Termos de Serviço e Política de Privacidade em 10 de junho de 2025.",
                   "ko-KR":
-                    "2025년 6월 10일에 서비스 약관과 개인정보 처리방침을 업데이트했습니다.",
+                    "2025년 6월 10일에 서비스 약관과 개인정보 처리방침을 업데이트했습니다。",
                 },
                 locale,
               )}{" "}
@@ -931,7 +948,7 @@ export default async function HomePage({ params }: Props) {
                         "pt-BR":
                           "Atualizamos nossos Termos de Serviço e Política de Privacidade em 10 de junho de 2025.",
                         "ko-KR":
-                          "2025년 6월 10일에 서비스 약관과 개인정보 처리방침을 업데이트했습니다.",
+                          "2025년 6월 10일에 서비스 약관과 개인정보 처리방침을 업데이트했습니다。",
                       },
                       locale,
                     )}{" "}
@@ -1598,16 +1615,16 @@ export default async function HomePage({ params }: Props) {
                   <Heart className="h-5 w-5" />
                   {lang(
                     {
-                      "zh-CN": "点赞最多帖子",
+                      "zh-CN": "本页点赞最多帖子",
                       "en-US": "Most Liked Posts",
-                      "zh-TW": "按讚最多貼文",
+                      "zh-TW": "本頁按讚最多貼文",
                       "es-ES": "Publicaciones más gustadas",
                       "fr-FR": "Messages les plus aimés",
                       "ru-RU": "Самые популярные сообщения",
-                      "ja-JP": "最もいいねされた投稿",
+                      "ja-JP": "最も人気の投稿",
                       "de-DE": "Beliebteste Beiträge",
                       "pt-BR": "Postagens mais curtidas",
-                      "ko-KR": "가장 좋아요 받은 게시물",
+                      "ko-KR": "가장 좋아요 많은 게시물",
                     },
                     locale,
                   )}
@@ -1659,16 +1676,16 @@ export default async function HomePage({ params }: Props) {
                   <MessageCircle className="h-5 w-5" />
                   {lang(
                     {
-                      "zh-CN": "回复最多帖子",
+                      "zh-CN": "本页回复最多帖子",
                       "en-US": "Most Replied Posts",
-                      "zh-TW": "回覆最多貼文",
+                      "zh-TW": "本頁回覆最多貼文",
                       "es-ES": "Publicaciones más respondidas",
                       "fr-FR": "Messages les plus commentés",
                       "ru-RU": "Самые обсуждаемые сообщения",
-                      "ja-JP": "最も返信された投稿",
-                      "de-DE": "Meistdiskutierte Beiträge",
+                      "ja-JP": "最も返信の多い投稿",
+                      "de-DE": "Meist diskutierte Beiträge",
                       "pt-BR": "Postagens mais respondidas",
-                      "ko-KR": "가장 많이 답글 받은 게시물",
+                      "ko-KR": "가장 답글 많은 게시물",
                     },
                     locale,
                   )}
@@ -1720,16 +1737,16 @@ export default async function HomePage({ params }: Props) {
                   <Calendar className="h-5 w-5" />
                   {lang(
                     {
-                      "zh-CN": "发帖时间分布",
-                      "en-US": "Post Time Distribution",
-                      "zh-TW": "發帖時間分佈",
-                      "es-ES": "Distribución de tiempo de publicación",
-                      "fr-FR": "Distribution du temps de publication",
-                      "ru-RU": "Распределение времени публикации",
+                      "zh-CN": "本页发帖时间分布",
+                      "en-US": "Posting Time Distribution",
+                      "zh-TW": "本頁發文時間分佈",
+                      "es-ES": "Distribución temporal de publicaciones",
+                      "fr-FR": "Distribution temporelle des messages",
+                      "ru-RU": "Временное распределение сообщений",
                       "ja-JP": "投稿時間の分布",
-                      "de-DE": "Verteilung der Beitragszeit",
-                      "pt-BR": "Distribuição do tempo de postagem",
-                      "ko-KR": "게시 시간 분포",
+                      "de-DE": "Zeitverteilung der Beiträge",
+                      "pt-BR": "Distribuição temporal das postagens",
+                      "ko-KR": "게시물 시간 분포",
                     },
                     locale,
                   )}

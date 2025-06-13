@@ -35,6 +35,7 @@ model User {
   notice          Notice[]
   post            Post[]
   reply           Reply[]
+  tasks           Task[]
 }
 
 model Post {
@@ -159,6 +160,8 @@ model Reply {
 model Task {
   id        String   @id @default(uuid())
   status    String   @default("PENDING") @db.VarChar(20)
+  user      User?     @relation(fields: [userUid], references: [uid])
+  userUid   Int?
   post      Post?    @relation(fields: [postId], references: [id])
   postId    Int?
   reply     Reply?   @relation(fields: [replyId], references: [id])
@@ -186,6 +189,7 @@ model FriendShip {
 model Notice {
   id        String   @id @default(uuid())
   userId    Int
+  isRead    Boolean  @default(false)
   content   String   @db.VarChar(255)
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [uid])

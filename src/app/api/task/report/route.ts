@@ -18,10 +18,13 @@ export async function POST(request: Request) {
 
     try {
         await broadcast({
-            content: `Task ${taskUuid} has been reported with status: ${status}`,
-            title: `Task Report: ${taskUuid}`,
-            link: `/task/${taskUuid}`,
-            locale: 'en-US',
+            type: "task",
+            content: {
+                uuid: taskUuid,
+                status: status,
+            },
+            title: "",
+            link: "",
         });
         return response(200, {
             message: 'Task report broadcasted successfully',

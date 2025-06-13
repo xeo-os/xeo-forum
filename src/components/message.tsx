@@ -5,12 +5,14 @@ import * as Ably from 'ably';
 import { toast } from 'sonner';
 import token from '@/utils/userToken';
 import lang from '@/lib/lang';
+import { useBroadcast } from '@/store/useBroadcast';
 
 interface MessageData {
     title: string;
     content: string;
     link: string;
     locale: string;
+    type?: string;
 }
 
 export default function Message() {
@@ -21,6 +23,7 @@ export default function Message() {
     const retryCountRef = useRef(0);
     const maxRetries = 5;
     const retryDelayRef = useRef(1000); // 初始重试延迟1秒
+    const { broadcast } = useBroadcast();
 
     const cleanup = useCallback(async () => {
         console.log('Cleanup called, ablyRef.current exists:', !!ablyRef.current);
@@ -41,7 +44,7 @@ export default function Message() {
             }
         }
     }, []);
-   
+
     const reconnect = useCallback(async () => {
         if (!mountedRef.current || retryCountRef.current >= maxRetries) {
             console.log(
@@ -214,9 +217,48 @@ export default function Message() {
 
                 // 首次连接失败时显示错误提示
                 if (retryCountRef.current === 0) {
-                    toast.error('消息服务连接失败，正在尝试重连...', {
-                        description: '实时消息功能可能暂时不可用',
-                    });
+                    toast.error(
+                        lang({
+                            'zh-CN': '消息服务连接失败，正在尝试重连...',
+                            'en-US':
+                                'Message service connection failed, attempting to reconnect...',
+                            'de-DE':
+                                'Nachrichtendienstverbindung fehlgeschlagen, versuche erneut zu verbinden...',
+                            'fr-FR':
+                                'Échec de la connexion au service de messagerie, tentative de reconnexion...',
+                            'es-ES':
+                                'Error de conexión al servicio de mensajería, intentando reconectar...',
+                            'ru-RU':
+                                'Ошибка подключения к службе сообщений, попытка переподключения...',
+                            'ja-JP':
+                                'メッセージサービスの接続に失敗しました。再接続を試みています...',
+                            'pt-BR':
+                                'Falha na conexão com o serviço de mensagens, tentando reconectar...',
+                            'ko-KR': '메시지 서비스 연결 실패, 재연결 시도 중...',
+                            'zh-TW': '消息服務連接失敗，正在嘗試重新連接...',
+                        }),
+                        {
+                            description: lang({
+                                'zh-CN': '实时消息功能可能暂时不可用',
+                                'en-US': 'Real-time messaging may be temporarily unavailable',
+                                'de-DE':
+                                    'Echtzeit-Nachrichtenfunktion könnte vorübergehend nicht verfügbar sein',
+                                'fr-FR':
+                                    'La fonction de messagerie en temps réel peut être temporairement indisponible',
+                                'es-ES':
+                                    'La función de mensajería en tiempo real puede estar temporalmente no disponible',
+                                'ru-RU':
+                                    'Функция обмена сообщениями в реальном времени может быть временно недоступна',
+                                'ja-JP':
+                                    'リアルタイムメッセージング機能は一時的に利用できない可能性があります',
+                                'pt-BR':
+                                    'A funcionalidade de mensagens em tempo real pode estar temporariamente indisponível',
+                                'ko-KR':
+                                    '실시간 메시징 기능이 일시적으로 사용할 수 없을 수 있습니다',
+                                'zh-TW': '即時消息功能可能暫時無法使用',
+                            }),
+                        },
+                    );
                 }
 
                 // 连接失败时尝试重连
@@ -256,9 +298,42 @@ export default function Message() {
 
                             // 初次连接超时时显示错误提示
                             if (retryCountRef.current === 0) {
-                                toast.error('消息服务连接超时，正在重试...', {
-                                    description: '请检查网络连接',
-                                });
+                                toast.error(
+                                    lang({
+                                        'zh-CN': '消息服务连接超时，正在重试...',
+                                        'en-US':
+                                            'Message service connection timed out, retrying...',
+                                        'de-DE':
+                                            'Nachrichtendienstverbindung zeitüberschreitung, versuche erneut zu verbinden...',
+                                        'fr-FR':
+                                            'Échec de la connexion au service de messagerie, tentative de reconnexion...',
+                                        'es-ES':
+                                            'Error de conexión al servicio de mensajería, intentando reconectar...',
+                                        'ru-RU':
+                                            'Ошибка подключения к службе сообщений, попытка переподключения...',
+                                        'ja-JP':
+                                            'メッセージサービスの接続がタイムアウトしました。再接続を試みています...',
+                                        'pt-BR':
+                                            'Falha na conexão com o serviço de mensagens, tentando reconectar...',
+                                        'ko-KR': '메시지 서비스 연결 시간 초과, 재연결 시도 중...',
+                                        'zh-TW': '消息服務連接超時，正在重試...',
+                                    }),
+                                    {
+                                        description: lang({
+                                            'zh-CN': '请检查网络连接',
+                                            'en-US': 'Please check your network connection',
+                                            'de-DE': 'Bitte überprüfen Sie Ihre Netzwerkverbindung',
+                                            'fr-FR': 'Veuillez vérifier votre connexion réseau',
+                                            'es-ES': 'Por favor, verifica tu conexión de red',
+                                            'ru-RU':
+                                                'Пожалуйста, проверьте ваше сетевое подключение',
+                                            'ja-JP': 'ネットワーク接続を確認してください',
+                                            'pt-BR': 'Por favor, verifique sua conexão de rede',
+                                            'ko-KR': '네트워크 연결을 확인하세요',
+                                            'zh-TW': '請檢查您的網絡連接',
+                                        }),
+                                    },
+                                );
                             }
 
                             resolve(); // 不阻塞后续设置
@@ -269,9 +344,40 @@ export default function Message() {
 
                             // 连接成功后，如果之前有重试，显示成功提示
                             if (retryCountRef.current > 0) {
-                                toast.success('消息服务已重新连接', {
-                                    description: '实时消息功能已恢复',
-                                });
+                                toast.success(
+                                    lang({
+                                        'zh-CN': '消息服务已重新连接',
+                                        'en-US': 'Message service reconnected successfully',
+                                        'de-DE': 'Nachrichtendienst erfolgreich wieder verbunden',
+                                        'fr-FR': 'Service de messagerie reconnecté avec succès',
+                                        'es-ES': 'Servicio de mensajería reconectado con éxito',
+                                        'ru-RU': 'Служба сообщений успешно переподключена',
+                                        'ja-JP': 'メッセージサービスが再接続されました',
+                                        'pt-BR': 'Serviço de mensagens reconectado com sucesso',
+                                        'ko-KR': '메시지 서비스가 성공적으로 재연결되었습니다',
+                                        'zh-TW': '消息服務已成功重新連接',
+                                    }),
+                                    {
+                                        description: lang({
+                                            'zh-CN': '实时消息功能已恢复',
+                                            'en-US': 'Real-time messaging functionality restored',
+                                            'de-DE':
+                                                'Echtzeit-Nachrichtenfunktion wiederhergestellt',
+                                            'fr-FR':
+                                                'Fonctionnalité de messagerie en temps réel restaurée',
+                                            'es-ES':
+                                                'Funcionalidad de mensajería en tiempo real restaurada',
+                                            'ru-RU':
+                                                'Функция обмена сообщениями в реальном времени восстановлена',
+                                            'ja-JP':
+                                                'リアルタイムメッセージング機能が復元されました',
+                                            'pt-BR':
+                                                'Funcionalidade de mensagens em tempo real restaurada',
+                                            'ko-KR': '실시간 메시징 기능이 복원되었습니다',
+                                            'zh-TW': '即時消息功能已恢復',
+                                        }),
+                                    },
+                                );
                             }
 
                             clearTimeout(timeout);
@@ -294,9 +400,34 @@ export default function Message() {
 
                 // 初次连接失败时显示错误提示
                 if (retryCountRef.current === 0) {
-                    toast.error('消息服务连接失败', {
-                        description: '正在尝试重新连接...',
-                    });
+                    toast.error(
+                        lang({
+                            'zh-CN': '消息服务连接失败',
+                            'en-US': 'Message service connection failed',
+                            'de-DE': 'Nachrichtendienstverbindung fehlgeschlagen',
+                            'fr-FR': 'Échec de la connexion au service de messagerie',
+                            'es-ES': 'Error de conexión al servicio de mensajería',
+                            'ru-RU': 'Ошибка подключения к службе сообщений',
+                            'ja-JP': 'メッセージサービスの接続に失敗しました',
+                            'pt-BR': 'Falha na conexão com o serviço de mensagens',
+                            'ko-KR': '메시지 서비스 연결 실패',
+                            'zh-TW': '消息服務連接失敗',
+                        }),
+                        {
+                            description: lang({
+                                'zh-CN': '正在尝试重新连接...',
+                                'en-US': 'Attempting to reconnect...',
+                                'de-DE': 'Versuche erneut zu verbinden...',
+                                'fr-FR': 'Tentative de reconnexion...',
+                                'es-ES': 'Intentando reconectar...',
+                                'ru-RU': 'Попытка переподключения...',
+                                'ja-JP': '再接続を試みています...',
+                                'pt-BR': 'Tentando reconectar...',
+                                'ko-KR': '재연결 시도 중...',
+                                'zh-TW': '正在嘗試重新連接...',
+                            }),
+                        },
+                    );
                 }
 
                 if (mountedRef.current) {
@@ -320,7 +451,11 @@ export default function Message() {
                 try {
                     const messageData = message.data.message as MessageData;
                     if (messageData?.content) {
-                        toast(messageData.content);
+                        broadcast({
+                            action: 'broadcast',
+                            data: messageData.content,
+                            type: messageData.type,
+                        });
                     }
                 } catch (error) {
                     console.error('Error processing broadcast message:', error);

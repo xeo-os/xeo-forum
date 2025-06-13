@@ -193,16 +193,47 @@ const getPostWithReplies = cache(async (postId: number, page: number) => {
                         _count: {
                             select: {
                                 likes: true,
+                                replies: true,
+                            },
+                        },
+                        // 递归获取子回复的子回复
+                        replies: {
+                            include: {
+                                user: {
+                                    select: {
+                                        uid: true,
+                                        nickname: true,
+                                        username: true,
+                                        profileEmoji: true,
+                                        avatar: {
+                                            select: {
+                                                id: true,
+                                                emoji: true,
+                                                background: true,
+                                            },
+                                            take: 1,
+                                        },
+                                    },
+                                },
+                                _count: {
+                                    select: {
+                                        likes: true,
+                                        replies: true,
+                                    },
+                                },
+                            },
+                            orderBy: {
+                                updatedAt: 'asc',
                             },
                         },
                     },
                     orderBy: {
-                        createdAt: 'asc',
+                        updatedAt: 'asc',
                     },
                 },
             },
             orderBy: {
-                createdAt: 'desc',
+                updatedAt: 'desc',
             },
             skip,
             take: REPLIES_PER_PAGE,
@@ -323,6 +354,12 @@ export default async function PostDetailPage({ params }: Props) {
             ...subReply,
             content: getLocalizedContent(subReply, locale),
             formattedTime: formatTime(new Date(subReply.createdAt)),
+            // 处理子回复的子回复
+            replies: subReply.replies?.map((subSubReply) => ({
+                ...subSubReply,
+                content: getLocalizedContent(subSubReply, locale),
+                formattedTime: formatTime(new Date(subSubReply.createdAt)),
+            })) || [],
         })),
     }));
 

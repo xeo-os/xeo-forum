@@ -2,6 +2,7 @@ import lang from '@/lib/lang';
 import * as Ably from 'ably';
 import { Resend } from 'resend';
 type Message = {
+    type: 'message';
     title: string;
     content: string;
     link: string;
