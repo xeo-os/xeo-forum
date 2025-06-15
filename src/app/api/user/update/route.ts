@@ -39,7 +39,6 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const token = authHeader.split(' ')[1];
 
         // 验证用户身份
         const user = await auth(request);
@@ -73,6 +72,7 @@ export async function POST(request: NextRequest) {
             gender,
             profileEmoji,
             avatar,
+            emailNotice,
             lang = 'en-US'
         } = body;
 
@@ -201,6 +201,27 @@ export async function POST(request: NextRequest) {
             });
         }
 
+        // 验证邮箱通知设置
+        if (emailNotice !== undefined && typeof emailNotice !== 'boolean') {
+            return response(400, {
+                message: langs(
+                    {
+                        'zh-CN': '邮箱通知设置格式错误',
+                        'zh-TW': '郵箱通知設置格式錯誤',
+                        'en-US': 'Invalid email notification setting format',
+                        'es-ES': 'Formato de configuración de notificación por email inválido',
+                        'fr-FR': 'Format de paramètre de notification par email invalide',
+                        'ru-RU': 'Неверный формат настройки уведомлений по email',
+                        'ja-JP': 'メール通知設定の形式が無効です',
+                        'de-DE': 'Ungültiges E-Mail-Benachrichtigungseinstellungsformat',
+                        'pt-BR': 'Formato de configuração de notificação por email inválido',
+                        'ko-KR': '이메일 알림 설정 형식이 잘못되었습니다',
+                    },
+                    lang,
+                ),
+            });
+        }
+
         await limitControl.update(request);
 
         // 准备更新数据
@@ -212,6 +233,7 @@ export async function POST(request: NextRequest) {
             timearea: timearea || null,
             gender: gender || 'UNSET',
             profileEmoji: profileEmoji || null,
+            emailNotice: emailNotice !== undefined ? emailNotice : true,
             updatedAt: new Date(),
         };
 

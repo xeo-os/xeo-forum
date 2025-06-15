@@ -503,24 +503,26 @@ export function SiteHeader({
                                             </DropdownMenuItem>
                                         </TaskListSheet>
                                         <DropdownMenuSeparator />
-                                        <DropdownMenuItem>
-                                            <Settings className='mr-2 h-4 w-4' />
-                                            {lang(
-                                                {
-                                                    'en-US': 'Settings',
-                                                    'zh-CN': '设置',
-                                                    'zh-TW': '設置',
-                                                    'es-ES': 'Configuración',
-                                                    'fr-FR': 'Paramètres',
-                                                    'ru-RU': 'Настройки',
-                                                    'ja-JP': '設定',
-                                                    'de-DE': 'Einstellungen',
-                                                    'pt-BR': 'Configurações',
-                                                    'ko-KR': '설정',
-                                                },
-                                                locale,
-                                            )}
-                                        </DropdownMenuItem>
+                                        <Link href={`/${locale || 'en-US'}/setting`}>
+                                            <DropdownMenuItem>
+                                                <Settings className='mr-2 h-4 w-4' />
+                                                {lang(
+                                                    {
+                                                        'en-US': 'Settings',
+                                                        'zh-CN': '设置',
+                                                        'zh-TW': '設置',
+                                                        'es-ES': 'Configuración',
+                                                        'fr-FR': 'Paramètres',
+                                                        'ru-RU': 'Настройки',
+                                                        'ja-JP': '設定',
+                                                        'de-DE': 'Einstellungen',
+                                                        'pt-BR': 'Configurações',
+                                                        'ko-KR': '설정',
+                                                    },
+                                                    locale,
+                                                )}
+                                            </DropdownMenuItem>
+                                        </Link>
                                         <DropdownMenuItem onClick={() => setShowLogoutDialog(true)}>
                                             <LogOut className='mr-2 h-4 w-4' />
                                             {lang(

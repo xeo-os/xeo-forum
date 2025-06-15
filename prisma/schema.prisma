@@ -13,6 +13,7 @@ model User {
   uuid            String       @default(uuid())
   email           String       @unique
   emailVerified   Boolean      @default(false)
+  emailNotice     Boolean      @default(true)
   username        String       @unique @db.VarChar(20)
   nickname        String       @db.VarChar(50)
   bio             String?      @db.VarChar(255)
@@ -160,7 +161,7 @@ model Reply {
 model Task {
   id        String   @id @default(uuid())
   status    String   @default("PENDING") @db.VarChar(20)
-  user      User?     @relation(fields: [userUid], references: [uid])
+  user      User?    @relation(fields: [userUid], references: [uid])
   userUid   Int?
   post      Post?    @relation(fields: [postId], references: [id])
   postId    Int?

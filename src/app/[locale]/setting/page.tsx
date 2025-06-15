@@ -8,12 +8,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { Settings, Save, Loader2, Palette } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Settings, Save, Loader2, Palette, Mail, Smile } from 'lucide-react';
 import lang from '@/lib/lang';
 import token from '@/utils/userToken';
 import "@/app/globals.css";
+import { EmojiPicker } from '@/components/emoji-picker';
 
 // 头像背景预设
 const backgroundPresets = [
@@ -61,6 +63,7 @@ type UserData = {
     country: string | null;
     timearea: string | null;
     profileEmoji: string | null;
+    emailNotice: boolean;
     avatar: {
         emoji: string;
         background: string;
@@ -72,7 +75,6 @@ export default function SettingPage(props: { params: Promise<{ locale: string }>
     const { locale } = params;
     const router = useRouter();
     
-    const [userData, setUserData] = useState<UserData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     
@@ -84,6 +86,7 @@ export default function SettingPage(props: { params: Promise<{ locale: string }>
         country: '',
         timearea: '',
         profileEmoji: '',
+        emailNotice: true,
         avatar: {
             emoji: '😀',
             background: backgroundPresets[0],
@@ -99,10 +102,11 @@ export default function SettingPage(props: { params: Promise<{ locale: string }>
         color2: '#feb47b',
     });
 
-    // Emoji验证函数
+    // 改进的Emoji验证函数
     const isEmoji = (str: string) => {
-        const emojiRegex = /^[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]+$/u;
-        return emojiRegex.test(str);
+        const emojiRegex = /([\u2700-\u27BF]|[\u1F600-\u1F64F]|[\u1F300-\u1F5FF]|[\u1F680-\u1F6FF]|[\u1F1E0-\u1F1FF])/g;
+        const matches = str.match(emojiRegex);
+        return matches && matches.join('') === str;
     };
 
     const texts = {
@@ -382,6 +386,30 @@ export default function SettingPage(props: { params: Promise<{ locale: string }>
             'pt-BR': 'Salvando...',
             'ko-KR': '저장 중...',
         }, locale),
+        emailNotification: lang({
+            'zh-CN': '邮箱通知',
+            'en-US': 'Email Notification',
+            'zh-TW': '郵箱通知',
+            'es-ES': 'Notificación por Email',
+            'fr-FR': 'Notification par Email',
+            'ru-RU': 'Уведомления по Email',
+            'ja-JP': 'メール通知',
+            'de-DE': 'E-Mail-Benachrichtigung',
+            'pt-BR': 'Notificação por Email',
+            'ko-KR': '이메일 알림',
+        }, locale),
+        emailNotificationDesc: lang({
+            'zh-CN': '接收重要更新和通知到您的邮箱',
+            'en-US': 'Receive important updates and notifications to your email',
+            'zh-TW': '接收重要更新和通知到您的郵箱',
+            'es-ES': 'Recibir actualizaciones importantes y notificaciones en su email',
+            'fr-FR': 'Recevoir des mises à jour importantes et des notifications par email',
+            'ru-RU': 'Получать важные обновления и уведомления на вашу почту',
+            'ja-JP': '重要なアップデートと通知をメールで受信',
+            'de-DE': 'Wichtige Updates und Benachrichtigungen per E-Mail erhalten',
+            'pt-BR': 'Receber atualizações importantes e notificações no seu email',
+            'ko-KR': '중요한 업데이트와 알림을 이메일로 받기',
+        }, locale),
     };
 
     // 解析CSS渐变字符串为渐变参数
@@ -453,7 +481,6 @@ export default function SettingPage(props: { params: Promise<{ locale: string }>
                 return;
             }
 
-            setUserData(userInfo as UserData);
             const avatarBackground = userInfo.avatar?.background || backgroundPresets[0];
             
             setFormData({
@@ -463,6 +490,7 @@ export default function SettingPage(props: { params: Promise<{ locale: string }>
                 country: userInfo.country || '',
                 timearea: userInfo.timearea || '',
                 profileEmoji: userInfo.profileEmoji || '',
+                emailNotice: userInfo.emailNotice !== undefined ? userInfo.emailNotice : true,
                 avatar: {
                     emoji: userInfo.avatar?.emoji || '😀',
                     background: avatarBackground,
@@ -518,13 +546,24 @@ export default function SettingPage(props: { params: Promise<{ locale: string }>
         }
     };
 
-    // 处理Profile Emoji输入
+    // 处理Profile Emoji输入 - 优化toast提示
     const handleProfileEmojiChange = (value: string) => {
         if (value === '' || isEmoji(value)) {
             setFormData(prev => ({ ...prev, profileEmoji: value }));
         } else {
-            toast.error('只能输入表情符号');
+            // 减少toast频率，只在用户停止输入时提示
+            const timeoutId = setTimeout(() => {
+                toast.error(texts.onlyEmojiAllowed);
+            }, 500);
+            
+            // 清理定时器以避免重复提示
+            return () => clearTimeout(timeoutId);
         }
+    };
+
+    // 从emoji picker选择Profile Emoji
+    const handleProfileEmojiSelect = (emoji: string) => {
+        setFormData(prev => ({ ...prev, profileEmoji: prev.profileEmoji + emoji }));
     };
 
     // 选择背景
@@ -547,34 +586,15 @@ export default function SettingPage(props: { params: Promise<{ locale: string }>
         }));
     };
 
-    // 添加自定义表情符号
+    // 添加自定义表情符号 - 优化提示
     const handleAddCustomEmoji = () => {
         if (customEmoji && isEmoji(customEmoji)) {
             handleEmojiSelect(customEmoji);
             setCustomEmoji('');
-        } else {
+            toast.success('表情符号已添加');
+        } else if (customEmoji) {
             toast.error('请输入有效的表情符号');
         }
-    };
-
-    // 生成实时渐变背景
-    const generateRealtimeGradient = () => {
-        const { type, angle, color1, color2 } = gradientCreator;
-        let gradient = '';
-        
-        switch (type) {
-            case 'linear':
-                gradient = `linear-gradient(${angle}deg, ${color1} 0%, ${color2} 100%)`;
-                break;
-            case 'radial':
-                gradient = `radial-gradient(circle, ${color1} 0%, ${color2} 100%)`;
-                break;
-            case 'conic':
-                gradient = `conic-gradient(from ${angle}deg, ${color1} 0%, ${color2} 100%)`;
-                break;
-        }
-        
-        return gradient;
     };
 
     // 更新渐变创建器并实时同步到头像
@@ -676,14 +696,41 @@ export default function SettingPage(props: { params: Promise<{ locale: string }>
 
                     <div className="space-y-2">
                         <Label htmlFor="profileEmoji">{texts.profileEmoji}</Label>
-                        <Input
-                            id="profileEmoji"
-                            value={formData.profileEmoji}
-                            onChange={(e) => handleProfileEmojiChange(e.target.value)}
-                            maxLength={30}
-                            placeholder="🌟 ✨ 🎯"
-                        />
+                        <div className="flex gap-2">
+                            <Input
+                                id="profileEmoji"
+                                value={formData.profileEmoji}
+                                onChange={(e) => handleProfileEmojiChange(e.target.value)}
+                                maxLength={30}
+                                placeholder="🌟 ✨ 🎯"
+                                className="flex-1"
+                            />
+                            <EmojiPicker
+                                onEmojiSelect={handleProfileEmojiSelect}
+                                locale={locale}
+                            />
+                        </div>
                         <p className="text-sm text-muted-foreground">{texts.onlyEmojiAllowed}</p>
+                    </div>
+
+                    {/* 邮箱通知设置 */}
+                    <div className="border-t pt-6">
+                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                            <Mail className="h-5 w-5" />
+                            {texts.emailNotification}
+                        </h3>
+                        
+                        <div className="flex items-center justify-between p-4 border rounded-lg">
+                            <div className="space-y-1">
+                                <Label className="text-base font-medium">{texts.emailNotification}</Label>
+                                <p className="text-sm text-muted-foreground">{texts.emailNotificationDesc}</p>
+                            </div>
+                            <Switch
+                                checked={formData.emailNotice}
+                                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, emailNotice: checked }))
+                                }
+                            />
+                        </div>
                     </div>
 
                     {/* 头像设置 */}
@@ -716,7 +763,30 @@ export default function SettingPage(props: { params: Promise<{ locale: string }>
 
                         {/* 表情符号选择 */}
                         <div className="space-y-4 mb-6">
-                            <Label>{texts.selectEmoji}</Label>
+                            <div className="flex items-center justify-between">
+                                <Label>{texts.selectEmoji}</Label>
+                                <EmojiPicker
+                                    onEmojiSelect={handleEmojiSelect}
+                                    locale={locale}
+                                    trigger={
+                                        <Button variant="outline" size="sm">
+                                            <Smile className="h-4 w-4 mr-2" />
+                                            {lang({
+                                                'zh-CN': '打开表情面板',
+                                                'en-US': 'Open Emoji Panel',
+                                                'zh-TW': '打開表情面板',
+                                                'es-ES': 'Abrir Panel de Emojis',
+                                                'fr-FR': 'Ouvrir le Panel d\'Emojis',
+                                                'ru-RU': 'Открыть Панель Эмодзи',
+                                                'ja-JP': '絵文字パネルを開く',
+                                                'de-DE': 'Emoji-Panel öffnen',
+                                                'pt-BR': 'Abrir Painel de Emojis',
+                                                'ko-KR': '이모지 패널 열기',
+                                            }, locale)}
+                                        </Button>
+                                    }
+                                />
+                            </div>
                             <div className="grid grid-cols-10 gap-2 p-4 border rounded-lg max-h-32 overflow-y-auto">
                                 {commonEmojis.map((emoji, index) => (
                                     <button
@@ -739,6 +809,7 @@ export default function SettingPage(props: { params: Promise<{ locale: string }>
                                     onChange={(e) => setCustomEmoji(e.target.value)}
                                     placeholder={texts.customEmoji}
                                     maxLength={2}
+                                    className="flex-1"
                                 />
                                 <Button
                                     type="button"
@@ -747,6 +818,10 @@ export default function SettingPage(props: { params: Promise<{ locale: string }>
                                 >
                                     {texts.use}
                                 </Button>
+                                <EmojiPicker
+                                    onEmojiSelect={(emoji) => setCustomEmoji(emoji)}
+                                    locale={locale}
+                                />
                             </div>
                         </div>
 

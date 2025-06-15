@@ -37,6 +37,11 @@ const token = {
               username: string;
               userExp: number;
               uid: number;
+              bio: string;
+              birth: string;
+              country: string;
+              timearea: string;
+              profileEmoji: string;
               avatar: {
                   emoji: string;
                   background: string;
@@ -54,6 +59,11 @@ const token = {
                 username: string;
                 userExp: number;
                 uid: number;
+                bio: string;
+                birth: string;
+                country: string;
+                timearea: string;
+                profileEmoji: string;
                 avatar: {
                     emoji: string;
                     background: string;
