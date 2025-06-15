@@ -69,6 +69,7 @@ async function generateAblyToken(clientId: string) {
     try {
         console.log('Requesting Ably token for client:', clientId);
         const ably = new Ably.Rest({ key: process.env.ABLY_API_KEY || '' });
+
         const channel = 'user-' + clientId;
 
         // 设置正确的TTL (毫秒)
@@ -78,7 +79,7 @@ async function generateAblyToken(clientId: string) {
             clientId: clientId,
             ttl: ttlMs, // 使用毫秒
             capability: {
-                broadcast: ['subscribe'],
+                broadcast: ['subscribe','presence'],
                 [channel]: ['subscribe'],
             },
         });

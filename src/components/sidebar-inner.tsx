@@ -31,11 +31,35 @@ export function SidebarInner({
         items?: { title: string; url: string; icon: string; name: string }[];
     }[];
 }) {
-    // 初始化所有话题为展开状态
+    // 初始化话题展开状态
     const [openTopics, setOpenTopics] = useState<Set<string>>(() => {
-        const topics = [''];
-        return new Set(topics);
+        // 如果是服务端渲染，返回空集合
+        if (typeof window === 'undefined') {
+            return new Set<string>();
+        }
+
+        const stored = localStorage.getItem('sidebar-open-topics');
+        if (stored) {
+            // 如果localStorage中有数据，使用保存的状态
+            try {
+                const parsed = JSON.parse(stored);
+                return new Set(parsed);
+            } catch {
+                // 解析失败，返回空集合
+                return new Set<string>();
+            }
+        }
+
+        // 第一次访问，默认全部展开
+        const allTopicTitles = new Set<string>();
+        topics.forEach((topic) => {
+            allTopicTitles.add(topic.title);
+        });
+        return allTopicTitles;
     });
+
+    // 记录是否已经初始化过localStorage
+    const [hasInitialized, setHasInitialized] = useState(false);
 
     const { registerCallback, unregisterCallback } = useBroadcast();
 
@@ -63,13 +87,17 @@ export function SidebarInner({
         const handleMessage = (message: unknown) => {
             const typedMessage = message as { action: string };
             if (typedMessage.action == 'loadingComplete') {
-                // 页面初始化完成，展开所有话题
+                // 页面初始化完成后，如果localStorage中没有数据，则展开所有话题
                 setTimeout(() => {
-                    const allTopicTitles = new Set<string>();
-                    topics.forEach((topic) => {
-                        allTopicTitles.add(topic.title);
-                    });
-                    setOpenTopics(allTopicTitles);
+                    const stored = localStorage.getItem('sidebar-open-topics');
+                    if (!stored && !hasInitialized) {
+                        const allTopicTitles = new Set<string>();
+                        topics.forEach((topic) => {
+                            allTopicTitles.add(topic.title);
+                        });
+                        setOpenTopics(allTopicTitles);
+                        setHasInitialized(true);
+                    }
                 }, 1000);
             }
         };
@@ -77,7 +105,14 @@ export function SidebarInner({
         return () => {
             unregisterCallback(handleMessage);
         };
-    }, [registerCallback, unregisterCallback]);
+    }, [registerCallback, unregisterCallback, topics, hasInitialized]);
+
+    // 保存状态到localStorage
+    const saveToLocalStorage = (newOpenTopics: Set<string>) => {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('sidebar-open-topics', JSON.stringify(Array.from(newOpenTopics)));
+        }
+    };
 
     const toggleTopic = (title: string) => {
         const newOpenTopics = new Set(openTopics);
@@ -87,6 +122,8 @@ export function SidebarInner({
             newOpenTopics.add(title);
         }
         setOpenTopics(newOpenTopics);
+        // 保存到localStorage
+        saveToLocalStorage(newOpenTopics);
     };
 
     const mainItems = [
@@ -131,21 +168,21 @@ export function SidebarInner({
         {
             title: lang(
                 {
-                    'zh-CN': '我的收藏',
-                    'zh-TW': '我的收藏',
-                    'en-US': 'My Favorites',
-                    'es-ES': 'Mis Favoritos',
-                    'fr-FR': 'Mes Favoris',
-                    'ru-RU': 'Мои Избранные',
-                    'ja-JP': 'お気に入り',
-                    'de-DE': 'Meine Favoriten',
-                    'pt-BR': 'Meus Favoritos',
-                    'ko-KR': '내 즐겨찾기',
+                    'zh-CN': '排行榜',
+                    'zh-TW': '排行榜',
+                    'en-US': 'Leaderboard',
+                    'es-ES': 'Tabla de Clasificación',
+                    'fr-FR': 'Classement',
+                    'ru-RU': 'Таблица Лидеров',
+                    'ja-JP': 'ランキング',
+                    'de-DE': 'Rangliste',
+                    'pt-BR': 'Classificação',
+                    'ko-KR': '리더보드',
                 },
                 locale,
             ),
-            url: '#',
-            icon: emojiIcon('⭐'),
+            url: '/' + locale + '/leaderboard',
+            icon: emojiIcon('🏆'),
         },
     ];
 

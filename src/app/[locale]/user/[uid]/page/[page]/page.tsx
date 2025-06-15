@@ -2,7 +2,7 @@ import prisma from '@/app/api/_utils/prisma';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { CalendarDays, MapPin, Users, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CalendarDays, MapPin, Users, Clock, ChevronLeft, ChevronRight, FileText, MessageSquare } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { TimelineCard } from '@/components/timeline-card';
 import { Button } from '@/components/ui/button';
@@ -536,6 +536,51 @@ export default async function UserPage({ params,}: Props) {
             },
             locale,
         ),
+        allActivities: lang(
+            {
+                'zh-CN': '全部活动',
+                'en-US': 'All Activities',
+                'ja-JP': '全てのアクティビティ',
+                'ko-KR': '모든 활동',
+                'fr-FR': 'Toutes les activités',
+                'es-ES': 'Todas las actividades',
+                'de-DE': 'Alle Aktivitäten',
+                'pt-BR': 'Todas as atividades',
+                'ru-RU': 'Вся активность',
+                'zh-TW': '全部活動',
+            },
+            locale,
+        ),
+        postsOnly: lang(
+            {
+                'zh-CN': '仅帖子',
+                'en-US': 'Posts Only',
+                'ja-JP': '投稿のみ',
+                'ko-KR': '게시물만',
+                'fr-FR': 'Publications uniquement',
+                'es-ES': 'Solo publicaciones',
+                'de-DE': 'Nur Beiträge',
+                'pt-BR': 'Apenas postagens',
+                'ru-RU': 'Только посты',
+                'zh-TW': '僅帖子',
+            },
+            locale,
+        ),
+        repliesOnly: lang(
+            {
+                'zh-CN': '仅回复',
+                'en-US': 'Replies Only',
+                'ja-JP': '返信のみ',
+                'ko-KR': '답글만',
+                'fr-FR': 'Réponses uniquement',
+                'es-ES': 'Solo respuestas',
+                'de-DE': 'Nur Antworten',
+                'pt-BR': 'Apenas respostas',
+                'ru-RU': 'Только ответы',
+                'zh-TW': '僅回復',
+            },
+            locale,
+        ),
         noActivity: lang(
             {
                 'zh-CN': '暂无活动记录',
@@ -696,7 +741,23 @@ export default async function UserPage({ params,}: Props) {
             {/* 活动时间线 */}
             <Card>
                 <CardHeader>
-                    <CardTitle>{texts.timeline}</CardTitle>
+                    <div className="flex items-center justify-between">
+                        <CardTitle>{texts.timeline}</CardTitle>
+                        <div className="flex gap-2">
+                            <Button variant="outline" size="sm" asChild>
+                                <Link href={`/${locale}/user/${params.uid}/post/page/1`}>
+                                    <FileText className="h-4 w-4 mr-1" />
+                                    {texts.postsOnly} ({user._count.post})
+                                </Link>
+                            </Button>
+                            <Button variant="outline" size="sm" asChild>
+                                <Link href={`/${locale}/user/${params.uid}/reply/page/1`}>
+                                    <MessageSquare className="h-4 w-4 mr-1" />
+                                    {texts.repliesOnly} ({user._count.reply})
+                                </Link>
+                            </Button>
+                        </div>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     {timelineItems.length === 0 ? (

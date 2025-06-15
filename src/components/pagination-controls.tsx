@@ -12,11 +12,18 @@ type Props = {
     currentPage: number;
     totalPages: number;
     basePath: string;
+    onPageChange?: (page: number) => void;
 };
 
-export function PaginationControls({ currentPage, totalPages, basePath }: Props) {
+export function PaginationControls({ currentPage, totalPages, basePath, onPageChange }: Props) {
     const generatePageUrl = (page: number) => {
         return `${basePath}/page/${page}`;
+    };
+
+    const handlePageClick = (page: number) => {
+        if (onPageChange) {
+            onPageChange(page);
+        }
     };
 
     const getVisiblePages = () => {
@@ -59,7 +66,10 @@ export function PaginationControls({ currentPage, totalPages, basePath }: Props)
             <PaginationContent>
                 {currentPage > 1 && (
                     <PaginationItem>
-                        <PaginationPrevious href={generatePageUrl(currentPage - 1)} />
+                        <PaginationPrevious
+                            href={onPageChange ? undefined : generatePageUrl(currentPage - 1)}
+                            onClick={onPageChange ? () => handlePageClick(currentPage - 1) : undefined}
+                        />
                     </PaginationItem>
                 )}
 
@@ -69,8 +79,9 @@ export function PaginationControls({ currentPage, totalPages, basePath }: Props)
                             <PaginationEllipsis />
                         ) : (
                             <PaginationLink
-                                href={generatePageUrl(page as number)}
+                                href={onPageChange ? undefined : generatePageUrl(page as number)}
                                 isActive={page === currentPage}
+                                onClick={onPageChange ? () => handlePageClick(page as number) : undefined}
                             >
                                 {page}
                             </PaginationLink>
@@ -80,7 +91,10 @@ export function PaginationControls({ currentPage, totalPages, basePath }: Props)
 
                 {currentPage < totalPages && (
                     <PaginationItem>
-                        <PaginationNext href={generatePageUrl(currentPage + 1)} />
+                        <PaginationNext
+                            href={onPageChange ? undefined : generatePageUrl(currentPage + 1)}
+                            onClick={onPageChange ? () => handlePageClick(currentPage + 1) : undefined}
+                        />
                     </PaginationItem>
                 )}
             </PaginationContent>

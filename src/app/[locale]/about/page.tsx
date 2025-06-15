@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import EmojiBackground from '@/components/EmojiBackground';
+import { getGlobalStats, formatCount } from '@/lib/stats';
 
 type Props = {
     params: { locale: string };
@@ -80,8 +81,11 @@ export async function generateMetadata({
     };
 }
 
-export default function AboutPage({ params }: Props) {
+export default async function AboutPage({ params }: Props) {
     const locale = params.locale || 'en-US';
+    
+    // 获取动态统计数据
+    const { userCount, translationCount } = await getGlobalStats();
 
     const features = [
         {
@@ -212,7 +216,7 @@ export default function AboutPage({ params }: Props) {
     const stats = [
         {
             icon: <Users className='h-8 w-8' />,
-            value: '50K+',
+            value: formatCount(userCount),
             label: lang(
                 {
                     'zh-CN': '全球用户',
@@ -231,7 +235,7 @@ export default function AboutPage({ params }: Props) {
         },
         {
             icon: <Globe className='h-8 w-8' />,
-            value: '100+',
+            value: '10',
             label: lang(
                 {
                     'zh-CN': '支持语言',
@@ -250,7 +254,7 @@ export default function AboutPage({ params }: Props) {
         },
         {
             icon: <MessageSquare className='h-8 w-8' />,
-            value: '1M+',
+            value: formatCount(translationCount),
             label: lang(
                 {
                     'zh-CN': '消息翻译',
@@ -370,20 +374,39 @@ export default function AboutPage({ params }: Props) {
             ),
         },
         {
-            name: 'TypeScript',
+            name: 'Vercel',
+            icon: <Rocket className='h-6 w-6' />,
+            description: lang(
+                {
+                    'zh-CN': '边缘计算平台部署',
+                    'en-US': 'Edge Computing Platform',
+                    'ja-JP': 'エッジコンピューティングプラットフォーム',
+                    'ko-KR': '엣지 컴퓨팅 플랫폼',
+                    'fr-FR': 'Plateforme de calcul en périphérie',
+                    'es-ES': 'Plataforma de computación en el borde',
+                    'de-DE': 'Edge-Computing-Plattform',
+                    'pt-BR': 'Plataforma de Computação de Borda',
+                    'ru-RU': 'Платформа граничных вычислений',
+                    'zh-TW': '邊緣運算平台部署',
+                },
+                locale,
+            ),
+        },
+        {
+            name: 'Cloudflare',
             icon: <Shield className='h-6 w-6' />,
             description: lang(
                 {
-                    'zh-CN': '类型安全的开发',
-                    'en-US': 'Type-safe Development',
-                    'ja-JP': '型安全な開発',
-                    'ko-KR': '타입 안전한 개발',
-                    'fr-FR': 'Développement type-safe',
-                    'es-ES': 'Desarrollo type-safe',
-                    'de-DE': 'Typsichere Entwicklung',
-                    'pt-BR': 'Desenvolvimento Type-safe',
-                    'ru-RU': 'Типобезопасная разработка',
-                    'zh-TW': '類型安全的開發',
+                    'zh-CN': 'CDN 加速与安全防护',
+                    'en-US': 'CDN Acceleration & Security',
+                    'ja-JP': 'CDN高速化とセキュリティ',
+                    'ko-KR': 'CDN 가속화 및 보안',
+                    'fr-FR': 'Accélération CDN et sécurité',
+                    'es-ES': 'Aceleración CDN y seguridad',
+                    'de-DE': 'CDN-Beschleunigung & Sicherheit',
+                    'pt-BR': 'Aceleração CDN e Segurança',
+                    'ru-RU': 'Ускорение CDN и безопасность',
+                    'zh-TW': 'CDN 加速與安全防護',
                 },
                 locale,
             ),
@@ -417,16 +440,16 @@ export default function AboutPage({ params }: Props) {
                             <p className='text-lg text-white/90 drop-shadow'>
                                 {lang(
                                     {
-                                        'zh-CN': '交流每个人的观点',
-                                        'en-US': "Exchange Everyone's Views",
-                                        'ja-JP': 'みんなの意見を交換する',
-                                        'ko-KR': '모두의 의견을 교환하다',
-                                        'fr-FR': 'Échanger les opinions de chacun',
-                                        'es-ES': 'Intercambiar las opiniones de todos',
-                                        'de-DE': 'Meinungen austauschen',
-                                        'pt-BR': 'Trocar as Opiniões de Todos',
-                                        'ru-RU': 'Обмен мнениями',
-                                        'zh-TW': '交流每個人的觀點',
+                                        'zh-CN': "基于 AI 的下一代全球化论坛",
+                                        "en-US": "AI-Powered Next-Gen Global Forum",
+                                        'ja-JP': 'AI駆動の次世代グローバルフォーラム',
+                                        'ko-KR': 'AI 기반 차세대 글로벌 포럼',
+                                        'fr-FR': 'Forum mondial de nouvelle génération alimenté par l’IA',
+                                        'es-ES': 'Foro global de próxima generación impulsado por IA',
+                                        'de-DE': 'KI-gesteuertes Next-Gen Global Forum',
+                                        'pt-BR': 'Fórum Global de Próxima Geração com IA',
+                                        'ru-RU': 'Глобальный форум нового поколения на основе ИИ',
+                                        'zh-TW': '基於 AI 的下一代全球化論壇',
                                     },
                                     locale,
                                 )}
@@ -488,7 +511,7 @@ export default function AboutPage({ params }: Props) {
                                         'ja-JP':
                                             "XEO OS（Xchange Everyone's Opinion）は、AI駆動のグローバル総合フォーラムプラットフォームです。先進的な人工知能翻訳技術により言語の壁を打ち破り、世界中の人々が母国語で自由に意見を表現し、アイデアを共有できるようにすることが私たちの使命です。",
                                         'ko-KR':
-                                            "XEO OS (Xchange Everyone's Opinion)는 AI 기반의 글로벌 종합 포럼 플랫폼입니다. 첨단 인공지능 번역 기술을 통해 언어 장벽을 허물고, 전 세계 사람들이 모국어로 자유롭게 의견을 표현하고 아이디어를 공유할 수 있도록 하는 것이 우리의 사명입니다.",
+                                            "XEO OS (Xchange Everyone's Opinion)는 AI 기반의 글로벌 종합 포럼 플랫폼입니다. 첨단 인공지능 번역 기술을 통해 언어 장벽을 허물고, 전 세계 사람들이 모국어로 자유롭게 의견을 표현하고 아이디어를 공유할 수 있도록 하는 것이 우리의 사명입니다。",
                                         'fr-FR':
                                             "XEO OS (Xchange Everyone's Opinion) est une plateforme de forum global complète alimentée par l'IA. Notre mission est de briser les barrières linguistiques grâce à une technologie de traduction par intelligence artificielle avancée, permettant aux gens du monde entier d'exprimer librement leurs opinions et de partager des idées dans leur langue maternelle.",
                                         'es-ES':
@@ -604,11 +627,11 @@ export default function AboutPage({ params }: Props) {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+                        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
                             {technologies.map((tech, index) => (
                                 <div
                                     key={index}
-                                    className='flex items-center space-x-3 p-4 bg-muted/50 rounded-lg'
+                                    className='flex flex-col items-center space-y-3 p-4 bg-muted/50 rounded-lg text-center'
                                 >
                                     <div className='text-primary'>{tech.icon}</div>
                                     <div>

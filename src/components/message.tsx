@@ -461,6 +461,7 @@ export default function Message() {
                     console.error('Error processing broadcast message:', error);
                 }
             });
+            await broadcastChannel.presence.enter();
 
             // 监听用户专属频道
             const userChannel = ablyRef.current.channels.get(`user-${userInfo.uid}`);

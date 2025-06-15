@@ -13,6 +13,7 @@ import {
     Search,
     Edit,
     Award,
+    Reply,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { SearchForm } from '@/components/search-form';
@@ -159,7 +160,7 @@ export function SiteHeader({
     useEffect(() => {
         const handleBroadcastMessage = (message: unknown) => {
             if (typeof message === 'object' && message !== null && 'action' in message) {
-                const msg = message as { action: string; query?: string; data?: {type: string; } };
+                const msg = message as { action: string; query?: string; data?: { type: string } };
                 if (msg.action === 'SHOW_SEARCH') {
                     setShowSearchSheet(true);
                 }
@@ -170,18 +171,15 @@ export function SiteHeader({
                 if (msg.action === 'broadcast') {
                     const messageData = msg.data;
                     if (!messageData) return;
-                    if (messageData.type == "task") {
+                    if (messageData.type == 'task') {
                         // 任务状态更新已在TaskListSheet中处理
                         console.log('Task status updated:', messageData);
                     }
-                    if (messageData.type == "message") {
-
+                    if (messageData.type == 'message') {
                     }
-                    if (messageData.type == "post") {
-
+                    if (messageData.type == 'post') {
                     }
                 }
-                
             }
         };
 
@@ -390,24 +388,46 @@ export function SiteHeader({
                                                 )}
                                             </DropdownMenuItem>
                                         </Link>
-                                        <DropdownMenuItem>
-                                            <FileText className='mr-2 h-4 w-4' />
-                                            {lang(
-                                                {
-                                                    'en-US': 'My Posts',
-                                                    'zh-CN': '我的贴子',
-                                                    'zh-TW': '我的貼子',
-                                                    'es-ES': 'Mis publicaciones',
-                                                    'fr-FR': 'Mes publications',
-                                                    'ru-RU': 'Мои сообщения',
-                                                    'ja-JP': '投稿',
-                                                    'de-DE': 'Meine Beiträge',
-                                                    'pt-BR': 'Minhas postagens',
-                                                    'ko-KR': '내 게시물',
-                                                },
-                                                locale,
-                                            )}
-                                        </DropdownMenuItem>
+                                        <Link href={`/${locale || 'en-US'}/user/post`}>
+                                            <DropdownMenuItem>
+                                                <FileText className='mr-2 h-4 w-4' />
+                                                {lang(
+                                                    {
+                                                        'en-US': 'My Posts',
+                                                        'zh-CN': '我的贴子',
+                                                        'zh-TW': '我的貼子',
+                                                        'es-ES': 'Mis publicaciones',
+                                                        'fr-FR': 'Mes publications',
+                                                        'ru-RU': 'Мои сообщения',
+                                                        'ja-JP': '投稿',
+                                                        'de-DE': 'Meine Beiträge',
+                                                        'pt-BR': 'Minhas postagens',
+                                                        'ko-KR': '내 게시물',
+                                                    },
+                                                    locale,
+                                                )}
+                                            </DropdownMenuItem>
+                                        </Link>
+                                        <Link href={`/${locale || 'en-US'}/user/reply`}>
+                                            <DropdownMenuItem>
+                                                <Reply className='mr-2 h-4 w-4' />
+                                                {lang(
+                                                    {
+                                                        'zh-CN': '我的回复',
+                                                        'zh-TW': '我的回覆',
+                                                        'en-US': 'My Replies',
+                                                        'es-ES': 'Mis Respuestas',
+                                                        'fr-FR': 'Mes Réponses',
+                                                        'ru-RU': 'Мои Ответы',
+                                                        'ja-JP': '私の返信',
+                                                        'de-DE': 'Meine Antworten',
+                                                        'pt-BR': 'Minhas Respostas',
+                                                        'ko-KR': '내 답변',
+                                                    },
+                                                    locale,
+                                                )}
+                                            </DropdownMenuItem>
+                                        </Link>
                                         <DropdownMenuItem>
                                             <Award className='mr-2 h-4 w-4' />
                                             {lang(
