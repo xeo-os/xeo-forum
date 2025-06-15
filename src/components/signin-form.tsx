@@ -24,6 +24,7 @@ import token from '@/utils/userToken';
 export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) {
     const searchParams = useSearchParams();
     const locale = searchParams?.get('lang') || 'en-US';
+    const signupEmail = searchParams?.get('email') || '';
 
     const [isLoading, setIsLoading] = useState(false);
     const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(false);
@@ -106,7 +107,11 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
 
                 // 延迟跳转
                 setTimeout(() => {
-                    window.location.href = '/';
+                    if (signupEmail) {
+                        window.location.href = '/welcome';
+                    } else {
+                        window.location.href = '/';
+                    }
                 }, 1500);
             } else {
                 // 显示API错误信息
@@ -216,6 +221,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                                     name='email'
                                     type='email'
                                     placeholder='user@xeoos.net'
+                                    value={signupEmail || ""}
                                     required
                                     disabled={isLoading}
                                 />
