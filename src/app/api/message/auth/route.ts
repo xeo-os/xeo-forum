@@ -49,7 +49,7 @@ export async function POST(request: Request) {
 
         console.log(
             'Ably token generated successfully, expires at:',
-            new Date(tokenDetails.expires * 1000).toISOString(),
+            new Date(tokenDetails.expires).toISOString(),
         );
 
         // 返回 Ably TokenDetails 格式

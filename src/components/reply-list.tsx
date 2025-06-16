@@ -191,6 +191,8 @@ interface SingleReplyProps {
   parentPath: string[]; // 从根到当前回复的路径
   onFocusReply?: (replyId: string) => void; // 新增：聚焦回复的回调
   focusedReplyId?: string | null; // 新增：当前聚焦的回复ID
+  highlightedReplyId?: string | null; // 新增：当前高亮的回复ID
+  onHighlightChange?: (replyId: string | null) => void; // 新增：高亮变化回调
 }
 
 function SingleReply({ 
@@ -202,7 +204,9 @@ function SingleReply({
   onHover, 
   parentPath,
   onFocusReply,
-  focusedReplyId
+  focusedReplyId,
+  highlightedReplyId,
+  onHighlightChange
 }: SingleReplyProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
@@ -242,6 +246,9 @@ function SingleReply({
     return safeParentPath[safeParentPath.length - 1];
   };
 
+  // 检查当前回复是否被高亮
+  const isHighlighted = highlightedReplyId === reply.id;
+
   // 滚动到指定回复
   const scrollToReply = (replyId: string) => {
     const element = document.getElementById(`reply-${replyId}`);
@@ -266,6 +273,10 @@ function SingleReply({
   // 处理鼠标悬停
   const handleMouseEnter = () => {
     onHover?.(reply.id, currentPath);
+    // 如果当前回复被高亮，hover时清除高亮
+    if (highlightedReplyId === reply.id) {
+      onHighlightChange?.(null);
+    }
   };
 
   const handleMouseLeave = () => {
@@ -406,37 +417,24 @@ function SingleReply({
     }
   };
 
-  // 高亮指定回复
+  // 高亮指定回复 - 修复版本
   const highlightParentReply = (replyId: string) => {
-    const element = document.getElementById(`reply-${replyId}`);
-    if (element) {
-      // 清除之前的高亮
-      const previousHighlighted = document.querySelector('.reply-highlighted');
-      if (previousHighlighted) {
-        previousHighlighted.classList.remove('reply-highlighted');
-      }
-      
-      // 添加高亮类
-      element.classList.add('reply-highlighted');
-      
-      // 滚动到视图中心
-      element.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'center' 
-      });
-      
-      // 3秒后移除高亮
-      setTimeout(() => {
-        element.classList.remove('reply-highlighted');
-      }, 3000);
-    }
+    // 清除之前的高亮
+    onHighlightChange?.(null);
+    
+    // 设置新的高亮
+    setTimeout(() => {
+      onHighlightChange?.(replyId);
+    }, 50); // 短暂延迟确保状态更新
   };
 
   return (
     <div 
       id={`reply-${reply.id}`}
       style={getIndentStyle()} 
-      className={`relative ${level > 0 ? 'border-l-2 border-transparent' : ''} transition-colors duration-300`}
+      className={`relative ${level > 0 ? 'border-l-2 border-transparent' : ''} transition-all duration-300 ${
+        isHighlighted ? 'bg-primary/10 border-primary/20 rounded-lg' : ''
+      }`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -795,6 +793,8 @@ function SingleReply({
               parentPath={currentPath}
               onFocusReply={onFocusReply}
               focusedReplyId={focusedReplyId}
+              highlightedReplyId={highlightedReplyId}
+              onHighlightChange={onHighlightChange}
             />
           ))}
         </div>
@@ -815,6 +815,12 @@ export function ReplyList({ replies, locale, onRepliesUpdate }: ReplyListProps) 
   const [hoveredReplyPath, setHoveredReplyPath] = useState<string[] | null>(null);
   const [focusedReplyId, setFocusedReplyId] = useState<string | null>(null);
   const [focusedReplies, setFocusedReplies] = useState<any[] | null>(null);
+  const [highlightedReplyId, setHighlightedReplyId] = useState<string | null>(null); // 新增：高亮状态
+
+  // 处理高亮变化
+  const handleHighlightChange = (replyId: string | null) => {
+    setHighlightedReplyId(replyId);
+  };
 
   // 处理hover事件
   const handleHover = (replyId: string | null, parentPath: string[]) => {
@@ -982,6 +988,8 @@ export function ReplyList({ replies, locale, onRepliesUpdate }: ReplyListProps) 
               parentPath={[]}
               onFocusReply={handleFocusReply}
               focusedReplyId={focusedReplyId}
+              highlightedReplyId={highlightedReplyId}
+              onHighlightChange={handleHighlightChange}
             />
           </div>
         </CardContent>
@@ -1041,6 +1049,8 @@ export function ReplyList({ replies, locale, onRepliesUpdate }: ReplyListProps) 
               parentPath={[]}
               onFocusReply={handleFocusReply}
               focusedReplyId={focusedReplyId}
+              highlightedReplyId={highlightedReplyId}
+              onHighlightChange={handleHighlightChange}
             />
           ))}
         </div>

@@ -141,7 +141,6 @@ const getPostWithReplies = cache(async (postId: number, page: number) => {
                 },
             },
         }),
-        // 获取所有回复，然后在前端重新组织层级关系
         prisma.reply.findMany({
             where: {
                 belongPostid: postId,

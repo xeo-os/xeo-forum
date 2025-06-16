@@ -140,7 +140,7 @@ const classifications = [
     },
     {
         name: 'sports_recreation',
-        emoji: '⚽',
+        emoji: '🏀',
         index: 9,
         nameZHCN: '体育与运动',
         nameZHTW: '體育與運動',
