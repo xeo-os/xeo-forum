@@ -352,6 +352,7 @@ export async function POST(request: Request) {
                     email,
                     emailVerifyCode: code,
                     nickname: username,
+                    emailNoticeLang: lang,
                     avatar: {
                         create: {
                             emoji: randomEmoji,

@@ -2,6 +2,7 @@ import lang from '@/lib/lang';
 import * as Ably from 'ably';
 import { Resend } from 'resend';
 import { generateEmailTemplate, type Lang } from './email-template';
+import prisma from './prisma';
 
 type Message = {
     type: 'message';
@@ -70,9 +71,23 @@ export default async function messager(
             console.error('Error publishing socket message:', error);
         }
     }
-
-    // Send email if user is offline or socket message failed
     try {
+        await prisma.notice.create({
+            data: {
+                userId: Number(user.uid),
+                content: message.content,
+            },
+        });
+        const userMessageSetting = await prisma.user.findUnique({
+            where: { uid: Number(user.uid) },
+            select: { emailNotice: true },
+        });
+        if (!userMessageSetting?.emailNotice) {
+            return {
+                ok: false,
+                error: 'User has disabled email notifications',
+            };
+        }
         const resend = new Resend(process.env.RESEND_API_KEY as string);
         const emailContent = getEmailContent(message);
 

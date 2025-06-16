@@ -73,6 +73,7 @@ export async function POST(request: NextRequest) {
             profileEmoji,
             avatar,
             emailNotice,
+            emailNoticeLang,
             lang = 'en-US'
         } = body;
 
@@ -222,6 +223,28 @@ export async function POST(request: NextRequest) {
             });
         }
 
+        // 验证邮箱通知语言设置
+        const validLangs = ['zh-CN', 'zh-TW', 'en-US', 'es-ES', 'fr-FR', 'ru-RU', 'ja-JP', 'de-DE', 'pt-BR', 'ko-KR'];
+        if (emailNoticeLang && !validLangs.includes(emailNoticeLang)) {
+            return response(400, {
+                message: langs(
+                    {
+                        'zh-CN': '无效的邮箱通知语言设置',
+                        'zh-TW': '無效的郵箱通知語言設置',
+                        'en-US': 'Invalid email notification language setting',
+                        'es-ES': 'Configuración de idioma de notificación por email inválida',
+                        'fr-FR': 'Paramètre de langue de notification par email invalide',
+                        'ru-RU': 'Неверная настройка языка уведомлений по email',
+                        'ja-JP': 'メール通知言語設定が無効です',
+                        'de-DE': 'Ungültige E-Mail-Benachrichtigungssprache-Einstellung',
+                        'pt-BR': 'Configuração de idioma de notificação por email inválida',
+                        'ko-KR': '이메일 알림 언어 설정이 잘못되었습니다',
+                    },
+                    lang,
+                ),
+            });
+        }
+
         await limitControl.update(request);
 
         // 准备更新数据
@@ -234,6 +257,7 @@ export async function POST(request: NextRequest) {
             gender: gender || 'UNSET',
             profileEmoji: profileEmoji || null,
             emailNotice: emailNotice !== undefined ? emailNotice : true,
+            emailNoticeLang: emailNoticeLang || 'en-US',
             updatedAt: new Date(),
         };
 

@@ -42,6 +42,8 @@ const token = {
               country: string;
               timearea: string;
               profileEmoji: string;
+              emailNotice: boolean;
+              emailNoticeLang: string;
               avatar: {
                   emoji: string;
                   background: string;
@@ -61,6 +63,8 @@ const token = {
                 uid: number;
                 bio: string;
                 birth: string;
+                emailNotice: boolean;
+                emailNoticeLang: string;
                 country: string;
                 timearea: string;
                 profileEmoji: string;
@@ -135,8 +139,8 @@ const token = {
             const currentTime = Date.now();
             const timeSinceLastRefresh = currentTime - lastRefreshTime;
 
-            // 如果距离上次刷新超过5分钟（300000毫秒），则进行刷新
-            if (timeSinceLastRefresh >= 300000) {
+            // 如果距离上次刷新超过50分钟，则进行刷新
+            if (timeSinceLastRefresh >= 50 * 60 * 1000) {
                 const currentToken = token.get();
                 if (currentToken) {
                     token
@@ -154,8 +158,8 @@ const token = {
             }
         };
 
-        // 设置每5分钟执行一次的定时器
-        refreshInterval = setInterval(checkAndRefresh, 300000); // 300000ms = 5分钟
+        // 60 分钟
+        refreshInterval = setInterval(checkAndRefresh, 60 * 60 * 1000);
 
         // 立即执行一次检查
         checkAndRefresh();

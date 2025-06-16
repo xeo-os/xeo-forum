@@ -61,6 +61,7 @@ export async function POST(request: Request) {
                         postUid: postid,
                         userUid: token.uid,
                         belongPostid: postid,
+                        originLang: lang,
                     },
                 });
                 post = await prisma.post.findUnique({
@@ -120,11 +121,9 @@ export async function POST(request: Request) {
                         content,
                         userUid: token.uid,
                         belongPostid: fatherReply?.belongPostid,
-                        replies: {
-                            connect: {
-                                id: replyid,
-                            },
-                        },
+                        commentUid: replyid,
+                        childReplay: true,
+                        originLang: lang,
                     },
                 });
             }
@@ -147,9 +146,16 @@ export async function POST(request: Request) {
             revalidatePath(`/[locale]/topic/${post?.topics[0]?.name.replace('_', '-')}/page`);
             revalidatePath(`/[locale]/post/${fatherReply?.belongPostid}`);
             revalidatePath(`/[locale]/user/${token.uid}}`);
-            return response(200, { message: task.id, ok: true });
+            return response(200, { 
+                message: 'Reply created successfully', 
+                ok: true,
+                data: {
+                    id: result?.id,
+                    taskId: task.id
+                }
+            });
         } catch (error) {
-            console.error('Error creating post:', error);
+            console.error('Error creating reply:', error);
             return response(500, {
                 message: langs(
                     {

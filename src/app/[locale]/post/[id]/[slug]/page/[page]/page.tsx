@@ -141,10 +141,10 @@ const getPostWithReplies = cache(async (postId: number, page: number) => {
                 },
             },
         }),
+        // 获取所有回复，然后在前端重新组织层级关系
         prisma.reply.findMany({
             where: {
-                postUid: postId,
-                commentUid: null, // 只获取顶级回复
+                belongPostid: postId,
                 NOT: {
                     originLang: null,
                 },
@@ -172,75 +172,14 @@ const getPostWithReplies = cache(async (postId: number, page: number) => {
                         replies: true,
                     },
                 },
-                replies: {
-                    include: {
-                        user: {
-                            select: {
-                                uid: true,
-                                nickname: true,
-                                username: true,
-                                profileEmoji: true,
-                                avatar: {
-                                    select: {
-                                        id: true,
-                                        emoji: true,
-                                        background: true,
-                                    },
-                                    take: 1,
-                                },
-                            },
-                        },
-                        _count: {
-                            select: {
-                                likes: true,
-                                replies: true,
-                            },
-                        },
-                        // 递归获取子回复的子回复
-                        replies: {
-                            include: {
-                                user: {
-                                    select: {
-                                        uid: true,
-                                        nickname: true,
-                                        username: true,
-                                        profileEmoji: true,
-                                        avatar: {
-                                            select: {
-                                                id: true,
-                                                emoji: true,
-                                                background: true,
-                                            },
-                                            take: 1,
-                                        },
-                                    },
-                                },
-                                _count: {
-                                    select: {
-                                        likes: true,
-                                        replies: true,
-                                    },
-                                },
-                            },
-                            orderBy: {
-                                updatedAt: 'asc',
-                            },
-                        },
-                    },
-                    orderBy: {
-                        updatedAt: 'asc',
-                    },
-                },
             },
             orderBy: {
-                updatedAt: 'desc',
+                createdAt: 'asc',
             },
-            skip,
-            take: REPLIES_PER_PAGE,
         }),
         prisma.reply.count({
             where: {
-                postUid: postId,
+                belongPostid: postId,
                 commentUid: null,
             },
         }),
@@ -332,7 +271,7 @@ export default async function PostDetailPage({ params }: Props) {
     }
 
     // 获取帖子详情和回复
-    const [post, replies, totalReplies] = await getPostWithReplies(postId, page);
+    const [post, allReplies, totalReplies] = await getPostWithReplies(postId, page);
 
     if (!post) {
         notFound();
@@ -345,23 +284,50 @@ export default async function PostDetailPage({ params }: Props) {
     // 格式化时间函数需要传入locale参数
     const formatTime = (date: Date) => formatRelativeTime(date, locale);
 
-    // 预处理回复数据，在服务器端格式化时间
-    const processedReplies = replies.map((reply) => ({
-        ...reply,
-        content: getLocalizedContent(reply, locale),
-        formattedTime: formatTime(reply.createdAt),
-        replies: reply.replies.map((subReply) => ({
-            ...subReply,
-            content: getLocalizedContent(subReply, locale),
-            formattedTime: formatTime(new Date(subReply.createdAt)),
-            // 处理子回复的子回复
-            replies: subReply.replies?.map((subSubReply) => ({
-                ...subSubReply,
-                content: getLocalizedContent(subSubReply, locale),
-                formattedTime: formatTime(new Date(subSubReply.createdAt)),
-            })) || [],
-        })),
-    }));
+    // 重新组织回复的层级关系
+    const organizeReplies = (replies: any[]) => {
+        const replyMap = new Map();
+        const rootReplies: any[] = [];
+
+        // 首先处理所有回复，添加到 map 中
+        replies.forEach(reply => {
+            const processedReply = {
+                ...reply,
+                content: getLocalizedContent(reply, locale),
+                formattedTime: formatTime(reply.createdAt),
+                replies: [],
+            };
+            replyMap.set(reply.id, processedReply);
+        });
+
+        // 然后建立父子关系
+        replies.forEach(reply => {
+            const processedReply = replyMap.get(reply.id);
+            if (reply.commentUid && replyMap.has(reply.commentUid)) {
+                // 这是一个子回复
+                const parentReply = replyMap.get(reply.commentUid);
+                parentReply.replies.push(processedReply);
+            } else {
+                // 这是一个顶级回复
+                rootReplies.push(processedReply);
+            }
+        });
+
+        return rootReplies;
+    };
+
+    const processedReplies = organizeReplies(allReplies);
+
+    // 递归处理所有子回复的时间格式化
+    const processRepliesRecursively = (replies: any[]): any[] => {
+        return replies.map(reply => ({
+            ...reply,
+            formattedTime: formatTime(reply.createdAt),
+            replies: reply.replies ? processRepliesRecursively(reply.replies) : []
+        }));
+    };
+
+    const finalReplies = processRepliesRecursively(processedReplies);
 
     return (
         <div className='container mx-auto px-4 py-6 max-w-4xl'>
@@ -500,7 +466,7 @@ export default async function PostDetailPage({ params }: Props) {
                     likes: post._count.likes,
                     replies: post._count.Reply,
                 }}
-                replies={processedReplies}
+                replies={finalReplies}
                 locale={locale}
                 currentPage={page}
                 totalPages={totalPages}

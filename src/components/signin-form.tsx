@@ -221,7 +221,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                                     name='email'
                                     type='email'
                                     placeholder='user@xeoos.net'
-                                    value={signupEmail || ""}
+                                    defaultValue={signupEmail || ""}
                                     required
                                     disabled={isLoading}
                                 />

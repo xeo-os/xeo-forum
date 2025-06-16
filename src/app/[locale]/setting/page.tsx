@@ -54,21 +54,20 @@ const gradientTypes = [
     { value: 'conic', label: '圆锥渐变' },
 ];
 
-type UserData = {
-    uid: number;
-    username: string;
-    nickname: string;
-    bio: string | null;
-    birth: string | null;
-    country: string | null;
-    timearea: string | null;
-    profileEmoji: string | null;
-    emailNotice: boolean;
-    avatar: {
-        emoji: string;
-        background: string;
-    }[];
-};
+// 语言选项映射
+const languageOptions = [
+    { value: 'zh-CN', label: '简体中文' },
+    { value: 'zh-TW', label: '繁體中文' },
+    { value: 'en-US', label: 'English' },
+    { value: 'es-ES', label: 'Español' },
+    { value: 'fr-FR', label: 'Français' },
+    { value: 'ru-RU', label: 'Русский' },
+    { value: 'ja-JP', label: '日本語' },
+    { value: 'de-DE', label: 'Deutsch' },
+    { value: 'pt-BR', label: 'Português' },
+    { value: 'ko-KR', label: '한국어' }
+];
+
 
 export default function SettingPage(props: { params: Promise<{ locale: string }> }) {
     const params = use(props.params);
@@ -87,6 +86,7 @@ export default function SettingPage(props: { params: Promise<{ locale: string }>
         timearea: '',
         profileEmoji: '',
         emailNotice: true,
+        emailNoticeLang: 'en-US',
         avatar: {
             emoji: '😀',
             background: backgroundPresets[0],
@@ -410,6 +410,30 @@ export default function SettingPage(props: { params: Promise<{ locale: string }>
             'pt-BR': 'Receber atualizações importantes e notificações no seu email',
             'ko-KR': '중요한 업데이트와 알림을 이메일로 받기',
         }, locale),
+        emailNotificationLang: lang({
+            'zh-CN': '邮箱通知语言',
+            'en-US': 'Email Notification Language',
+            'zh-TW': '郵箱通知語言',
+            'es-ES': 'Idioma de Notificación por Email',
+            'fr-FR': 'Langue de Notification par Email',
+            'ru-RU': 'Язык Уведомлений по Email',
+            'ja-JP': 'メール通知言語',
+            'de-DE': 'E-Mail-Benachrichtigungssprache',
+            'pt-BR': 'Idioma de Notificação por Email',
+            'ko-KR': '이메일 알림 언어',
+        }, locale),
+        emailNotificationLangDesc: lang({
+            'zh-CN': '选择接收邮箱通知时使用的语言',
+            'en-US': 'Choose the language for email notifications',
+            'zh-TW': '選擇接收郵箱通知時使用的語言',
+            'es-ES': 'Elija el idioma para las notificaciones por email',
+            'fr-FR': 'Choisissez la langue pour les notifications par email',
+            'ru-RU': 'Выберите язык для уведомлений по email',
+            'ja-JP': 'メール通知の言語を選択してください',
+            'de-DE': 'Wählen Sie die Sprache für E-Mail-Benachrichtigungen',
+            'pt-BR': 'Escolha o idioma para notificações por email',
+            'ko-KR': '이메일 알림에 사용할 언어를 선택하세요',
+        }, locale),
     };
 
     // 解析CSS渐变字符串为渐变参数
@@ -491,6 +515,7 @@ export default function SettingPage(props: { params: Promise<{ locale: string }>
                 timearea: userInfo.timearea || '',
                 profileEmoji: userInfo.profileEmoji || '',
                 emailNotice: userInfo.emailNotice !== undefined ? userInfo.emailNotice : true,
+                emailNoticeLang: userInfo.emailNoticeLang || 'en-US',
                 avatar: {
                     emoji: userInfo.avatar?.emoji || '😀',
                     background: avatarBackground,
@@ -720,16 +745,43 @@ export default function SettingPage(props: { params: Promise<{ locale: string }>
                             {texts.emailNotification}
                         </h3>
                         
-                        <div className="flex items-center justify-between p-4 border rounded-lg">
-                            <div className="space-y-1">
-                                <Label className="text-base font-medium">{texts.emailNotification}</Label>
-                                <p className="text-sm text-muted-foreground">{texts.emailNotificationDesc}</p>
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between p-4 border rounded-lg">
+                                <div className="space-y-1">
+                                    <Label className="text-base font-medium">{texts.emailNotification}</Label>
+                                    <p className="text-sm text-muted-foreground">{texts.emailNotificationDesc}</p>
+                                </div>
+                                <Switch
+                                    checked={formData.emailNotice}
+                                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, emailNotice: checked }))
+                                    }
+                                />
                             </div>
-                            <Switch
-                                checked={formData.emailNotice}
-                                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, emailNotice: checked }))
-                                }
-                            />
+                            
+                            {formData.emailNotice && (
+                                <div className="p-4 border rounded-lg space-y-3">
+                                    <div className="space-y-1">
+                                        <Label className="text-base font-medium">{texts.emailNotificationLang}</Label>
+                                        <p className="text-sm text-muted-foreground">{texts.emailNotificationLangDesc}</p>
+                                    </div>
+                                    <Select
+                                        value={formData.emailNoticeLang}
+                                        onValueChange={(value) => setFormData(prev => ({ ...prev, emailNoticeLang: value }))
+                                        }
+                                    >
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {languageOptions.map(option => (
+                                                <SelectItem key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
                         </div>
                     </div>
 

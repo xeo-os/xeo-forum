@@ -15,7 +15,9 @@ interface UserInfo {
     lastUseAt?: Date | null;
     gender?: Gender | null;
     timearea?: string | null;
+    emailNoticeLang: string;
     exp: number;
+    profileEmoji: string;
     avatar?: { id: string; emoji: string; background: string }[] | null;
 }
 
@@ -34,9 +36,11 @@ interface PackedUserInfo {
     country?: string | null;
     timearea?: string | null;
     role: string;
+    emailNoticeLang: string;
     updatedAt: Date;
     createdAt: Date;
     lastUseAt: Date;
+    profileEmoji: string;
     gender?: Gender | null;
     userExp: number;
 }
@@ -53,10 +57,12 @@ function pack(userinfo: UserInfo, timestamp: number): PackedUserInfo {
         bio: userinfo.bio,
         birth: userinfo.birth,
         country: userinfo.country,
+        emailNoticeLang: userinfo.emailNoticeLang,
         timearea: userinfo.timearea,
         role: userinfo.role,
         updatedAt: userinfo.updatedAt,
         createdAt: userinfo.createdAt,
+        profileEmoji: userinfo.profileEmoji,
         lastUseAt: new Date(timestamp),
         gender: userinfo.gender,
         userExp: userinfo.exp, // 改名避免与JWT的exp冲突

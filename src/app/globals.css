@@ -197,3 +197,45 @@
 .bg-gradient-radial {
     background: radial-gradient(circle, var(--tw-gradient-stops));
 }
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(-4px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+/* 高亮回复的样式 */
+.reply-highlighted {
+  background-color: hsl(var(--primary) / 0.15) !important;
+  border-radius: 8px !important;
+  transition: background-color 0.3s ease !important;
+  animation: pulse-highlight 0.6s ease-out;
+}
+
+@keyframes pulse-highlight {
+  0% {
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 6px hsl(var(--primary) / 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0);
+  }
+}
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(-4px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}

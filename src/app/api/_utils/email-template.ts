@@ -63,7 +63,7 @@ function generateHTMLTemplate(data: EmailTemplateData, lang: Lang): string {
                     <div style="margin:32px 0;">
                       <h2 style="font-size:22px;margin:0 0 20px;color:#e6edf3;font-weight:600;">${data.heading}</h2>
                       <div style="background:#21262d;border:1px solid #30363d;border-radius:12px;padding:24px;margin:20px 0;${data.actionButton ? 'text-align:left;' : ''}box-shadow:inset 0 1px 0 rgba(255,255,255,0.05);">
-                        ${data.content ? `<div style="font-size:16px;color:#e6edf3;word-wrap:break-word;line-height:1.6;${data.code ? 'margin:0 0 16px;' : ''}">${data.content}</div>` : ''}
+                        ${data.content ? `<div style="font-size:16px;color:#e6edf3;word-wrap:break-word;line-height:1.8;${data.code ? 'margin:0 0 16px;' : ''}">${data.content.replace(/<br\s*\/?>/gi, '<br style="margin-bottom:8px;">').replace(/<em>/gi, '<em style="color:#7d8590;font-style:italic;">').replace(/<strong>/gi, '<strong style="color:#f0b100;font-weight:600;">')}</div>` : ''}
                         ${data.code ? `<div style="font-size:36px;font-weight:700;color:#f0b100;letter-spacing:6px;text-shadow:0 2px 4px rgba(240,177,0,0.3);margin:16px 0;text-align:center;">${data.code}</div>` : ''}
                       </div>
                     </div>
