@@ -5,12 +5,13 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent} from '@/components/ui/card';
-import { Heart, Reply as ReplyIcon, ArrowUp, Focus } from 'lucide-react';
+import { Heart, Reply as ReplyIcon, ArrowUp, Focus, ChevronDown, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import lang from '@/lib/lang';
 import { MarkdownEditor } from '@/components/markdown-editor';
 import { markdownToHtml } from '@/lib/markdown-utils';
 import token from '@/utils/userToken';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface ReplyEditorProps {
   replyId: string;
@@ -215,6 +216,7 @@ function SingleReply({
   const [likeCount, setLikeCount] = useState(reply._count?.likes || 0);
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false); // 新增：折叠状态
 
   const isTranslated = reply.originLang !== locale;
   const maxLevel = 8;
@@ -269,6 +271,20 @@ function SingleReply({
   const hasChildReplies = () => {
     return reply.replies && reply.replies.length > 0;
   };
+
+  // 获取子回复总数（递归计算）
+  const getTotalChildrenCount = (replies: any[]): number => {
+    let count = 0;
+    for (const reply of replies) {
+      count += 1; // 当前回复
+      if (reply.replies && reply.replies.length > 0) {
+        count += getTotalChildrenCount(reply.replies); // 递归计算子回复
+      }
+    }
+    return count;
+  };
+
+  const totalChildrenCount = hasChildReplies() ? getTotalChildrenCount(reply.replies) : 0;
 
   // 处理鼠标悬停
   const handleMouseEnter = () => {
@@ -505,7 +521,50 @@ function SingleReply({
               </span>
             )}
             
-            {/* 父回复高亮按钮 - 只在hover且有父回复时显示 */}
+            {/* 折叠按钮 - 只在有子回复时显示，移到最前面 */}
+            {hasChildReplies() && (
+              <button
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 text-xs"
+              >
+                <motion.div
+                  animate={{ rotate: isCollapsed ? 0 : 90 }}
+                  transition={{ duration: 0.2, ease: "easeInOut" }}
+                >
+                  <ChevronRight className="h-3 w-3" />
+                </motion.div>
+                <span className="text-xs">
+                  {isCollapsed ? 
+                    lang({
+                      'zh-CN': `展开 ${totalChildrenCount} 条回复`,
+                      'en-US': `Expand ${totalChildrenCount} replies`,
+                      'zh-TW': `展開 ${totalChildrenCount} 條回覆`,
+                      'es-ES': `Expandir ${totalChildrenCount} respuestas`,
+                      'fr-FR': `Développer ${totalChildrenCount} réponses`,
+                      'ru-RU': `Развернуть ${totalChildrenCount} ответов`,
+                      'ja-JP': `${totalChildrenCount} 件の返信を展開`,
+                      'de-DE': `${totalChildrenCount} Antworten erweitern`,
+                      'pt-BR': `Expandir ${totalChildrenCount} respostas`,
+                      'ko-KR': `${totalChildrenCount}개 답글 펼치기`,
+                    }, locale) :
+                    lang({
+                      'zh-CN': '折叠',
+                      'en-US': 'Collapse',
+                      'zh-TW': '折疊',
+                      'es-ES': 'Colapsar',
+                      'fr-FR': 'Réduire',
+                      'ru-RU': 'Свернуть',
+                      'ja-JP': '折りたたみ',
+                      'de-DE': 'Einklappen',
+                      'pt-BR': 'Recolher',
+                      'ko-KR': '접기',
+                    }, locale)
+                  }
+                </span>
+              </button>
+            )}
+            
+            {/* 原回复高亮按钮 - 只在hover且有原回复时显示 */}
             {isCurrentHovered() && getParentReplyId() && (
               <button
                 onClick={() => highlightParentReply(getParentReplyId()!)}
@@ -516,16 +575,16 @@ function SingleReply({
               >
                 <ArrowUp className="h-3 w-3" />
                 {lang({
-                  'zh-CN': '高亮父回复',
-                  'en-US': 'Highlight parent',
-                  'zh-TW': '高亮父回覆',
-                  'es-ES': 'Resaltar padre',
-                  'fr-FR': 'Surligner parent',
-                  'ru-RU': 'Выделить родителя',
-                  'ja-JP': '親をハイライト',
-                  'de-DE': 'Eltern hervorheben',
-                  'pt-BR': 'Destacar pai',
-                  'ko-KR': '부모 강조',
+                  'zh-CN': '高亮原回复',
+                  'en-US': 'Highlight original',
+                  'zh-TW': '高亮原回覆',
+                  'es-ES': 'Resaltar original',
+                  'fr-FR': 'Surligner original',
+                  'ru-RU': 'Выделить оригинал',
+                  'ja-JP': '元をハイライト',
+                  'de-DE': 'Original hervorheben',
+                  'pt-BR': 'Destacar original',
+                  'ko-KR': '원본 강조',
                 }, locale)}
               </button>
             )}
@@ -555,20 +614,20 @@ function SingleReply({
               </button>
             )}
 
-            {/* 父回复指示 - 只在hover时显示 */}
+            {/* 原回复指示 - 只在hover时显示 */}
             {isDirectParent() && (
               <span className="text-orange-500 text-xs font-medium animate-pulse">
                 ↳ {lang({
-                  'zh-CN': '父回复',
-                  'en-US': 'Parent',
-                  'zh-TW': '父回覆',
-                  'es-ES': 'Padre',
-                  'fr-FR': 'Parent',
-                  'ru-RU': 'Родитель',
-                  'ja-JP': '親',
-                  'de-DE': 'Eltern',
-                  'pt-BR': 'Pai',
-                  'ko-KR': '부모',
+                  'zh-CN': '原回复',
+                  'en-US': 'Original',
+                  'zh-TW': '原回覆',
+                  'es-ES': 'Original',
+                  'fr-FR': 'Original',
+                  'ru-RU': 'Оригинал',
+                  'ja-JP': '元',
+                  'de-DE': 'Original',
+                  'pt-BR': 'Original',
+                  'ko-KR': '원본',
                 }, locale)}
               </span>
             )}
@@ -778,27 +837,49 @@ function SingleReply({
         </div>
       </div>
 
-      {/* 子回复 */}
-      {reply.replies && reply.replies.length > 0 && (
-        <div className="space-y-0">
-          {reply.replies.map((subReply: any) => (
-            <SingleReply
-              key={subReply.id}
-              reply={subReply}
-              locale={locale}
-              level={level + 1}
-              onReplySuccess={onReplySuccess}
-              hoveredReplyPath={hoveredReplyPath}
-              onHover={onHover}
-              parentPath={currentPath}
-              onFocusReply={onFocusReply}
-              focusedReplyId={focusedReplyId}
-              highlightedReplyId={highlightedReplyId}
-              onHighlightChange={onHighlightChange}
-            />
-          ))}
-        </div>
-      )}
+      {/* 子回复 - 使用动画展开/折叠 */}
+      <AnimatePresence initial={false}>
+        {reply.replies && reply.replies.length > 0 && !isCollapsed && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ 
+              height: "auto", 
+              opacity: 1,
+              transition: {
+                height: { duration: 0.3, ease: "easeInOut" },
+                opacity: { duration: 0.2, delay: 0.1 }
+              }
+            }}
+            exit={{ 
+              height: 0, 
+              opacity: 0,
+              transition: {
+                height: { duration: 0.3, ease: "easeInOut", delay: 0.1 },
+                opacity: { duration: 0.2 }
+              }
+            }}
+            style={{ overflow: "hidden" }}
+            className="space-y-0"
+          >
+            {reply.replies.map((subReply: any) => (
+              <SingleReply
+                key={subReply.id}
+                reply={subReply}
+                locale={locale}
+                level={level + 1}
+                onReplySuccess={onReplySuccess}
+                hoveredReplyPath={hoveredReplyPath}
+                onHover={onHover}
+                parentPath={currentPath}
+                onFocusReply={onFocusReply}
+                focusedReplyId={focusedReplyId}
+                highlightedReplyId={highlightedReplyId}
+                onHighlightChange={onHighlightChange}
+              />
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
