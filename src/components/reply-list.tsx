@@ -38,6 +38,8 @@ interface SingleReplyProps {
   onHighlightChange?: (replyId: string | null) => void; // 新增：高亮变化回调
   isLastChild?: boolean; // 新增：是否是最后一个子元素
   childrenStatus?: boolean[]; // 新增：子层级的连接状态
+  replyLikes?: Record<string, boolean>; // 新增：回复点赞状态
+  onReplyLikeChange?: (replyId: string, isLiked: boolean) => void; // 新增：回复点赞状态变化回调
 }
 
 function SingleReply({ 
@@ -53,9 +55,11 @@ function SingleReply({
   highlightedReplyId,
   onHighlightChange,
   isLastChild = false,
-  childrenStatus = []
+  childrenStatus = [],
+  replyLikes = {},
+  onReplyLikeChange
 }: SingleReplyProps) {
-  const [isLiked, setIsLiked] = useState(false);
+  const [isLiked, setIsLiked] = useState(replyLikes[reply.id] || false);
   const [isLiking, setIsLiking] = useState(false);
   const [isReplying, setIsReplying] = useState(false);
   const [showOriginal, setShowOriginal] = useState(false);
@@ -68,6 +72,11 @@ function SingleReply({
   const [translationProgress, setTranslationProgress] = useState<{uuid: string; toastId: string} | null>(null);
 
   const { registerCallback, unregisterCallback, broadcast } = useBroadcast();
+    // 更新点赞状态当外部状态变化时
+  useEffect(() => {
+    console.log('SingleReply - replyLikes updated:', replyLikes, 'reply.id:', reply.id, 'isLiked:', replyLikes[reply.id]); // 调试日志
+    setIsLiked(replyLikes[reply.id] || false);
+  }, [replyLikes, reply.id]);
   // 检测移动设备
   useEffect(() => {
     const checkMobile = () => {
@@ -361,14 +370,14 @@ function SingleReply({
   const handleMouseLeave = () => {
     onHover?.(null, []);
   };
-
   // 处理点赞
   const handleLike = async () => {
     if (isLiking) return;
+    let result;
     
     setIsLiking(true);
     try {
-      const response = await fetch('/api/reply/like', {
+      const response = await fetch('/api/like', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -376,29 +385,26 @@ function SingleReply({
         },
         body: JSON.stringify({
           replyId: reply.id,
-          like: !isLiked,
+          post: window.location.pathname.split('/')[3],
+          action: !isLiked,
+          locale: locale,
         }),
       });
 
-      const result = await response.json();
-      if (result.ok) {
-        setIsLiked(!isLiked);
-        setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+      result = await response.json();
+      if (result.ok || result.message?.ok) {
+        const newLikedState = !isLiked;
+        setIsLiked(newLikedState);
+        setLikeCount((prev: number) => isLiked ? prev - 1 : prev + 1);
+        
+        // 通知父组件更新点赞状态
+        if (onReplyLikeChange) {
+          onReplyLikeChange(reply.id, newLikedState);
+        }
       }
     } catch (error) {
       console.error('Like error:', error);
-      toast.error(lang({
-        'zh-CN': '操作失败，请重试',
-        'en-US': 'Action failed, please try again',
-        'zh-TW': '操作失敗，請重試',
-        'es-ES': 'Acción fallida, por favor intente de nuevo',
-        'fr-FR': 'Échec de l\'action, veuillez réessayer',
-        'ru-RU': 'Ошибка действия, попробуйте еще раз',
-        'ja-JP': '操作に失敗しました。もう一度お試しください',
-        'de-DE': 'Aktion fehlgeschlagen, bitte versuchen Sie es erneut',
-        'pt-BR': 'Ação falhou, por favor tente novamente',
-        'ko-KR': '작업 실패, 다시 시도해주세요',
-      }, locale));
+      toast.error(result?.message || 'Like failed');
     } finally {
       setIsLiking(false);
     }
@@ -1154,8 +1160,7 @@ function SingleReply({
                 newChildrenStatus[level] = index < reply.replies.length - 1;
               }
               
-              return (
-                <SingleReply
+              return (                <SingleReply
                   key={subReply.id}
                   reply={subReply}
                   locale={locale}
@@ -1170,6 +1175,8 @@ function SingleReply({
                   onHighlightChange={onHighlightChange}
                   isLastChild={index === reply.replies.length - 1}
                   childrenStatus={newChildrenStatus}
+                  replyLikes={replyLikes}
+                  onReplyLikeChange={onReplyLikeChange}
                 />
               )
             })}
@@ -1185,14 +1192,17 @@ interface ReplyListProps {
   replies: any[];
   locale: string;
   onRepliesUpdate?: (replies: any[]) => void;
+  replyLikes?: Record<string, boolean>; // 新增：回复点赞状态
+  onReplyLikeChange?: (replyId: string, isLiked: boolean) => void; // 新增：回复点赞状态变化回调
 }
 
-export function ReplyList({ replies, locale, onRepliesUpdate }: ReplyListProps) {
+export function ReplyList({ replies, locale, onRepliesUpdate, replyLikes = {}, onReplyLikeChange }: ReplyListProps) {
+  console.log('ReplyList received replyLikes:', replyLikes); // 调试日志
   const [localReplies, setLocalReplies] = useState(replies);
   const [hoveredReplyPath, setHoveredReplyPath] = useState<string[] | null>(null);
   const [focusedReplyId, setFocusedReplyId] = useState<string | null>(null);
-  const [focusedReplies, setFocusedReplies] = useState<any[] | null>(null);
-  const [highlightedReplyId, setHighlightedReplyId] = useState<string | null>(null); // 新增：高亮状态
+  const [focusedReplies, setFocusedReplies] = useState<any | null>(null);
+  const [highlightedReplyId, setHighlightedReplyId] = useState<string | null>(null);
 
   // 处理高亮变化
   const handleHighlightChange = (replyId: string | null) => {
@@ -1350,23 +1360,22 @@ export function ReplyList({ replies, locale, onRepliesUpdate }: ReplyListProps) 
                 }, locale)}
               </Button>
             </div>
-          </div>
-
-          {/* 聚焦的回复 - 包含该回复及其所有子回复 */}
-          <div className="space-y-0">
-            <SingleReply
+          </div>          {/* 聚焦的回复 - 包含该回复及其所有子回复 */}
+          <div className="space-y-0">            <SingleReply
               key={focusedReplies.id}
               reply={focusedReplies}
               locale={locale}
               level={0}
               onReplySuccess={handleReplySuccess}
-              hoveredReplyPath={hoveredReplyPath}
+              hoveredReplyPath={hoveredReplyPath || undefined}
               onHover={handleHover}
               parentPath={[]}
               onFocusReply={handleFocusReply}
               focusedReplyId={focusedReplyId}
               highlightedReplyId={highlightedReplyId}
               onHighlightChange={handleHighlightChange}
+              replyLikes={replyLikes}
+              onReplyLikeChange={onReplyLikeChange}
             />
           </div>
         </CardContent>
@@ -1412,22 +1421,22 @@ export function ReplyList({ replies, locale, onRepliesUpdate }: ReplyListProps) 
 
   return (
     <Card className="overflow-hidden">
-      <CardContent className="p-6"> {/* 从 p-3 改为 p-4 */}
-        <div className="space-y-0">
-          {localReplies.map((reply) => (
-            <SingleReply
+      <CardContent className="p-6"> {/* 从 p-3 改为 p-4 */}        <div className="space-y-0">
+          {localReplies.map((reply) => (            <SingleReply
               key={reply.id}
               reply={reply}
               locale={locale}
               level={0}
               onReplySuccess={handleReplySuccess}
-              hoveredReplyPath={hoveredReplyPath}
+              hoveredReplyPath={hoveredReplyPath || undefined}
               onHover={handleHover}
               parentPath={[]}
               onFocusReply={handleFocusReply}
               focusedReplyId={focusedReplyId}
               highlightedReplyId={highlightedReplyId}
               onHighlightChange={handleHighlightChange}
+              replyLikes={replyLikes}
+              onReplyLikeChange={onReplyLikeChange}
             />
           ))}
         </div>

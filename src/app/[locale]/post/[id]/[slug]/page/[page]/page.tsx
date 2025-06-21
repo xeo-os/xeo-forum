@@ -185,6 +185,64 @@ const getPostWithReplies = cache(async (postId: number, page: number) => {
     ]);
 });
 
+// 获取用户点赞状态的函数
+const getUserLikeStatus = cache(async (postId: number, userUid?: number) => {
+    if (!userUid) {
+        return { postLiked: false, replyLikes: {} };
+    }
+
+    try {
+        // 获取帖子的点赞状态
+        const postLike = await prisma.like.findFirst({
+            where: {
+                userUid: userUid,
+                postId: postId,
+            },
+        });
+
+        // 获取该帖子下所有回复的ID
+        const replies = await prisma.reply.findMany({
+            where: {
+                belongPostid: postId,
+            },
+            select: {
+                id: true,
+            },
+        });
+
+        const replyIds = replies.map(reply => reply.id);
+
+        // 获取用户对这些回复的点赞状态
+        const replyLikes = await prisma.like.findMany({
+            where: {
+                userUid: userUid,
+                replyId: {
+                    in: replyIds,
+                },
+            },
+            select: {
+                replyId: true,
+            },
+        });
+
+        // 构建回复点赞状态映射
+        const replyLikesMap: Record<string, boolean> = {};
+        replyLikes.forEach(like => {
+            if (like.replyId) {
+                replyLikesMap[like.replyId] = true;
+            }
+        });
+
+        return {
+            postLiked: !!postLike,
+            replyLikes: replyLikesMap,
+        };
+    } catch (error) {
+        console.error('Error getting user like status:', error);
+        return { postLiked: false, replyLikes: {} };
+    }
+});
+
 // 获取本地化标题
 function getLocalizedTitle(post: PostForMetadata, locale: string): string {
     const titleMap: Record<string, string | null> = {
@@ -275,6 +333,10 @@ export default async function PostDetailPage({ params }: Props) {
     if (!post) {
         notFound();
     }
+
+    // 获取用户点赞状态 - 这里需要从 cookie 或 header 中获取用户信息
+    // 简化处理，先设置为空，在客户端通过 API 获取
+    const likeStatus = { postLiked: false, replyLikes: {} };
 
     const totalPages = Math.ceil(totalReplies / REPLIES_PER_PAGE);
     const title = getLocalizedTitle(post, locale);
@@ -455,9 +517,7 @@ export default async function PostDetailPage({ params }: Props) {
                         dangerouslySetInnerHTML={{ __html: markdownToHtml(content) }}
                     />
                 </CardContent>
-            </Card>
-
-            {/* 交互按钮和回复区域 */}
+            </Card>            {/* 交互按钮和回复区域 */}
             <PostDetailClient
                 post={{
                     id: post.id,
@@ -469,6 +529,7 @@ export default async function PostDetailPage({ params }: Props) {
                 locale={locale}
                 currentPage={page}
                 totalPages={totalPages}
+                initialLikeStatus={likeStatus}
             />
         </div>
     );

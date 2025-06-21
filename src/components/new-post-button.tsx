@@ -430,16 +430,16 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
                         <span>
                             {lang(
                                 {
-                                    'zh-CN': '正在翻译...',
-                                    'zh-TW': '正在翻譯...',
-                                    'en-US': 'Translating...',
-                                    'es-ES': 'Traduciendo...',
-                                    'fr-FR': 'Traduction en cours...',
-                                    'ru-RU': 'Перевод...',
-                                    'ja-JP': '翻訳中...',
-                                    'de-DE': 'Übersetzen...',
-                                    'pt-BR': 'Traduzindo...',
-                                    'ko-KR': '번역 중...',
+                                    'zh-CN': '正在翻译帖子...',
+                                    'zh-TW': '正在翻譯帖子...',
+                                    'en-US': 'Translating post...',
+                                    'es-ES': 'Traduciendo publicación...',
+                                    'fr-FR': 'Traduction du message en cours...',
+                                    'ru-RU': 'Перевод поста...',
+                                    'ja-JP': '投稿を翻訳中...',
+                                    'de-DE': 'Beitrag wird übersetzt...',
+                                    'pt-BR': 'Traduzindo postagem...',
+                                    'ko-KR': '게시물 번역 중...'
                                 },
                                 locale,
                             )}
