@@ -461,18 +461,22 @@ export default function Message() {
                     console.error('Error processing broadcast message:', error);
                 }
             });
-            await broadcastChannel.presence.enter();
-
-            // 监听用户专属频道
+            await broadcastChannel.presence.enter();            // 监听用户专属频道
             const userChannel = ablyRef.current.channels.get(`user-${userInfo.uid}`);
             userChannel.subscribe((message) => {
                 console.log('Received user message:', message);
                 if (!isConnectedRef.current || !mountedRef.current) return;
 
                 try {
-                    const messageData = message.data as MessageData;
-                    if (messageData?.content) {
-                        toast(messageData.content);
+                    const messageData = message.data?.message as MessageData;
+                    if (messageData && messageData.type === 'message') {                        // 广播新消息事件给其他组件
+                        broadcast({
+                            action: 'broadcast',
+                            data: { 
+                                type: 'message',
+                                message: messageData
+                            },
+                        });
                     }
                 } catch (error) {
                     console.error('Error processing user message:', error);

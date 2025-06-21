@@ -1,7 +1,10 @@
 'use client';
 
+import TaskListSheet from '@/components/task-list-sheet';
+import NoticeListSheet from '@/components/notice-list-sheet';
+import MessageNotificationToast from '@/components/message-notification-toast';
+import '@/styles/animations.css';
 import {
-    SidebarIcon,
     Settings,
     LogOut,
     Bell,
@@ -14,11 +17,12 @@ import {
     Edit,
     Award,
     Reply,
+    SidebarIcon,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { SearchForm } from '@/components/search-form';
 import { SearchSheet } from '@/components/search-sheet';
-import TaskListSheet from '@/components/task-list-sheet';
+import '@/styles/animations.css';
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -71,6 +75,9 @@ export function SiteHeader({
     const [showSearchSheet, setShowSearchSheet] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchFocused, setSearchFocused] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [isAvatarShaking, setIsAvatarShaking] = useState(false);
+    const [noticeListOpen, setNoticeListOpen] = useState(false);
     const searchInputRef = useRef<HTMLInputElement>(null);
     const { registerCallback, unregisterCallback } = useBroadcast();
 
@@ -87,6 +94,41 @@ export function SiteHeader({
     };
 
     const expProgress = userData.userExp % 100;
+
+    // 定期检查未读消息
+    useEffect(() => {
+        if (!isLoggedIn) {
+            setUnreadCount(0);
+            return;
+        }
+
+        const checkUnreadCount = async () => {
+            try {
+                const response = await fetch('/api/message/unread-count', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token.get()}`,
+                    },
+                });
+
+                const data = await response.json();
+                if (data.ok) {
+                    setUnreadCount(data.unreadCount || 0);
+                }
+            } catch (error) {
+                console.error('Error checking unread count:', error);
+            }
+        };
+
+        // 立即检查一次
+        checkUnreadCount();
+
+        // 每600秒检查一次
+        const interval = setInterval(checkUnreadCount, 600000);
+
+        return () => clearInterval(interval);
+    }, [isLoggedIn]);
 
     const handleLogout = () => {
         token.clear();
@@ -160,7 +202,21 @@ export function SiteHeader({
     useEffect(() => {
         const handleBroadcastMessage = (message: unknown) => {
             if (typeof message === 'object' && message !== null && 'action' in message) {
-                const msg = message as { action: string; query?: string; data?: { type: string } };
+                const msg = message as { 
+                    action: string; 
+                    query?: string; 
+                    data?: { 
+                        type: string; 
+                        message?: {
+                            title: string;
+                            content: string;
+                            link: string;
+                            locale: string;
+                            type: string;
+                        } 
+                    } 
+                };
+                
                 if (msg.action === 'SHOW_SEARCH') {
                     setShowSearchSheet(true);
                 }
@@ -168,16 +224,63 @@ export function SiteHeader({
                     setSearchQuery(msg.query);
                     setShowSearchSheet(true);
                 }
+                if (msg.action === 'OPEN_NOTICE_LIST') {
+                    setNoticeListOpen(true);
+                }
+                if (msg.action === 'REFRESH_UNREAD_COUNT') {
+                    // 刷新未读消息计数
+                    if (isLoggedIn) {
+                        fetch('/api/message/unread-count', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                Authorization: `Bearer ${token.get()}`,
+                            },
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.ok) {
+                                setUnreadCount(data.unreadCount || 0);
+                            }
+                        })
+                        .catch(error => console.error('Error checking unread count:', error));
+                    }
+                }
                 if (msg.action === 'broadcast') {
                     const messageData = msg.data;
                     if (!messageData) return;
-                    if (messageData.type == 'task') {
+                    
+                    if (messageData.type === 'task') {
                         // 任务状态更新已在TaskListSheet中处理
                         console.log('Task status updated:', messageData);
                     }
-                    if (messageData.type == 'message') {
+                    if (messageData.type === 'message') {
+                        // 收到新消息时的处理
+                        if (isLoggedIn) {
+                            // 触发头像抖动
+                            setIsAvatarShaking(true);
+                            setTimeout(() => setIsAvatarShaking(false), 600);
+                            
+                            // 延迟一下再刷新，确保数据库更新完成
+                            setTimeout(() => {
+                                fetch('/api/message/unread-count', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        Authorization: `Bearer ${token.get()}`,
+                                    },
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.ok) {
+                                        setUnreadCount(data.unreadCount || 0);
+                                    }
+                                })
+                                .catch(error => console.error('Error checking unread count:', error));
+                            }, 1000);
+                        }
                     }
-                    if (messageData.type == 'post') {
+                    if (messageData.type === 'post') {
                     }
                 }
             }
@@ -187,10 +290,13 @@ export function SiteHeader({
         return () => {
             unregisterCallback(handleBroadcastMessage);
         };
-    }, [registerCallback, unregisterCallback]);
+    }, [registerCallback, unregisterCallback, isLoggedIn]);
 
     return (
         <>
+            {/* 消息通知组件 */}
+            <MessageNotificationToast />
+            
             <header className='bg-background border-b w-full fixed top-0 z-50'>
                 <div className='flex h-14 w-full items-center gap-2 px-4 relative'>
                     <Button className='h-8 w-8' variant='ghost' size='icon' onClick={toggleSidebar}>
@@ -312,30 +418,40 @@ export function SiteHeader({
 
                         <DropdownMenu modal={false}>
                             <DropdownMenuTrigger asChild>
-                                <Avatar className='cursor-pointer hover:opacity-80 transition-opacity'>
-                                    {isLoggedIn ? (
-                                        <AvatarImage
-                                            src={`/api/dynamicImage/emoji?emoji=${encodeURIComponent(
-                                                userData.avatar?.emoji || '',
-                                            )}&background=${encodeURIComponent(
-                                                userData.avatar?.background?.replaceAll(
-                                                    '%',
-                                                    '%25',
-                                                ) || '',
-                                            )}`}
-                                        />
-                                    ) : (
-                                        <AvatarImage src='/api/dynamicImage/emoji' />
-                                    )}
+                                <div className="relative">
+                                    <Avatar className={`cursor-pointer hover:opacity-80 transition-opacity ${
+                                        isAvatarShaking ? 'animate-shake-rotate' : ''
+                                    }`}>
+                                        {isLoggedIn ? (
+                                            <AvatarImage
+                                                src={`/api/dynamicImage/emoji?emoji=${encodeURIComponent(
+                                                    userData.avatar?.emoji || '',
+                                                )}&background=${encodeURIComponent(
+                                                    userData.avatar?.background?.replaceAll(
+                                                        '%',
+                                                        '%25',
+                                                    ) || '',
+                                                )}`}
+                                            />
+                                        ) : (
+                                            <AvatarImage src='/api/dynamicImage/emoji' />
+                                        )}
 
-                                    <AvatarFallback>
-                                        {isLoggedIn
-                                            ? userData.nickname
-                                                ? userData.nickname.charAt(0)
-                                                : 'U'
-                                            : 'G'}
-                                    </AvatarFallback>
-                                </Avatar>
+                                        <AvatarFallback>
+                                            {isLoggedIn
+                                                ? userData.nickname
+                                                    ? userData.nickname.charAt(0)
+                                                    : 'U'
+                                                : 'G'}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    {/* 未读消息红点 */}
+                                    {isLoggedIn && unreadCount > 0 && (
+                                        <div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-background flex items-center justify-center animate-pulse">
+                                            <span className="sr-only">{unreadCount} unread messages</span>
+                                        </div>
+                                    )}
+                                </div>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className='w-64' align='end' sideOffset={5}>
                                 {isLoggedIn ? (
@@ -463,25 +579,36 @@ export function SiteHeader({
                                                 },
                                                 locale,
                                             )}
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem>
-                                            <Bell className='mr-2 h-4 w-4' />
-                                            {lang(
-                                                {
-                                                    'en-US': 'Notifications',
-                                                    'zh-CN': '消息通知',
-                                                    'zh-TW': '消息通知',
-                                                    'es-ES': 'Notificaciones',
-                                                    'fr-FR': 'Notifications',
-                                                    'ru-RU': 'Уведомления',
-                                                    'ja-JP': '通知',
-                                                    'de-DE': 'Benachrichtigungen',
-                                                    'pt-BR': 'Notificações',
-                                                    'ko-KR': '알림',
-                                                },
-                                                locale,
-                                            )}
-                                        </DropdownMenuItem>
+                                        </DropdownMenuItem>                        <NoticeListSheet 
+                            open={noticeListOpen}
+                            onOpenChange={setNoticeListOpen}
+                            onUnreadCountChange={setUnreadCount}
+                            externalUnreadCount={unreadCount}
+                        >
+                                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                                <Bell className='mr-2 h-4 w-4' />
+                                                {lang(
+                                                    {
+                                                        'en-US': 'Notifications',
+                                                        'zh-CN': '消息通知',
+                                                        'zh-TW': '消息通知',
+                                                        'es-ES': 'Notificaciones',
+                                                        'fr-FR': 'Notifications',
+                                                        'ru-RU': 'Уведомления',
+                                                        'ja-JP': '通知',
+                                                        'de-DE': 'Benachrichtigungen',
+                                                        'pt-BR': 'Notificações',
+                                                        'ko-KR': '알림',
+                                                    },
+                                                    locale,
+                                                )}
+                                                {unreadCount > 0 && (
+                                                    <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[16px] h-[18px] text-center flex items-center justify-center text-[10px] leading-none">
+                                                        {unreadCount > 99 ? '99+' : unreadCount}
+                                                    </span>
+                                                )}
+                                            </DropdownMenuItem>
+                                        </NoticeListSheet>
                                         <TaskListSheet>
                                             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                                                 <List className='mr-2 h-4 w-4' />

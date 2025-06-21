@@ -49,38 +49,22 @@ export async function POST(request: Request) {
                     locale,
                 ),
             });
-        }        // 解析请求体获取分页参数
-        const body = await request.json().catch(() => ({}));
-        const page = Math.max(1, parseInt(body.page) || 1);
-        const limit = 20; // 固定每页20个消息
-        const skip = (page - 1) * limit;
+        }
 
-        // 获取所有消息（分页）
-        const messages = await prisma.notice.findMany({
+        // 获取未读消息数量
+        const unreadCount = await prisma.notice.count({
             where: {
                 userId: user.uid,
+                isRead: false,
             },
-            orderBy: {
-                createdAt: 'desc',
-            },
-            skip,
-            take: limit,
-            select: {
-                id: true,
-                content: true,
-                createdAt: true,
-                link: true,
-                isRead: true,
-            }
         });
 
-        const hasMore = messages.length === limit;        return response(200, {
+        return response(200, {
             ok: true,
-            messages,
-            hasMore,
+            unreadCount,
         });
     } catch (error) {
-        console.error('Rate limit check error:', error);
+        console.error('Unread count check error:', error);
         return response(500, {
             error: 'server_error',
             message: langs(

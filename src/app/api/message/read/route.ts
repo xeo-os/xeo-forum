@@ -49,38 +49,92 @@ export async function POST(request: Request) {
                     locale,
                 ),
             });
-        }        // 解析请求体获取分页参数
-        const body = await request.json().catch(() => ({}));
-        const page = Math.max(1, parseInt(body.page) || 1);
-        const limit = 20; // 固定每页20个消息
-        const skip = (page - 1) * limit;
+        }
 
-        // 获取所有消息（分页）
-        const messages = await prisma.notice.findMany({
+        // 解析请求体获取消息ID
+        const body = await request.json().catch(() => ({}));
+        const { id } = body;
+
+        if (!id) {
+            return response(400, {
+                error: 'missing_id',
+                message: langs(
+                    {
+                        'zh-CN': '缺少消息ID',
+                        'zh-TW': '缺少消息ID',
+                        'en-US': 'Missing message ID',
+                        'es-ES': 'Falta el ID del mensaje',
+                        'fr-FR': 'ID de message manquant',
+                        'ru-RU': 'Отсутствует ID сообщения',
+                        'ja-JP': 'メッセージIDがありません',
+                        'de-DE': 'Nachrichten-ID fehlt',
+                        'pt-BR': 'ID da mensagem ausente',
+                        'ko-KR': '메시지 ID가 없습니다',
+                    },
+                    locale,
+                ),
+            });
+        }
+
+        // 验证消息是否存在且属于当前用户
+        const notice = await prisma.notice.findFirst({
             where: {
+                id: id,
                 userId: user.uid,
             },
-            orderBy: {
-                createdAt: 'desc',
-            },
-            skip,
-            take: limit,
-            select: {
-                id: true,
-                content: true,
-                createdAt: true,
-                link: true,
-                isRead: true,
-            }
         });
 
-        const hasMore = messages.length === limit;        return response(200, {
+        if (!notice) {
+            return response(404, {
+                error: 'notice_not_found',
+                message: langs(
+                    {
+                        'zh-CN': '消息不存在',
+                        'zh-TW': '消息不存在',
+                        'en-US': 'Message not found',
+                        'es-ES': 'Mensaje no encontrado',
+                        'fr-FR': 'Message non trouvé',
+                        'ru-RU': 'Сообщение не найдено',
+                        'ja-JP': 'メッセージが見つかりません',
+                        'de-DE': 'Nachricht nicht gefunden',
+                        'pt-BR': 'Mensagem não encontrada',
+                        'ko-KR': '메시지를 찾을 수 없습니다',
+                    },
+                    locale,
+                ),
+            });
+        }
+
+        // 标记消息为已读
+        await prisma.notice.update({
+            where: {
+                id: id,
+            },
+            data: {
+                isRead: true,
+            },
+        });
+
+        return response(200, {
             ok: true,
-            messages,
-            hasMore,
+            message: langs(
+                {
+                    'zh-CN': '消息已标记为已读',
+                    'zh-TW': '消息已標記為已讀',
+                    'en-US': 'Message marked as read',
+                    'es-ES': 'Mensaje marcado como leído',
+                    'fr-FR': 'Message marqué comme lu',
+                    'ru-RU': 'Сообщение отмечено как прочитанное',
+                    'ja-JP': 'メッセージを既読にしました',
+                    'de-DE': 'Nachricht als gelesen markiert',
+                    'pt-BR': 'Mensagem marcada como lida',
+                    'ko-KR': '메시지가 읽음으로 표시되었습니다',
+                },
+                locale,
+            ),
         });
     } catch (error) {
-        console.error('Rate limit check error:', error);
+        console.error('Mark as read error:', error);
         return response(500, {
             error: 'server_error',
             message: langs(

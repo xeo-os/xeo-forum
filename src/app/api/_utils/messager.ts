@@ -12,6 +12,19 @@ type Message = {
     locale: string;
 };
 
+function htmlToText(html: string): string {
+    // Remove HTML tags and decode HTML entities
+    return html
+        .replace(/<[^>]*>/g, '') // Remove HTML tags
+        .replace(/&nbsp;/g, ' ') // Replace non-breaking spaces
+        .replace(/&amp;/g, '&') // Replace ampersands
+        .replace(/&lt;/g, '<') // Replace less than
+        .replace(/&gt;/g, '>') // Replace greater than
+        .replace(/&quot;/g, '"') // Replace quotes
+        .replace(/&#39;/g, "'") // Replace apostrophes
+        .trim();
+}
+
 function getEmailContent(message: Message) {
     const buttonText = lang(
         {
@@ -53,15 +66,41 @@ export default async function messager(
 ) {
     const ably = new Ably.Rest(process.env.ABLY_API_KEY || '');
     const channel = ably.channels.get('user-' + user.uid);
-    const presence = await channel.presence.get();
+    const party = ably.channels.get('broadcast');
+    const presence = await party.presence.get();
     const isOnline = presence.items.some(
         (member: { clientId: string }) => member.clientId === user.uid.toString(),
     );
+    let id;
+    try {
+        const result = await prisma.notice.create({
+            data: {
+                userId: Number(user.uid),
+                content: htmlToText(message.content),
+                link: message.link,
+            },
+        });
+        id = result.id;
+    } catch (error) {
+        console.error('Error saving message to database:', error);
+        return {
+            ok: false,
+            error: 'Failed to save message to database',
+        };
+    }
 
     if (isOnline) {
+        // socket notification
         try {
             await channel.publish('new-message', {
-                message,
+                message: {
+                    title: message.title,
+                    content: htmlToText(message.content),
+                    link: message.link,
+                    locale: message.locale || 'en-US',
+                    type: message.type || 'message',
+                    id: id,
+                }
             });
             return {
                 ok: true,
@@ -70,45 +109,40 @@ export default async function messager(
         } catch (error) {
             console.error('Error publishing socket message:', error);
         }
-    }
-    try {
-        await prisma.notice.create({
-            data: {
-                userId: Number(user.uid),
-                content: message.content,
-                link: message.link,
-            },
-        });
-        const userMessageSetting = await prisma.user.findUnique({
-            where: { uid: Number(user.uid) },
-            select: { emailNotice: true },
-        });
-        if (!userMessageSetting?.emailNotice) {
+    } else {
+        // email notification
+        try {
+            const userMessageSetting = await prisma.user.findUnique({
+                where: { uid: Number(user.uid) },
+                select: { emailNotice: true },
+            });
+            if (!userMessageSetting?.emailNotice) {
+                return {
+                    ok: false,
+                    error: 'User has disabled email notifications',
+                };
+            }
+            const resend = new Resend(process.env.RESEND_API_KEY as string);
+            const emailContent = getEmailContent(message);
+
+            await resend.emails.send({
+                from: process.env.VERIFY_EMAIL_FROM as string,
+                to: user.email,
+                subject: message.title,
+                html: emailContent.html,
+                text: emailContent.text,
+            });
+
+            return {
+                ok: true,
+                method: 'email',
+            };
+        } catch (error) {
+            console.error('Error sending email:', error);
             return {
                 ok: false,
-                error: 'User has disabled email notifications',
+                error: 'Failed to send notification',
             };
         }
-        const resend = new Resend(process.env.RESEND_API_KEY as string);
-        const emailContent = getEmailContent(message);
-
-        await resend.emails.send({
-            from: process.env.VERIFY_EMAIL_FROM as string,
-            to: user.email,
-            subject: message.title,
-            html: emailContent.html,
-            text: emailContent.text,
-        });
-
-        return {
-            ok: true,
-            method: 'email',
-        };
-    } catch (error) {
-        console.error('Error sending email:', error);
-        return {
-            ok: false,
-            error: 'Failed to send notification',
-        };
     }
 }

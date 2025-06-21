@@ -49,38 +49,39 @@ export async function POST(request: Request) {
                     locale,
                 ),
             });
-        }        // 解析请求体获取分页参数
-        const body = await request.json().catch(() => ({}));
-        const page = Math.max(1, parseInt(body.page) || 1);
-        const limit = 20; // 固定每页20个消息
-        const skip = (page - 1) * limit;
+        }
 
-        // 获取所有消息（分页）
-        const messages = await prisma.notice.findMany({
+        // 将用户的所有未读消息标记为已读
+        await prisma.notice.updateMany({
             where: {
                 userId: user.uid,
+                isRead: false,
             },
-            orderBy: {
-                createdAt: 'desc',
-            },
-            skip,
-            take: limit,
-            select: {
-                id: true,
-                content: true,
-                createdAt: true,
-                link: true,
+            data: {
                 isRead: true,
-            }
+            },
         });
 
-        const hasMore = messages.length === limit;        return response(200, {
+        return response(200, {
             ok: true,
-            messages,
-            hasMore,
+            message: langs(
+                {
+                    'zh-CN': '所有消息已标记为已读',
+                    'zh-TW': '所有消息已標記為已讀',
+                    'en-US': 'All messages marked as read',
+                    'es-ES': 'Todos los mensajes marcados como leídos',
+                    'fr-FR': 'Tous les messages marqués comme lus',
+                    'ru-RU': 'Все сообщения отмечены как прочитанные',
+                    'ja-JP': 'すべてのメッセージを既読にしました',
+                    'de-DE': 'Alle Nachrichten als gelesen markiert',
+                    'pt-BR': 'Todas as mensagens marcadas como lidas',
+                    'ko-KR': '모든 메시지가 읽음으로 표시되었습니다',
+                },
+                locale,
+            ),
         });
     } catch (error) {
-        console.error('Rate limit check error:', error);
+        console.error('Mark all as read error:', error);
         return response(500, {
             error: 'server_error',
             message: langs(

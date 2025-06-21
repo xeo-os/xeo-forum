@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent} from '@/components/ui/card';
-import { Heart, Reply as ReplyIcon, ArrowUp, Focus, ChevronDown, ChevronRight } from 'lucide-react';
+import { Heart, Reply as ReplyIcon, ArrowUp, Focus, ChevronDown, ChevronRight, MoreHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
 import lang from '@/lib/lang';
 import { MarkdownEditor } from '@/components/markdown-editor';
@@ -194,6 +194,8 @@ interface SingleReplyProps {
   focusedReplyId?: string | null; // 新增：当前聚焦的回复ID
   highlightedReplyId?: string | null; // 新增：当前高亮的回复ID
   onHighlightChange?: (replyId: string | null) => void; // 新增：高亮变化回调
+  isLastChild?: boolean; // 新增：是否是最后一个子元素
+  childrenStatus?: boolean[]; // 新增：子层级的连接状态
 }
 
 function SingleReply({ 
@@ -207,7 +209,9 @@ function SingleReply({
   onFocusReply,
   focusedReplyId,
   highlightedReplyId,
-  onHighlightChange
+  onHighlightChange,
+  isLastChild = false,
+  childrenStatus = []
 }: SingleReplyProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
@@ -216,13 +220,49 @@ function SingleReply({
   const [likeCount, setLikeCount] = useState(reply._count?.likes || 0);
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false); // 新增：折叠状态
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [showMoreActions, setShowMoreActions] = useState(false); // 移动版更多操作
+
+  // 检测移动设备
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const isTranslated = reply.originLang !== locale;
   const maxLevel = 8;
   // 确保 parentPath 是数组
   const safeParentPath = Array.isArray(parentPath) ? parentPath : [];
   const currentPath = [...safeParentPath, reply.id];
+
+  // Git tree 风格的连接线渲染 - 移动版不再使用
+  const renderTreeLines = () => {
+    return null; // 移动版不显示连接线
+  };
+
+  // 移动版计算缩进 - 移动版不再缩进
+  const getMobileIndent = () => {
+    return 0; // 移动版不缩进
+  };
+
+  // 桌面版缩进样式
+  const getDesktopIndentStyle = () => {
+    if (isMobile || level === 0) return {};
+    const indentSize = 3;
+    return { paddingLeft: `${indentSize}%` };
+  };
+
+  // 桌面版连接线样式
+  const getDesktopConnectionLineStyle = () => {
+    if (isMobile || level === 0) return '';
+    return 'absolute left-0 top-0 bottom-0 w-0.5 bg-muted/60';
+  };
 
   // 检查当前回复是否在hover路径中
   const isInHoverPath = () => {
@@ -350,22 +390,7 @@ function SingleReply({
     return reply[translatedFieldName] || reply.content;
   };
 
-  // 计算缩进样式 - 使用更小的缩进
-  const getIndentStyle = () => {
-    if (level === 0) return {};
-    const indentSize = 4;
-    return { paddingLeft: `${indentSize}%` };
-  };
-
-  // 获取连接线样式 - 简化为统一样式
-  const getConnectionLineStyle = () => {
-    if (level === 0) return '';
-    
-    // 统一的连接线样式，不再有高亮效果
-    return 'absolute left-0 top-0 bottom-0 w-0.5 bg-muted/60';
-  };
-
-  // 提交回复逻辑
+  // 处理回复
   const submitReply = async () => {
     if (!content.trim()) return;
 
@@ -444,29 +469,148 @@ function SingleReply({
     }, 50); // 短暂延迟确保状态更新
   };
 
+  // 移动版操作按钮组件
+  const MobileActionButtons = () => (
+    <div className="flex items-center gap-1">
+      {/* 主要操作按钮 */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleLike}
+        disabled={isLiking}
+        className="h-6 px-2 text-xs hover:bg-muted/50"
+      >
+        <Heart className={`h-3 w-3 ${isLiked ? 'fill-current text-red-500' : ''}`} />
+        <span className="ml-1 text-xs">{likeCount}</span>
+      </Button>
+
+      {level < maxLevel && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsReplying(!isReplying)}
+          className="h-6 px-2 text-xs hover:bg-muted/50"
+        >
+          <ReplyIcon className="h-3 w-3" />
+        </Button>
+      )}
+
+      {/* 更多操作按钮 */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setShowMoreActions(!showMoreActions)}
+        className="h-6 px-1 text-xs hover:bg-muted/50"
+      >
+        <MoreHorizontal className="h-3 w-3" />
+      </Button>
+    </div>
+  );
+
+  // 桌面版操作按钮组件
+  const DesktopActionButtons = () => (
+    <div className="flex items-center gap-1 flex-wrap">
+      {isTranslated && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowOriginal(!showOriginal)}
+          className="h-5 px-1.5 text-xs hover:bg-muted/50"
+        >
+          {showOriginal ? 
+            lang({
+              'zh-CN': '译文',
+              'en-US': 'Trans',
+              'zh-TW': '譯文',
+              'es-ES': 'Trad',
+              'fr-FR': 'Trad',
+              'ru-RU': 'Пер',
+              'ja-JP': '翻訳',
+              'de-DE': 'Übers',
+              'pt-BR': 'Trad',
+              'ko-KR': '번역',
+            }, locale) :
+            lang({
+              'zh-CN': '原文',
+              'en-US': 'Orig',
+              'zh-TW': '原文',
+              'es-ES': 'Orig',
+              'fr-FR': 'Orig',
+              'ru-RU': 'Ориг',
+              'ja-JP': '原文',
+              'de-DE': 'Orig',
+              'pt-BR': 'Orig',
+              'ko-KR': '원문',
+            }, locale)
+          }
+        </Button>
+      )}
+      
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleLike}
+        disabled={isLiking}
+        className="h-5 px-1.5 text-xs hover:bg-muted/50"
+      >
+        <Heart className={`h-3 w-3 mr-1 ${isLiked ? 'fill-current text-red-500' : ''}`} />
+        {likeCount}
+      </Button>
+
+      {level < maxLevel && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsReplying(!isReplying)}
+          className="h-5 px-1.5 text-xs hover:bg-muted/50"
+        >
+          <ReplyIcon className="h-3 w-3 mr-1" />
+          {lang({
+            'zh-CN': '回复',
+            'en-US': 'Reply',
+            'zh-TW': '回覆',
+            'es-ES': 'Resp',
+            'fr-FR': 'Rép',
+            'ru-RU': 'Отв',
+            'ja-JP': '返信',
+            'de-DE': 'Antw',
+            'pt-BR': 'Resp',
+            'ko-KR': '답글',
+          }, locale)}
+        </Button>
+      )}
+    </div>
+  );
+
   return (
     <div 
       id={`reply-${reply.id}`}
-      style={getIndentStyle()} 
-      className={`relative ${level > 0 ? 'border-l-2 border-transparent' : ''} transition-all duration-300 ${
+      style={isMobile ? {} : getDesktopIndentStyle()} 
+      className={`relative ${level > 0 && !isMobile ? 'border-l-2 border-transparent' : ''} transition-all duration-300 ${
         isHighlighted ? 'bg-primary/10 border-primary/20 rounded-lg' : ''
-      }`}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      } ${isMobile ? 'border-none' : ''}`} // 移动版去除边框
+      onMouseEnter={!isMobile ? handleMouseEnter : undefined}
+      onMouseLeave={!isMobile ? handleMouseLeave : undefined}
     >
-      {/* 连接线 - 统一样式，无高亮 */}
-      {level > 0 && (
-        <div className={getConnectionLineStyle()} />
+      {/* 移动版不显示 Git tree 连接线 */}
+      {!isMobile && renderTreeLines()}
+      
+      {/* 桌面版连接线 */}
+      {level > 0 && !isMobile && (
+        <div className={getDesktopConnectionLineStyle()} />
       )}
       
-      <div className="flex gap-2 py-2 relative">
-        {/* 头像 - 统一大小为 32px (h-8 w-8) */}
+      <div 
+        className={`flex gap-2 py-2 relative ${isMobile ? 'px-0' : ''}`} // 移动版去除padding
+        style={isMobile ? {} : {}} // 移动版不使用任何缩进样式
+      >
+        {/* 头像 */}
         <div className="flex-shrink-0">
           <Link
             href={`/${locale}/user/${reply.user.uid}`}
             className="hover:opacity-80 transition-opacity block"
           >
-            <Avatar className="h-8 w-8">
+            <Avatar className={isMobile ? "h-6 w-6" : "h-8 w-8"}>
               <AvatarImage
                 src={
                   reply.user.avatar[0]?.id
@@ -496,36 +640,159 @@ function SingleReply({
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <Link
               href={`/${locale}/user/${reply.user.uid}`}
-              className="font-medium hover:text-primary transition-colors text-sm"
+              className={`font-medium hover:text-primary transition-colors ${isMobile ? 'text-xs' : 'text-sm'}`}
             >
               {reply.user.nickname || 'Anonymous'}
             </Link>
-            <span className="text-muted-foreground text-xs">
+            <span className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-xs'}`}>
               {reply.formattedTime}
             </span>
-            {level > 0 && (
-              <span className="text-muted-foreground text-xs">
-                #{reply.id.slice(-6)}
-              </span>
-            )}
-            {/* 层级指示器 - hover时高亮 */}
-            {level > 0 && (
-              <span className={`text-muted-foreground text-xs transition-all duration-300 ${
-                isCurrentHovered() 
-                  ? 'opacity-100 text-primary font-medium' 
-                  : isInHoverPath() 
-                    ? 'opacity-80 text-primary' 
-                    : 'opacity-50'
-              }`}>
+            {/* 移动版显示层级指示器 */}
+            {isMobile && level > 0 && (
+              <span className="text-muted-foreground text-xs bg-muted/30 px-1.5 py-0.5 rounded-full">
                 L{level}
               </span>
             )}
+            {level > 0 && (
+              <span className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-xs'}`}>
+                #{reply.id.slice(-6)}
+              </span>
+            )}
             
-            {/* 折叠按钮 - 只在有子回复时显示，移到最前面 */}
-            {hasChildReplies() && (
+            {/* 桌面版的额外信息 */}
+            {!isMobile && (
+              <>
+                {/* 层级指示器 */}
+                {level > 0 && (
+                  <span className={`text-muted-foreground text-xs transition-all duration-300 ${
+                    isCurrentHovered() 
+                      ? 'opacity-100 text-primary font-medium' 
+                      : isInHoverPath() 
+                        ? 'opacity-80 text-primary' 
+                        : 'opacity-50'
+                  }`}>
+                    L{level}
+                  </span>
+                )}
+                
+                {/* 折叠按钮 */}
+                {hasChildReplies() && (
+                  <button
+                    onClick={() => setIsCollapsed(!isCollapsed)}
+                    className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 text-xs"
+                  >
+                    <motion.div
+                      animate={{ rotate: isCollapsed ? 0 : 90 }}
+                      transition={{ duration: 0.2, ease: "easeInOut" }}
+                    >
+                      <ChevronRight className="h-3 w-3" />
+                    </motion.div>
+                    <span className="text-xs">
+                      {isCollapsed ? 
+                        lang({
+                          'zh-CN': `展开 ${totalChildrenCount} 条回复`,
+                          'en-US': `Expand ${totalChildrenCount} replies`,
+                          'zh-TW': `展開 ${totalChildrenCount} 條回覆`,
+                          'es-ES': `Expandir ${totalChildrenCount} respuestas`,
+                          'fr-FR': `Développer ${totalChildrenCount} réponses`,
+                          'ru-RU': `Развернуть ${totalChildrenCount} ответов`,
+                          'ja-JP': `${totalChildrenCount} 件の返信を展開`,
+                          'de-DE': `${totalChildrenCount} Antworten erweitern`,
+                          'pt-BR': `Expandir ${totalChildrenCount} respostas`,
+                          'ko-KR': `${totalChildrenCount}개 답글 펼치기`,
+                        }, locale) :
+                        lang({
+                          'zh-CN': '折叠',
+                          'en-US': 'Collapse',
+                          'zh-TW': '折疊',
+                          'es-ES': 'Colapsar',
+                          'fr-FR': 'Réduire',
+                          'ru-RU': 'Свернуть',
+                          'ja-JP': '折りたたみ',
+                          'de-DE': 'Einklappen',
+                          'pt-BR': 'Recolher',
+                          'ko-KR': '접기',
+                        }, locale)
+                      }
+                    </span>
+                  </button>
+                )}
+                
+                {/* 其他桌面版专用按钮 */}
+                {isCurrentHovered() && getParentReplyId() && (
+                  <button
+                    onClick={() => highlightParentReply(getParentReplyId()!)}
+                    className="text-blue-500 text-xs font-medium hover:text-blue-600 transition-colors flex items-center gap-1"
+                    style={{
+                      animation: 'fadeIn 0.2s ease-out'
+                    }}
+                  >
+                    <ArrowUp className="h-3 w-3" />
+                    {lang({
+                      'zh-CN': '高亮原回复',
+                      'en-US': 'Highlight original',
+                      'zh-TW': '高亮原回覆',
+                      'es-ES': 'Resaltar original',
+                      'fr-FR': 'Surligner original',
+                      'ru-RU': 'Выделить оригинал',
+                      'ja-JP': '元をハイライト',
+                      'de-DE': 'Original hervorheben',
+                      'pt-BR': 'Destacar original',
+                      'ko-KR': '원본 강조',
+                    }, locale)}
+                  </button>
+                )}
+
+                {isCurrentHovered() && hasChildReplies() && (
+                  <button
+                    onClick={() => onFocusReply?.(reply.id)}
+                    className="text-green-500 text-xs font-medium hover:text-green-600 transition-colors flex items-center gap-1"
+                    style={{
+                      animation: 'fadeIn 0.2s ease-out'
+                    }}
+                  >
+                    <Focus className="h-3 w-3" />
+                    {lang({
+                      'zh-CN': `聚焦此回复(${reply.replies.length})`,
+                      'en-US': `Focus reply(${reply.replies.length})`,
+                      'zh-TW': `聚焦此回覆(${reply.replies.length})`,
+                      'es-ES': `Enfocar(${reply.replies.length})`,
+                      'fr-FR': `Focus(${reply.replies.length})`,
+                      'ru-RU': `Фокус(${reply.replies.length})`,
+                      'ja-JP': `フォーカス(${reply.replies.length})`,
+                      'de-DE': `Fokus(${reply.replies.length})`,
+                      'pt-BR': `Foco(${reply.replies.length})`,
+                      'ko-KR': `포커스(${reply.replies.length})`,
+                    }, locale)}
+                  </button>
+                )}
+
+                {isDirectParent() && (
+                  <span className="text-orange-500 text-xs font-medium animate-pulse">
+                    ↳ {lang({
+                      'zh-CN': '原回复',
+                      'en-US': 'Original',
+                      'zh-TW': '原回覆',
+                      'es-ES': 'Original',
+                      'fr-FR': 'Original',
+                      'ru-RU': 'Оригинал',
+                      'ja-JP': '元',
+                      'de-DE': 'Original',
+                      'pt-BR': 'Original',
+                      'ko-KR': '원본',
+                    }, locale)}
+                  </span>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* 移动版折叠按钮 - 显示为小徽章 */}
+          {isMobile && hasChildReplies() && (
+            <div className="mb-2">
               <button
                 onClick={() => setIsCollapsed(!isCollapsed)}
-                className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 text-xs"
+                className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 text-xs bg-muted/20 px-2 py-1 rounded-full"
               >
                 <motion.div
                   animate={{ rotate: isCollapsed ? 0 : 90 }}
@@ -535,18 +802,18 @@ function SingleReply({
                 </motion.div>
                 <span className="text-xs">
                   {isCollapsed ? 
-                    lang({
-                      'zh-CN': `展开 ${totalChildrenCount} 条回复`,
-                      'en-US': `Expand ${totalChildrenCount} replies`,
-                      'zh-TW': `展開 ${totalChildrenCount} 條回覆`,
-                      'es-ES': `Expandir ${totalChildrenCount} respuestas`,
-                      'fr-FR': `Développer ${totalChildrenCount} réponses`,
-                      'ru-RU': `Развернуть ${totalChildrenCount} ответов`,
-                      'ja-JP': `${totalChildrenCount} 件の返信を展開`,
-                      'de-DE': `${totalChildrenCount} Antworten erweitern`,
-                      'pt-BR': `Expandir ${totalChildrenCount} respostas`,
-                      'ko-KR': `${totalChildrenCount}개 답글 펼치기`,
-                    }, locale) :
+                    `${totalChildrenCount} ${lang({
+                      'zh-CN': '条回复',
+                      'en-US': 'replies',
+                      'zh-TW': '條回覆',
+                      'es-ES': 'respuestas',
+                      'fr-FR': 'réponses',
+                      'ru-RU': 'ответов',
+                      'ja-JP': '件の返信',
+                      'de-DE': 'Antworten',
+                      'pt-BR': 'respostas',
+                      'ko-KR': '개 답글',
+                    }, locale)}` :
                     lang({
                       'zh-CN': '折叠',
                       'en-US': 'Collapse',
@@ -562,168 +829,129 @@ function SingleReply({
                   }
                 </span>
               </button>
-            )}
-            
-            {/* 原回复高亮按钮 - 只在hover且有原回复时显示 */}
-            {isCurrentHovered() && getParentReplyId() && (
-              <button
-                onClick={() => highlightParentReply(getParentReplyId()!)}
-                className="text-blue-500 text-xs font-medium hover:text-blue-600 transition-colors flex items-center gap-1"
-                style={{
-                  animation: 'fadeIn 0.2s ease-out'
-                }}
-              >
-                <ArrowUp className="h-3 w-3" />
-                {lang({
-                  'zh-CN': '高亮原回复',
-                  'en-US': 'Highlight original',
-                  'zh-TW': '高亮原回覆',
-                  'es-ES': 'Resaltar original',
-                  'fr-FR': 'Surligner original',
-                  'ru-RU': 'Выделить оригинал',
-                  'ja-JP': '元をハイライト',
-                  'de-DE': 'Original hervorheben',
-                  'pt-BR': 'Destacar original',
-                  'ko-KR': '원본 강조',
-                }, locale)}
-              </button>
-            )}
-
-            {/* 聚焦此回复按钮 - 只在hover且有子回复时显示 */}
-            {isCurrentHovered() && hasChildReplies() && (
-              <button
-                onClick={() => onFocusReply?.(reply.id)}
-                className="text-green-500 text-xs font-medium hover:text-green-600 transition-colors flex items-center gap-1"
-                style={{
-                  animation: 'fadeIn 0.2s ease-out'
-                }}
-              >
-                <Focus className="h-3 w-3" />
-                {lang({
-                  'zh-CN': `聚焦此回复(${reply.replies.length})`,
-                  'en-US': `Focus reply(${reply.replies.length})`,
-                  'zh-TW': `聚焦此回覆(${reply.replies.length})`,
-                  'es-ES': `Enfocar(${reply.replies.length})`,
-                  'fr-FR': `Focus(${reply.replies.length})`,
-                  'ru-RU': `Фокус(${reply.replies.length})`,
-                  'ja-JP': `フォーカス(${reply.replies.length})`,
-                  'de-DE': `Fokus(${reply.replies.length})`,
-                  'pt-BR': `Foco(${reply.replies.length})`,
-                  'ko-KR': `포커스(${reply.replies.length})`,
-                }, locale)}
-              </button>
-            )}
-
-            {/* 原回复指示 - 只在hover时显示 */}
-            {isDirectParent() && (
-              <span className="text-orange-500 text-xs font-medium animate-pulse">
-                ↳ {lang({
-                  'zh-CN': '原回复',
-                  'en-US': 'Original',
-                  'zh-TW': '原回覆',
-                  'es-ES': 'Original',
-                  'fr-FR': 'Original',
-                  'ru-RU': 'Оригинал',
-                  'ja-JP': '元',
-                  'de-DE': 'Original',
-                  'pt-BR': 'Original',
-                  'ko-KR': '원본',
-                }, locale)}
-              </span>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* 回复内容 */}
           <div
-            className="prose prose-sm max-w-none dark:prose-invert mb-2
+            className={`prose prose-sm max-w-none dark:prose-invert mb-2
                        prose-p:my-1 prose-p:leading-relaxed prose-p:text-sm
                        prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
                        prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-a:text-sm
                        prose-strong:text-sm prose-em:text-sm prose-li:text-sm
-                       text-sm"
+                       ${isMobile ? 'text-xs' : 'text-sm'}`}
             dangerouslySetInnerHTML={{ 
               __html: markdownToHtml(getDisplayContent()) 
             }}
           />
 
           {/* 操作按钮 */}
-          <div className="flex items-center gap-1 flex-wrap">
-            {isTranslated && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowOriginal(!showOriginal)}
-                className="h-5 px-1.5 text-xs hover:bg-muted/50"
-              >
-                {showOriginal ? 
-                  lang({
-                    'zh-CN': '译文',
-                    'en-US': 'Trans',
-                    'zh-TW': '譯文',
-                    'es-ES': 'Trad',
-                    'fr-FR': 'Trad',
-                    'ru-RU': 'Пер',
-                    'ja-JP': '翻訳',
-                    'de-DE': 'Übers',
-                    'pt-BR': 'Trad',
-                    'ko-KR': '번역',
-                  }, locale) :
-                  lang({
-                    'zh-CN': '原文',
-                    'en-US': 'Orig',
-                    'zh-TW': '原文',
-                    'es-ES': 'Orig',
-                    'fr-FR': 'Orig',
-                    'ru-RU': 'Ориг',
-                    'ja-JP': '原文',
-                    'de-DE': 'Orig',
-                    'pt-BR': 'Orig',
-                    'ko-KR': '원문',
-                  }, locale)
-                }
-              </Button>
-            )}
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLike}
-              disabled={isLiking}
-              className="h-5 px-1.5 text-xs hover:bg-muted/50"
-            >
-              <Heart className={`h-3 w-3 mr-1 ${isLiked ? 'fill-current text-red-500' : ''}`} />
-              {likeCount}
-            </Button>
+          {isMobile ? <MobileActionButtons /> : <DesktopActionButtons />}
 
-            {level < maxLevel && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsReplying(!isReplying)}
-                className="h-5 px-1.5 text-xs hover:bg-muted/50"
-              >
-                <ReplyIcon className="h-3 w-3 mr-1" />
-                {lang({
-                  'zh-CN': '回复',
-                  'en-US': 'Reply',
-                  'zh-TW': '回覆',
-                  'es-ES': 'Resp',
-                  'fr-FR': 'Rép',
-                  'ru-RU': 'Отв',
-                  'ja-JP': '返信',
-                  'de-DE': 'Antw',
-                  'pt-BR': 'Resp',
-                  'ko-KR': '답글',
-                }, locale)}
-              </Button>
-            )}
-          </div>
+          {/* 移动版更多操作面板 */}
+          {isMobile && showMoreActions && (
+            <div className="mt-2 p-2 bg-muted/20 rounded border">
+              <div className="flex flex-wrap gap-2">
+                {isTranslated && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setShowOriginal(!showOriginal);
+                      setShowMoreActions(false);
+                    }}
+                    className="h-6 px-2 text-xs"
+                  >
+                    {showOriginal ? 
+                      lang({
+                        'zh-CN': '显示译文',
+                        'en-US': 'Show translation',
+                        'zh-TW': '顯示譯文',
+                        'es-ES': 'Mostrar traducción',
+                        'fr-FR': 'Afficher la traduction',
+                        'ru-RU': 'Показать перевод',
+                        'ja-JP': '翻訳を表示',
+                        'de-DE': 'Übersetzung anzeigen',
+                        'pt-BR': 'Mostrar tradução',
+                        'ko-KR': '번역 보기',
+                      }, locale) :
+                      lang({
+                        'zh-CN': '显示原文',
+                        'en-US': 'Show original',
+                        'zh-TW': '顯示原文',
+                        'es-ES': 'Mostrar original',
+                        'fr-FR': 'Afficher l\'original',
+                        'ru-RU': 'Показать оригинал',
+                        'ja-JP': '原文を表示',
+                        'de-DE': 'Original anzeigen',
+                        'pt-BR': 'Mostrar original',
+                        'ko-KR': '원문 보기',
+                      }, locale)
+                    }
+                  </Button>
+                )}
+                
+                {/* 高亮原回复按钮 - 移动版新增 */}
+                {getParentReplyId() && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      highlightParentReply(getParentReplyId()!);
+                      setShowMoreActions(false);
+                    }}
+                    className="h-6 px-2 text-xs"
+                  >
+                    <ArrowUp className="h-3 w-3 mr-1" />
+                    {lang({
+                      'zh-CN': '高亮原回复',
+                      'en-US': 'Highlight original',
+                      'zh-TW': '高亮原回覆',
+                      'es-ES': 'Resaltar original',
+                      'fr-FR': 'Surligner original',
+                      'ru-RU': 'Выделить оригинал',
+                      'ja-JP': '元をハイライト',
+                      'de-DE': 'Original hervorheben',
+                      'pt-BR': 'Destacar original',
+                      'ko-KR': '원본 강조',
+                    }, locale)}
+                  </Button>
+                )}
+                
+                {hasChildReplies() && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      onFocusReply?.(reply.id);
+                      setShowMoreActions(false);
+                    }}
+                    className="h-6 px-2 text-xs"
+                  >
+                    <Focus className="h-3 w-3 mr-1" />
+                    {lang({
+                      'zh-CN': '聚焦',
+                      'en-US': 'Focus',
+                      'zh-TW': '聚焦',
+                      'es-ES': 'Enfocar',
+                      'fr-FR': 'Focus',
+                      'ru-RU': 'Фокус',
+                      'ja-JP': 'フォーカス',
+                      'de-DE': 'Fokus',
+                      'pt-BR': 'Foco',
+                      'ko-KR': '포커스',
+                    }, locale)}
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
 
-          {/* 回复编辑器 - 更紧凑的设计 */}
+          {/* 回复编辑器 */}
           {isReplying && (
-            <div className="mt-2 p-2 bg-muted/20 rounded-md border border-muted/50">
+            <div className={`mt-2 p-2 bg-muted/20 rounded-md border border-muted/50 ${isMobile ? 'text-xs' : ''}`}>
               <div className="flex gap-2">
-                <Avatar className="h-6 w-6 flex-shrink-0">
+                <Avatar className={isMobile ? "h-5 w-5" : "h-6 w-6"}>
                   <AvatarImage
                     src={
                       token.getObject()?.avatar
@@ -762,14 +990,16 @@ function SingleReply({
                         'pt-BR': `Responder a @${reply.user.nickname || 'Anonymous'}...`,
                         'ko-KR': `@${reply.user.nickname || 'Anonymous'}에게 답글...`,
                       }, locale)}
-                      className="w-full p-2 border border-input rounded-md resize-none focus:outline-none focus:ring-1 focus:ring-ring text-sm bg-background"
-                      rows={2}
+                      className={`w-full p-2 border border-input rounded-md resize-none focus:outline-none focus:ring-1 focus:ring-ring bg-background ${
+                        isMobile ? 'text-xs' : 'text-sm'
+                      }`}
+                      rows={isMobile ? 2 : 2}
                       maxLength={200}
                     />
                   </div>
 
                   <div className="flex justify-between items-center">
-                    <span className="text-xs text-muted-foreground">
+                    <span className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-xs'}`}>
                       {content.length}/200
                     </span>
                     <div className="flex gap-1">
@@ -780,7 +1010,7 @@ function SingleReply({
                           setIsReplying(false);
                           setContent('');
                         }}
-                        className="h-6 px-2 text-xs"
+                        className={`px-2 ${isMobile ? 'h-6 text-xs' : 'h-6 text-xs'}`}
                       >
                         {lang({
                           'zh-CN': '取消',
@@ -799,7 +1029,7 @@ function SingleReply({
                         onClick={submitReply}
                         disabled={isSubmitting || !content.trim()}
                         size="sm"
-                        className="h-6 px-2 text-xs"
+                        className={`px-2 ${isMobile ? 'h-6 text-xs' : 'h-6 text-xs'}`}
                       >
                         {isSubmitting ? 
                           lang({
@@ -837,7 +1067,7 @@ function SingleReply({
         </div>
       </div>
 
-      {/* 子回复 - 使用动画展开/折叠 */}
+      {/* 子回复 - 移动版平铺显示 */}
       <AnimatePresence initial={false}>
         {reply.replies && reply.replies.length > 0 && !isCollapsed && (
           <motion.div
@@ -859,24 +1089,34 @@ function SingleReply({
               }
             }}
             style={{ overflow: "hidden" }}
-            className="space-y-0"
+            className={`space-y-0 ${isMobile ? 'ml-0 pl-0' : ''}`} // 移动版去除左边距
           >
-            {reply.replies.map((subReply: any) => (
-              <SingleReply
-                key={subReply.id}
-                reply={subReply}
-                locale={locale}
-                level={level + 1}
-                onReplySuccess={onReplySuccess}
-                hoveredReplyPath={hoveredReplyPath}
-                onHover={onHover}
-                parentPath={currentPath}
-                onFocusReply={onFocusReply}
-                focusedReplyId={focusedReplyId}
-                highlightedReplyId={highlightedReplyId}
-                onHighlightChange={onHighlightChange}
-              />
-            ))}
+            {reply.replies.map((subReply: any, index: number) => {
+              // 移动版不需要连接状态
+              const newChildrenStatus = isMobile ? [] : [...childrenStatus];
+              if (!isMobile && level >= 0) {
+                newChildrenStatus[level] = index < reply.replies.length - 1;
+              }
+              
+              return (
+                <SingleReply
+                  key={subReply.id}
+                  reply={subReply}
+                  locale={locale}
+                  level={level + 1}
+                  onReplySuccess={onReplySuccess}
+                  hoveredReplyPath={hoveredReplyPath}
+                  onHover={onHover}
+                  parentPath={currentPath}
+                  onFocusReply={onFocusReply}
+                  focusedReplyId={focusedReplyId}
+                  highlightedReplyId={highlightedReplyId}
+                  onHighlightChange={onHighlightChange}
+                  isLastChild={index === reply.replies.length - 1}
+                  childrenStatus={newChildrenStatus}
+                />
+              )
+            })}
           </motion.div>
         )}
       </AnimatePresence>
@@ -1013,7 +1253,7 @@ export function ReplyList({ replies, locale, onRepliesUpdate }: ReplyListProps) 
   if (focusedReplies) {
     return (
       <Card className="overflow-hidden">
-        <CardContent className="p-3">
+        <CardContent className="p-4"> {/* 从 p-3 改为 p-4 */}
           {/* 聚焦模式头部 */}
           <div className="mb-4 p-3 bg-primary/10 rounded-lg border border-primary/20">
             <div className="flex items-center justify-between">
@@ -1116,7 +1356,7 @@ export function ReplyList({ replies, locale, onRepliesUpdate }: ReplyListProps) 
 
   return (
     <Card className="overflow-hidden">
-      <CardContent className="p-3">
+      <CardContent className="p-6"> {/* 从 p-3 改为 p-4 */}
         <div className="space-y-0">
           {localReplies.map((reply) => (
             <SingleReply
