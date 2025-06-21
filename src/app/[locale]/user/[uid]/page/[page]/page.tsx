@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Metadata } from 'next';
 import lang from '@/lib/lang';
-import EmojiBackground from '@/components/EmojiBackground';
+import EmojiBackground from '@/components/emoji-background';
 
 import '@/app/globals.css';
 

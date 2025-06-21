@@ -53,7 +53,12 @@ const EmojiBackground: React.FC<EmojiBackgroundProps> = ({
             return defaultEmojis;
         }
 
-        const userEmojiList = emojiString.split(' ').filter((emoji) => emoji.trim() !== '');
+        // 使用正则表达式拆分表情符号，支持Unicode表情符号
+        const emojiRegex = /\p{Emoji_Presentation}|\p{Emoji}\uFE0F/gu;
+        const matches = emojiString.match(emojiRegex);
+        
+        // 如果没有匹配到表情符号，尝试按空格分割
+        const userEmojiList = matches || emojiString.split(' ').filter((emoji) => emoji.trim() !== '');
 
         // 如果用户表情符号太少，用默认表情符号补充
         if (userEmojiList.length < 20) {

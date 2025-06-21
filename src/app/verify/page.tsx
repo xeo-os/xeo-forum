@@ -33,7 +33,7 @@ export default function VerifyPage() {
         setEmail(emailParam);
 
         if (!emailParam) {
-            router.replace('/signin');
+            router.replace(`/signin&email=${encodeURIComponent(emailParam || '')}`);
             return;
         }
     }, [router]);

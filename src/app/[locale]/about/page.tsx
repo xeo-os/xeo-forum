@@ -20,7 +20,7 @@ import {
     Calendar,
 } from 'lucide-react';
 import Link from 'next/link';
-import EmojiBackground from '@/components/EmojiBackground';
+import EmojiBackground from '@/components/emoji-background';
 import { getGlobalStats, formatCount } from '@/lib/stats';
 
 type Props = {

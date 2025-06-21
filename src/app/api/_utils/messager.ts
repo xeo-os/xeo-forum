@@ -76,6 +76,7 @@ export default async function messager(
             data: {
                 userId: Number(user.uid),
                 content: message.content,
+                link: message.link,
             },
         });
         const userMessageSetting = await prisma.user.findUnique({

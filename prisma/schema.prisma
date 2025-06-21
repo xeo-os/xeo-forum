@@ -194,6 +194,7 @@ model Notice {
   userId    Int
   isRead    Boolean  @default(false)
   content   String   @db.VarChar(255)
+  link      String?  @db.VarChar(100)
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [uid])
 }
