@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
     Sheet,
     SheetContent,
@@ -38,9 +38,11 @@ interface Task {
 
 interface TaskListSheetProps {
     children: React.ReactNode;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
 }
 
-export default function TaskListSheet({ children }: TaskListSheetProps) {
+export default function TaskListSheet({ children, open: externalOpen, onOpenChange }: TaskListSheetProps) {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
@@ -50,6 +52,9 @@ export default function TaskListSheet({ children }: TaskListSheetProps) {
     const [hasMore, setHasMore] = useState(true);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const { registerCallback, unregisterCallback } = useBroadcast();
+
+    // 使用外部的 open 状态，如果提供的话
+    const isOpen = externalOpen !== undefined ? externalOpen : open;
 
     useEffect(() => {
         const handleBroadcastMessage = (message: unknown) => {
@@ -157,7 +162,7 @@ export default function TaskListSheet({ children }: TaskListSheetProps) {
     };
 
     // 加载更多任务
-    const loadMoreTasks = async () => {
+    const loadMoreTasks = useCallback(async () => {
         if (loadingMore || !hasMore) return;
 
         setLoadingMore(true);
@@ -216,11 +221,11 @@ export default function TaskListSheet({ children }: TaskListSheetProps) {
         } finally {
             setLoadingMore(false);
         }
-    };
+    }, [loadingMore, hasMore, page]);
 
     // 处理滚动事件
     useEffect(() => {
-        if (!open) return;
+        if (!isOpen) return;
 
         const scrollElement = scrollAreaRef.current;
         if (!scrollElement) return;
@@ -258,13 +263,11 @@ export default function TaskListSheet({ children }: TaskListSheetProps) {
         };
 
         // 延迟检查，等待DOM更新
-        const timer = setTimeout(checkInitialLoad, 100);
-
-        return () => {
+        const timer = setTimeout(checkInitialLoad, 100);        return () => {
             viewport.removeEventListener('scroll', handleScroll);
             clearTimeout(timer);
         };
-    }, [open, hasMore, loadingMore, tasks.length]);
+    }, [isOpen, hasMore, loadingMore, tasks.length, loadMoreTasks]);
 
     const retryTask = async (taskId: string) => {
         setRetrying(taskId);
@@ -435,10 +438,13 @@ export default function TaskListSheet({ children }: TaskListSheetProps) {
         const date = new Date(dateString);
         const locale = navigator.language.startsWith('zh') ? zhCN : enUS;
         return formatDistanceToNow(date, { addSuffix: true, locale });
-    };
-
-    const handleOpenChange = (newOpen: boolean) => {
-        setOpen(newOpen);
+    };    const handleOpenChange = (newOpen: boolean) => {
+        // 如果有外部的 onOpenChange，使用它
+        if (onOpenChange) {
+            onOpenChange(newOpen);
+        } else {
+            setOpen(newOpen);
+        }
 
         // 管理滚动锁定状态
         if (newOpen) {
@@ -449,17 +455,13 @@ export default function TaskListSheet({ children }: TaskListSheetProps) {
         } else {
             document.body.removeAttribute('data-scroll-locked');
         }
-    };
-
-    // 组件卸载时清理滚动锁定状态
+    };    // 组件卸载时清理滚动锁定状态
     useEffect(() => {
         return () => {
             document.body.removeAttribute('data-scroll-locked');
         };
-    }, []);
-
-    return (
-        <Sheet open={open} onOpenChange={handleOpenChange}>
+    }, []);        return (
+        <Sheet open={isOpen} onOpenChange={handleOpenChange}>
             <SheetTrigger asChild>{children}</SheetTrigger>
             <SheetContent side='right' className='w-[400px] sm:w-[540px]'>
                 <SheetHeader>

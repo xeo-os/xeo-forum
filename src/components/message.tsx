@@ -441,8 +441,7 @@ export default function Message() {
                 return;
             }
 
-            console.log('Setting up channel subscriptions...');
-            // 监听 broadcast 频道
+            console.log('Setting up channel subscriptions...');            // 监听 broadcast 频道
             const broadcastChannel = ablyRef.current.channels.get('broadcast');
             broadcastChannel.subscribe('new-message', (message) => {
                 console.log('Received broadcast message:', message);
@@ -451,17 +450,26 @@ export default function Message() {
                 try {
                     const messageData = message.data.message as MessageData;
                     if (messageData?.content) {
-                        broadcast({
-                            action: 'broadcast',
-                            data: messageData.content,
-                            type: messageData.type,
-                        });
+                        // 如果是任务状态更新
+                        if (messageData.type === 'task') {
+                            broadcast({
+                                action: 'broadcast',
+                                data: messageData.content,
+                                type: messageData.type,
+                            });
+                        } else {
+                            broadcast({
+                                action: 'broadcast',
+                                data: messageData.content,
+                                type: messageData.type,
+                            });
+                        }
                     }
                 } catch (error) {
                     console.error('Error processing broadcast message:', error);
                 }
             });
-            await broadcastChannel.presence.enter();            // 监听用户专属频道
+            await broadcastChannel.presence.enter();// 监听用户专属频道
             const userChannel = ablyRef.current.channels.get(`user-${userInfo.uid}`);
             userChannel.subscribe((message) => {
                 console.log('Received user message:', message);
@@ -493,7 +501,7 @@ export default function Message() {
             isInitializingRef.current = false;
             console.log('=== initializeAbly END ===');
         }
-    }, [reconnect]);
+    }, [reconnect, broadcast]);
 
     useEffect(() => {
         console.log('useEffect triggered - setting up initialization');
@@ -513,9 +521,7 @@ export default function Message() {
         } else {
             console.log('Production mode - initializing immediately');
             startInitialization();
-        }
-
-        return () => {
+        }        return () => {
             console.log('useEffect cleanup called');
             if (initTimeout) {
                 clearTimeout(initTimeout);
@@ -523,7 +529,7 @@ export default function Message() {
             mountedRef.current = false;
             cleanup();
         };
-    }, []);
+    }, [cleanup, initializeAbly]);
 
     useEffect(() => {
         console.log('Component mounted, setting mountedRef to true');

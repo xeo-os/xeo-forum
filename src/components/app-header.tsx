@@ -78,6 +78,7 @@ export function SiteHeader({
     const [unreadCount, setUnreadCount] = useState(0);
     const [isAvatarShaking, setIsAvatarShaking] = useState(false);
     const [noticeListOpen, setNoticeListOpen] = useState(false);
+    const [taskListOpen, setTaskListOpen] = useState(false);
     const searchInputRef = useRef<HTMLInputElement>(null);
     const { registerCallback, unregisterCallback } = useBroadcast();
 
@@ -202,21 +203,21 @@ export function SiteHeader({
     useEffect(() => {
         const handleBroadcastMessage = (message: unknown) => {
             if (typeof message === 'object' && message !== null && 'action' in message) {
-                const msg = message as { 
-                    action: string; 
-                    query?: string; 
-                    data?: { 
-                        type: string; 
+                const msg = message as {
+                    action: string;
+                    query?: string;
+                    data?: {
+                        type: string;
                         message?: {
                             title: string;
                             content: string;
                             link: string;
                             locale: string;
                             type: string;
-                        } 
-                    } 
+                        };
+                    };
                 };
-                
+
                 if (msg.action === 'SHOW_SEARCH') {
                     setShowSearchSheet(true);
                 }
@@ -226,6 +227,9 @@ export function SiteHeader({
                 }
                 if (msg.action === 'OPEN_NOTICE_LIST') {
                     setNoticeListOpen(true);
+                }
+                if (msg.action === 'OPEN_TASK_QUEUE') {
+                    setTaskListOpen(true);
                 }
                 if (msg.action === 'REFRESH_UNREAD_COUNT') {
                     // 刷新未读消息计数
@@ -237,19 +241,19 @@ export function SiteHeader({
                                 Authorization: `Bearer ${token.get()}`,
                             },
                         })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.ok) {
-                                setUnreadCount(data.unreadCount || 0);
-                            }
-                        })
-                        .catch(error => console.error('Error checking unread count:', error));
+                            .then((response) => response.json())
+                            .then((data) => {
+                                if (data.ok) {
+                                    setUnreadCount(data.unreadCount || 0);
+                                }
+                            })
+                            .catch((error) => console.error('Error checking unread count:', error));
                     }
                 }
                 if (msg.action === 'broadcast') {
                     const messageData = msg.data;
                     if (!messageData) return;
-                    
+
                     if (messageData.type === 'task') {
                         // 任务状态更新已在TaskListSheet中处理
                         console.log('Task status updated:', messageData);
@@ -260,7 +264,7 @@ export function SiteHeader({
                             // 触发头像抖动
                             setIsAvatarShaking(true);
                             setTimeout(() => setIsAvatarShaking(false), 600);
-                            
+
                             // 延迟一下再刷新，确保数据库更新完成
                             setTimeout(() => {
                                 fetch('/api/message/unread-count', {
@@ -270,13 +274,15 @@ export function SiteHeader({
                                         Authorization: `Bearer ${token.get()}`,
                                     },
                                 })
-                                .then(response => response.json())
-                                .then(data => {
-                                    if (data.ok) {
-                                        setUnreadCount(data.unreadCount || 0);
-                                    }
-                                })
-                                .catch(error => console.error('Error checking unread count:', error));
+                                    .then((response) => response.json())
+                                    .then((data) => {
+                                        if (data.ok) {
+                                            setUnreadCount(data.unreadCount || 0);
+                                        }
+                                    })
+                                    .catch((error) =>
+                                        console.error('Error checking unread count:', error),
+                                    );
                             }, 1000);
                         }
                     }
@@ -296,7 +302,7 @@ export function SiteHeader({
         <>
             {/* 消息通知组件 */}
             <MessageNotificationToast />
-            
+
             <header className='bg-background border-b w-full fixed top-0 z-50'>
                 <div className='flex h-14 w-full items-center gap-2 px-4 relative'>
                     <Button className='h-8 w-8' variant='ghost' size='icon' onClick={toggleSidebar}>
@@ -418,10 +424,11 @@ export function SiteHeader({
 
                         <DropdownMenu modal={false}>
                             <DropdownMenuTrigger asChild>
-                                <div className="relative">
-                                    <Avatar className={`cursor-pointer hover:opacity-80 transition-opacity ${
-                                        isAvatarShaking ? 'animate-shake-rotate' : ''
-                                    }`}>
+                                <div className='relative'>
+                                    <Avatar
+                                        className={`cursor-pointer hover:opacity-80 transition-opacity ${
+                                            isAvatarShaking ? 'animate-shake-rotate' : ''
+                                        }`}>
                                         {isLoggedIn ? (
                                             <AvatarImage
                                                 src={`/api/dynamicImage/emoji?emoji=${encodeURIComponent(
@@ -447,8 +454,10 @@ export function SiteHeader({
                                     </Avatar>
                                     {/* 未读消息红点 */}
                                     {isLoggedIn && unreadCount > 0 && (
-                                        <div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-background flex items-center justify-center animate-pulse">
-                                            <span className="sr-only">{unreadCount} unread messages</span>
+                                        <div className='absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-background flex items-center justify-center animate-pulse'>
+                                            <span className='sr-only'>
+                                                {unreadCount} unread messages
+                                            </span>
                                         </div>
                                     )}
                                 </div>
@@ -579,12 +588,12 @@ export function SiteHeader({
                                                 },
                                                 locale,
                                             )}
-                                        </DropdownMenuItem>                        <NoticeListSheet 
-                            open={noticeListOpen}
-                            onOpenChange={setNoticeListOpen}
-                            onUnreadCountChange={setUnreadCount}
-                            externalUnreadCount={unreadCount}
-                        >
+                                        </DropdownMenuItem>{' '}
+                                        <NoticeListSheet
+                                            open={noticeListOpen}
+                                            onOpenChange={setNoticeListOpen}
+                                            onUnreadCountChange={setUnreadCount}
+                                            externalUnreadCount={unreadCount}>
                                             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                                                 <Bell className='mr-2 h-4 w-4' />
                                                 {lang(
@@ -603,13 +612,15 @@ export function SiteHeader({
                                                     locale,
                                                 )}
                                                 {unreadCount > 0 && (
-                                                    <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[16px] h-[18px] text-center flex items-center justify-center text-[10px] leading-none">
+                                                    <span className='ml-auto bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[16px] h-[18px] text-center flex items-center justify-center text-[10px] leading-none'>
                                                         {unreadCount > 99 ? '99+' : unreadCount}
                                                     </span>
                                                 )}
                                             </DropdownMenuItem>
                                         </NoticeListSheet>
-                                        <TaskListSheet>
+                                        <TaskListSheet
+                                            open={taskListOpen}
+                                            onOpenChange={setTaskListOpen}>
                                             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                                                 <List className='mr-2 h-4 w-4' />
                                                 {lang(

@@ -21,6 +21,7 @@ import {
     RiEditLine,
     RiSearchLine,
 } from '@remixicon/react';
+import { Loader2 } from 'lucide-react';
 import { motion, useDragControls } from 'motion/react';
 import { toast } from 'sonner';
 import lang from '@/lib/lang';
@@ -41,6 +42,12 @@ interface NewPostButtonProps {
         }>;
     }>;
     onExposeHandlers?: (handlers: { showNewPostSheet: () => void }) => void;
+}
+
+interface TranslationProgress {
+    uuid: string;
+    progress: number;
+    toastId: string;
 }
 
 interface PostDraft {
@@ -64,11 +71,12 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
     const [topicSearchQuery, setTopicSearchQuery] = useState('');
     const [hasDraft, setHasDraft] = useState(false);
     const [hasShownDraftToast, setHasShownDraftToast] = useState(false);
+    const [translationProgress, setTranslationProgress] = useState<TranslationProgress | null>(null);
 
     const dragControls = useDragControls();
     const sheetRef = useRef<HTMLDivElement>(null);
     const pathname = usePathname();
-    const { registerCallback, unregisterCallback } = useBroadcast();
+    const { registerCallback, unregisterCallback, broadcast } = useBroadcast();
 
     const STORAGE_KEY = 'xeo-forum-draft';
 
@@ -413,6 +421,43 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
             const result = await response.json();
 
             if (result.ok) {
+                const postUuid = result.message;
+                
+                // 显示翻译进度 toast
+                const toastId = toast(
+                    <div className="flex items-center space-x-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>
+                            {lang(
+                                {
+                                    'zh-CN': '正在翻译...',
+                                    'zh-TW': '正在翻譯...',
+                                    'en-US': 'Translating...',
+                                    'es-ES': 'Traduciendo...',
+                                    'fr-FR': 'Traduction en cours...',
+                                    'ru-RU': 'Перевод...',
+                                    'ja-JP': '翻訳中...',
+                                    'de-DE': 'Übersetzen...',
+                                    'pt-BR': 'Traduzindo...',
+                                    'ko-KR': '번역 중...',
+                                },
+                                locale,
+                            )}
+                        </span>
+                    </div>,
+                    {
+                        duration: Infinity,
+                        dismissible: false,
+                    }
+                );
+
+                // 保存翻译进度状态
+                setTranslationProgress({
+                    uuid: postUuid,
+                    progress: 10,
+                    toastId: toastId as string,
+                });
+
                 toast.success(
                     lang(
                         {
@@ -523,7 +568,7 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
     useEffect(() => {
         const handleBroadcastMessage = (message: unknown) => {
             if (typeof message === 'object' && message !== null && 'action' in message) {
-                const typedMessage = message as { action: string };
+                const typedMessage = message as { action: string; data?: { uuid?: string; status?: string; type?: string } };
                 if (typedMessage.action === 'SHOW_NEW_POST') {
                     if (!token.get()) {
                         setLoginPromptOpen(true);
@@ -535,6 +580,171 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
                         setOpen(true);
                     }
                 }
+                // 处理翻译状态更新
+                if (typedMessage.action === 'broadcast' && typedMessage.data && translationProgress) {
+                    console.log('Received broadcast data:', typedMessage.data);
+                    console.log('Current translation progress:', translationProgress);
+                    
+                    // 检查是否是任务状态更新且uuid匹配
+                    if (typedMessage.data.uuid === translationProgress.uuid && typedMessage.data.type === 'post') {
+                        const status = typedMessage.data.status;
+                        console.log('Task status update for matching UUID:', status);
+                        
+                        if (status === 'DONE') {
+                            // 关闭翻译进度toast
+                            toast.dismiss(translationProgress.toastId);
+                            
+                            // 显示完成提示
+                            toast.success(
+                                lang(
+                                    {
+                                        'zh-CN': '翻译完成',
+                                        'zh-TW': '翻譯完成',
+                                        'en-US': 'Translation completed',
+                                        'es-ES': 'Traducción completada',
+                                        'fr-FR': 'Traduction terminée',
+                                        'ru-RU': 'Перевод завершен',
+                                        'ja-JP': '翻訳完了',
+                                        'de-DE': 'Übersetzung abgeschlossen',
+                                        'pt-BR': 'Tradução concluída',
+                                        'ko-KR': '번역 완료',
+                                    },
+                                    locale,
+                                )
+                            );
+                            setTranslationProgress(null);
+                        } else if (status === 'FAIL') {
+                            // 翻译失败，显示重试按钮
+                            toast.error(
+                                lang(
+                                    {
+                                        'zh-CN': '翻译失败',
+                                        'zh-TW': '翻譯失敗',
+                                        'en-US': 'Translation failed',
+                                        'es-ES': 'Traducción falló',
+                                        'fr-FR': 'Échec de la traduction',
+                                        'ru-RU': 'Перевод не удался',
+                                        'ja-JP': '翻訳に失敗しました',
+                                        'de-DE': 'Übersetzung fehlgeschlagen',
+                                        'pt-BR': 'Tradução falhou',
+                                        'ko-KR': '번역 실패',
+                                    },
+                                    locale,
+                                ),
+                                {
+                                    action: {
+                                        label: lang(
+                                            {
+                                                'zh-CN': '重试',
+                                                'zh-TW': '重試',
+                                                'en-US': 'Retry',
+                                                'es-ES': 'Reintentar',
+                                                'fr-FR': 'Réessayer',
+                                                'ru-RU': 'Повторить',
+                                                'ja-JP': '再試行',
+                                                'de-DE': 'Wiederholen',
+                                                'pt-BR': 'Tentar novamente',
+                                                'ko-KR': '재시도',
+                                            },
+                                            locale,
+                                        ),
+                                        onClick: async () => {
+                                            try {
+                                                const response = await fetch('/api/task/retry', {
+                                                    method: 'POST',
+                                                    headers: {
+                                                        'Content-Type': 'application/json',
+                                                        Authorization: `Bearer ${token.get()}`,
+                                                    },
+                                                    body: JSON.stringify({ id: translationProgress.uuid }),
+                                                });
+
+                                                const result = await response.json();
+                                                if (result.ok) {
+                                                    // 重试成功，重新显示进度toast
+                                                    const newToastId = toast(
+                                                        <div className="flex items-center space-x-2">
+                                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                                            <span>
+                                                                {lang(
+                                                                    {
+                                                                        'zh-CN': '正在重新翻译...',
+                                                                        'zh-TW': '正在重新翻譯...',
+                                                                        'en-US': 'Retranslating...',
+                                                                        'es-ES': 'Retraduciendo...',
+                                                                        'fr-FR': 'Retraduction en cours...',
+                                                                        'ru-RU': 'Повторный перевод...',
+                                                                        'ja-JP': '再翻訳中...',
+                                                                        'de-DE': 'Erneut übersetzen...',
+                                                                        'pt-BR': 'Retraduzindo...',
+                                                                        'ko-KR': '재번역 중...',
+                                                                    },
+                                                                    locale,
+                                                                )}
+                                                            </span>
+                                                        </div>,
+                                                        {
+                                                            duration: Infinity,
+                                                            dismissible: false,
+                                                        }
+                                                    );
+
+                                                    // 更新翻译进度状态
+                                                    setTranslationProgress({
+                                                        uuid: translationProgress.uuid,
+                                                        progress: 10,
+                                                        toastId: newToastId as string,
+                                                    });
+                                                } else {
+                                                    toast.error(
+                                                        lang(
+                                                            {
+                                                                'zh-CN': '重试失败，请稍后再试',
+                                                                'zh-TW': '重試失敗，請稍後再試',
+                                                                'en-US': 'Retry failed, please try again later',
+                                                                'es-ES': 'Reintento falló, por favor intente de nuevo más tarde',
+                                                                'fr-FR': 'Échec de la nouvelle tentative, veuillez réessayer plus tard',
+                                                                'ru-RU': 'Повтор не удался, попробуйте позже',
+                                                                'ja-JP': '再試行に失敗しました。後でもう一度お試しください',
+                                                                'de-DE': 'Wiederholung fehlgeschlagen, bitte versuchen Sie es später erneut',
+                                                                'pt-BR': 'Falha na nova tentativa, tente novamente mais tarde',
+                                                                'ko-KR': '재시도 실패, 나중에 다시 시도하세요',
+                                                            },
+                                                            locale,
+                                                        )
+                                                    );
+                                                }
+                                            } catch (error) {
+                                                console.error('Retry error:', error);
+                                                toast.error(
+                                                    lang(
+                                                        {
+                                                            'zh-CN': '重试请求失败',
+                                                            'zh-TW': '重試請求失敗',
+                                                            'en-US': 'Retry request failed',
+                                                            'es-ES': 'Solicitud de reintento falló',
+                                                            'fr-FR': 'Échec de la demande de nouvelle tentative',
+                                                            'ru-RU': 'Запрос на повтор не удался',
+                                                            'ja-JP': '再試行リクエストが失敗しました',
+                                                            'de-DE': 'Wiederholungsanfrage fehlgeschlagen',
+                                                            'pt-BR': 'Falha na solicitação de nova tentativa',
+                                                            'ko-KR': '재시도 요청 실패',
+                                                        },
+                                                        locale,
+                                                    )
+                                                );
+                                            }
+                                        },
+                                    },
+                                    duration: 10000,
+                                }
+                            );
+                            // 关闭翻译进度toast
+                            toast.dismiss(translationProgress.toastId);
+                            setTranslationProgress(null);
+                        }
+                    }
+                }
             }
         };
 
@@ -542,7 +752,7 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
         return () => {
             unregisterCallback(handleBroadcastMessage);
         };
-    }, [registerCallback, unregisterCallback, open, loadDraft]);
+    }, [registerCallback, unregisterCallback, open, loadDraft, translationProgress, locale, broadcast]);
 
     // 组件卸载时清理滚动锁定状态
     useEffect(() => {
@@ -1015,10 +1225,7 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
                                             locale={locale}
                                         />
 
-                                        <div
-                                            className='border-2 rounded-lg overflow-hidden bg-background transition-colors'
-                                            style={{ height: '350px' }}
-                                        >
+                                        <div className='border-2 rounded-lg overflow-hidden bg-background transition-colors h-[350px]'>
                                             <Tabs
                                                 value={activeTab}
                                                 onValueChange={setActiveTab}
