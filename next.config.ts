@@ -28,6 +28,14 @@ const nextConfig: NextConfig = {
             destination: '/:locale/user/reply',
         },
         {
+            source: '/:locale/user/level',
+            destination: '/:locale/user/level',
+        },
+        {
+            source: '/:locale/user/draft',
+            destination: '/:locale/user/draft',
+        },
+        {
             source: '/:locale/user/:uid',
             destination: '/:locale/user/:uid/page/1',
         },

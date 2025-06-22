@@ -553,42 +553,46 @@ export function SiteHeader({
                                                 )}
                                             </DropdownMenuItem>
                                         </Link>
-                                        <DropdownMenuItem>
-                                            <Award className='mr-2 h-4 w-4' />
-                                            {lang(
-                                                {
-                                                    'en-US': 'My Level',
-                                                    'zh-CN': '我的等级',
-                                                    'zh-TW': '我的等級',
-                                                    'es-ES': 'Mi nivel',
-                                                    'fr-FR': 'Mon niveau',
-                                                    'ru-RU': 'Мой уровень',
-                                                    'ja-JP': '私のレベル',
-                                                    'de-DE': 'Mein Level',
-                                                    'pt-BR': 'Meu nível',
-                                                    'ko-KR': '내 레벨',
-                                                },
-                                                locale,
-                                            )}
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem>
-                                            <Edit className='mr-2 h-4 w-4' />
-                                            {lang(
-                                                {
-                                                    'en-US': 'Drafts',
-                                                    'zh-CN': '草稿',
-                                                    'zh-TW': '草稿',
-                                                    'es-ES': 'Borradores',
-                                                    'fr-FR': 'Brouillons',
-                                                    'ru-RU': 'Черновики',
-                                                    'ja-JP': '下書き',
-                                                    'de-DE': 'Entwürfe',
-                                                    'pt-BR': 'Rascunhos',
-                                                    'ko-KR': '초안',
-                                                },
-                                                locale,
-                                            )}
-                                        </DropdownMenuItem>{' '}
+                                        <Link href={`/${locale || 'en-US'}/user/level`}>
+                                            <DropdownMenuItem>
+                                                <Award className='mr-2 h-4 w-4' />
+                                                {lang(
+                                                    {
+                                                        'en-US': 'My Level',
+                                                        'zh-CN': '我的等级',
+                                                        'zh-TW': '我的等級',
+                                                        'es-ES': 'Mi nivel',
+                                                        'fr-FR': 'Mon niveau',
+                                                        'ru-RU': 'Мой уровень',
+                                                        'ja-JP': '私のレベル',
+                                                        'de-DE': 'Mein Level',
+                                                        'pt-BR': 'Meu nível',
+                                                        'ko-KR': '내 레벨',
+                                                    },
+                                                    locale,
+                                                )}
+                                            </DropdownMenuItem>
+                                        </Link>
+                                        <Link href={`/${locale || 'en-US'}/user/draft`}>
+                                            <DropdownMenuItem>
+                                                <Edit className='mr-2 h-4 w-4' />
+                                                {lang(
+                                                    {
+                                                        'zh-CN': '草稿箱',
+                                                        'zh-TW': '草稿箱',
+                                                        'en-US': 'Drafts',
+                                                        'es-ES': 'Borradores',
+                                                        'fr-FR': 'Brouillons',
+                                                        'ru-RU': 'Черновики',
+                                                        'ja-JP': '下書き',
+                                                        'de-DE': 'Entwürfe',
+                                                        'pt-BR': 'Rascunhos',
+                                                        'ko-KR': '임시 저장',
+                                                    },
+                                                    locale,
+                                                )}
+                                            </DropdownMenuItem>
+                                        </Link>
                                         <NoticeListSheet
                                             open={noticeListOpen}
                                             onOpenChange={setNoticeListOpen}
