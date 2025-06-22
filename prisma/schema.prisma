@@ -41,42 +41,43 @@ model User {
 }
 
 model Post {
-  id          Int      @id @default(autoincrement())
-  origin      String   @db.VarChar(200)
-  userUid     Int?
-  createdAt   DateTime @default(now())
-  lastReplyAt DateTime @default(now())
-  originLang  String?  @db.VarChar(10)
-  published   Boolean  @default(false)
-  title       String   @db.VarChar(50)
-  updatedAt   DateTime @updatedAt
-  pin         Boolean  @default(false)
-  contentDEDE String?
-  contentENUS String?
-  contentESES String?
-  contentFRFR String?
-  contentJAJP String?
-  contentKOKR String?
-  contentPTBR String?
-  contentRURU String?
-  contentZHCN String?
-  contentZHTW String?
-  titleDEDE   String?
-  titleENUS   String?
-  titleESES   String?
-  titleFRFR   String?
-  titleJAJP   String?
-  titleKOKR   String?
-  titlePTBR   String?
-  titleRURU   String?
-  titleZHCN   String?
-  titleZHTW   String?
-  unsafeTags  Json?    @db.JsonB
-  likes       Like[]
-  User        User?    @relation(fields: [userUid], references: [uid])
-  Reply       Reply[]
-  topics      Topic[]  @relation("PostTopics")
-  tasks       Task[]
+  id           Int      @id @default(autoincrement())
+  origin       String   @db.VarChar(200)
+  userUid      Int?
+  createdAt    DateTime @default(now())
+  lastReplyAt  DateTime @default(now())
+  originLang   String?  @db.VarChar(10)
+  published    Boolean  @default(false)
+  title        String   @db.VarChar(50)
+  updatedAt    DateTime @updatedAt
+  pin          Boolean  @default(false)
+  contentDEDE  String?
+  contentENUS  String?
+  contentESES  String?
+  contentFRFR  String?
+  contentJAJP  String?
+  contentKOKR  String?
+  contentPTBR  String?
+  contentRURU  String?
+  contentZHCN  String?
+  contentZHTW  String?
+  titleDEDE    String?
+  titleENUS    String?
+  titleESES    String?
+  titleFRFR    String?
+  titleJAJP    String?
+  titleKOKR    String?
+  titlePTBR    String?
+  titleRURU    String?
+  titleZHCN    String?
+  titleZHTW    String?
+  unsafeTags   Json?    @db.JsonB
+  likes        Like[]
+  User         User?    @relation(fields: [userUid], references: [uid])
+  Reply        Reply[]
+  belongReplies Reply[] @relation("BelongPost")
+  topics       Topic[]  @relation("PostTopics")
+  tasks        Task[]
 }
 
 model Like {
@@ -139,6 +140,7 @@ model Reply {
   userUid      Int
   likeUserUid  Int[]
   belongPostid Int?
+  belongPost   Post?    @relation("BelongPost", fields: [belongPostid], references: [id])
   childReplay  Boolean  @default(false)
   contentDEDE  String?
   contentENUS  String?
@@ -154,9 +156,10 @@ model Reply {
   likes        Like[]
   parentReply  Reply?   @relation("CommentReplies", fields: [commentUid], references: [id])
   replies      Reply[]  @relation("CommentReplies")
-  post         Post?    @relation(fields: [postUid], references: [id])
   user         User     @relation(fields: [userUid], references: [uid])
   tasks        Task[]
+  Post         Post?    @relation(fields: [postId], references: [id])
+  postId       Int?
 }
 
 model Task {

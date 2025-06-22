@@ -59,6 +59,63 @@ type PostForMetadata = {
     contentKOKR: string | null;
 };
 
+type User = {
+    uid: number;
+    nickname: string;
+    username: string;
+    profileEmoji: string | null;
+    avatar: {
+        id: number;
+        emoji: string;
+        background: string;
+    }[];
+};
+
+type ReplyData = {
+    id: number;
+    content: string;
+    contentZHCN: string | null;
+    contentENUS: string | null;
+    contentZHTW: string | null;
+    contentESES: string | null;
+    contentFRFR: string | null;
+    contentRURU: string | null;
+    contentJAJP: string | null;
+    contentDEDE: string | null;
+    contentPTBR: string | null;
+    contentKOKR: string | null;
+    origin: string;
+    createdAt: Date;
+    belongPostid: number;
+    commentUid: number | null;
+    originLang: string | null;
+    user: User;
+    _count: {
+        likes: number;
+        replies: number;
+    };
+};
+
+type ProcessedReply = ReplyData & {
+    formattedTime: string;
+    replies: ProcessedReply[];
+};
+
+type ContentWithLocalization = {
+    content?: string;
+    contentZHCN?: string | null;
+    contentENUS?: string | null;
+    contentZHTW?: string | null;
+    contentESES?: string | null;
+    contentFRFR?: string | null;
+    contentRURU?: string | null;
+    contentJAJP?: string | null;
+    contentDEDE?: string | null;
+    contentPTBR?: string | null;
+    contentKOKR?: string | null;
+    origin?: string;
+};
+
 // 缓存获取帖子基本信息的函数（用于生成 metadata）
 const getPostForMetadata = cache(async (postId: number): Promise<PostForMetadata | null> => {
     return await prisma.post.findUnique({
@@ -120,7 +177,7 @@ const getPostWithReplies = cache(async (postId: number, page: number) => {
                 _count: {
                     select: {
                         likes: true,
-                        Reply: true,
+                        belongReplies: true,
                     },
                 },
                 topics: {
@@ -185,64 +242,6 @@ const getPostWithReplies = cache(async (postId: number, page: number) => {
     ]);
 });
 
-// 获取用户点赞状态的函数
-const getUserLikeStatus = cache(async (postId: number, userUid?: number) => {
-    if (!userUid) {
-        return { postLiked: false, replyLikes: {} };
-    }
-
-    try {
-        // 获取帖子的点赞状态
-        const postLike = await prisma.like.findFirst({
-            where: {
-                userUid: userUid,
-                postId: postId,
-            },
-        });
-
-        // 获取该帖子下所有回复的ID
-        const replies = await prisma.reply.findMany({
-            where: {
-                belongPostid: postId,
-            },
-            select: {
-                id: true,
-            },
-        });
-
-        const replyIds = replies.map(reply => reply.id);
-
-        // 获取用户对这些回复的点赞状态
-        const replyLikes = await prisma.like.findMany({
-            where: {
-                userUid: userUid,
-                replyId: {
-                    in: replyIds,
-                },
-            },
-            select: {
-                replyId: true,
-            },
-        });
-
-        // 构建回复点赞状态映射
-        const replyLikesMap: Record<string, boolean> = {};
-        replyLikes.forEach(like => {
-            if (like.replyId) {
-                replyLikesMap[like.replyId] = true;
-            }
-        });
-
-        return {
-            postLiked: !!postLike,
-            replyLikes: replyLikesMap,
-        };
-    } catch (error) {
-        console.error('Error getting user like status:', error);
-        return { postLiked: false, replyLikes: {} };
-    }
-});
-
 // 获取本地化标题
 function getLocalizedTitle(post: PostForMetadata, locale: string): string {
     const titleMap: Record<string, string | null> = {
@@ -261,8 +260,8 @@ function getLocalizedTitle(post: PostForMetadata, locale: string): string {
 }
 
 // 获取本地化内容
-function getLocalizedContent(post: any, locale: string): string {
-    const contentMap: Record<string, string | null> = {
+function getLocalizedContent(post: ContentWithLocalization, locale: string): string {
+    const contentMap: Record<string, string | null | undefined> = {
         'zh-CN': post.contentZHCN || post.origin || post.content,
         'en-US': post.contentENUS || post.origin || post.content,
         'zh-TW': post.contentZHTW || post.origin || post.content,
@@ -274,7 +273,7 @@ function getLocalizedContent(post: any, locale: string): string {
         'pt-BR': post.contentPTBR || post.origin || post.content,
         'ko-KR': post.contentKOKR || post.origin || post.content,
     };
-    return contentMap[locale] || post.origin;
+    return contentMap[locale] || post.origin || '';
 }
 
 // 获取本地化主题名称
@@ -346,13 +345,13 @@ export default async function PostDetailPage({ params }: Props) {
     const formatTime = (date: Date) => formatRelativeTime(date, locale);
 
     // 重新组织回复的层级关系
-    const organizeReplies = (replies: any[]) => {
-        const replyMap = new Map();
-        const rootReplies: any[] = [];
+    const organizeReplies = (replies: ReplyData[]): ProcessedReply[] => {
+        const replyMap = new Map<number, ProcessedReply>();
+        const rootReplies: ProcessedReply[] = [];
 
         // 首先处理所有回复，添加到 map 中
         replies.forEach(reply => {
-            const processedReply = {
+            const processedReply: ProcessedReply = {
                 ...reply,
                 content: getLocalizedContent(reply, locale),
                 formattedTime: formatTime(reply.createdAt),
@@ -364,11 +363,13 @@ export default async function PostDetailPage({ params }: Props) {
         // 然后建立父子关系
         replies.forEach(reply => {
             const processedReply = replyMap.get(reply.id);
-            if (reply.commentUid && replyMap.has(reply.commentUid)) {
+            if (processedReply && reply.commentUid && replyMap.has(reply.commentUid)) {
                 // 这是一个子回复
                 const parentReply = replyMap.get(reply.commentUid);
-                parentReply.replies.push(processedReply);
-            } else {
+                if (parentReply) {
+                    parentReply.replies.push(processedReply);
+                }
+            } else if (processedReply) {
                 // 这是一个顶级回复
                 rootReplies.push(processedReply);
             }
@@ -380,7 +381,7 @@ export default async function PostDetailPage({ params }: Props) {
     const processedReplies = organizeReplies(allReplies);
 
     // 递归处理所有子回复的时间格式化
-    const processRepliesRecursively = (replies: any[]): any[] => {
+    const processRepliesRecursively = (replies: ProcessedReply[]): ProcessedReply[] => {
         return replies.map(reply => ({
             ...reply,
             formattedTime: formatTime(reply.createdAt),
@@ -452,7 +453,7 @@ export default async function PostDetailPage({ params }: Props) {
                                             {post.topics.map((topic) => (
                                                 <Link
                                                     key={topic.name}
-                                                    href={`/${locale}/topic/${topic.name}`}
+                                                    href={`/${locale}/topic/${topic.name.replaceAll("_","-")}`}
                                                     className='hover:opacity-80 transition-opacity'>
                                                     <Badge variant='secondary' className='text-xs'>
                                                         <span className='mr-1'>{topic.emoji}</span>
@@ -463,37 +464,6 @@ export default async function PostDetailPage({ params }: Props) {
                                         </div>
                                     </>
                                 )}
-                            </div>
-
-                            <div className='flex items-center gap-4 text-sm text-muted-foreground'>
-                                <div className='flex items-center gap-1'>
-                                    <Heart className='h-4 w-4' />
-                                    <span>{post._count.likes}</span>
-                                </div>
-                                <div className='flex items-center gap-1'>
-                                    <MessageCircle className='h-4 w-4' />
-                                    <span>{post._count.Reply}</span>
-                                </div>
-                                <div className='flex items-center gap-1'>
-                                    <Eye className='h-4 w-4' />
-                                    <span>
-                                        {lang(
-                                            {
-                                                'zh-CN': '浏览',
-                                                'en-US': 'views',
-                                                'zh-TW': '瀏覽',
-                                                'es-ES': 'vistas',
-                                                'fr-FR': 'vues',
-                                                'ru-RU': 'просмотры',
-                                                'ja-JP': '閲覧',
-                                                'de-DE': 'Ansichten',
-                                                'pt-BR': 'visualizações',
-                                                'ko-KR': '조회',
-                                            },
-                                            locale,
-                                        )}
-                                    </span>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -523,7 +493,7 @@ export default async function PostDetailPage({ params }: Props) {
                     id: post.id,
                     title,
                     likes: post._count.likes,
-                    replies: post._count.Reply,
+                    replies: post._count.belongReplies,
                 }}
                 replies={finalReplies}
                 locale={locale}

@@ -62,7 +62,7 @@ type Post = {
   } | null;
   _count: {
     likes: number;
-    Reply: number;
+    belongReplies: number;
   };
 };
 
@@ -129,7 +129,7 @@ const getPageData = cache(async (topic: string, page: number) => {
         _count: {
           select: {
             likes: true,
-            Reply: true,
+            belongReplies: true
           },
         },
         topics: {
@@ -177,7 +177,7 @@ const getPageData = cache(async (topic: string, page: number) => {
          AND "Post"."originLang" IS NOT NULL
          AND "Post"."userUid" IS NOT NULL) as "topicUsers",
         (SELECT COUNT("Reply"."id") FROM "Reply"
-         JOIN "Post" ON "Reply"."postUid" = "Post"."id"
+         JOIN "Post" ON "Reply"."belongPostid" = "Post"."id"
          JOIN "_PostTopics" ON "Post"."id" = "_PostTopics"."A"
          JOIN "Topic" ON "_PostTopics"."B" = "Topic"."name"
          WHERE "Topic"."name" = ${topic.replaceAll("-", "_")}
@@ -472,7 +472,7 @@ export default async function Topic({ params }: Props) {
 
     // 回复最多的帖子 - 使用数组副本
     topRepliedPosts: [...posts]
-      .sort((a, b) => b._count.Reply - a._count.Reply)
+      .sort((a, b) => b._count.belongReplies - a._count.belongReplies)
       .slice(0, 3),
 
     // 时间分布（柱状图数据）
@@ -908,7 +908,7 @@ export default async function Topic({ params }: Props) {
                         </div>
                         <div className="flex items-center gap-1">
                           <MessageCircle className="h-3 w-3" />
-                          <span>{post._count.Reply}</span>
+                          <span>{post._count.belongReplies}</span>
                         </div>
                       </div>
                     </div>
@@ -1397,7 +1397,7 @@ export default async function Topic({ params }: Props) {
                     </Link>
                     <span className="text-xs text-muted-foreground flex items-center gap-1">
                       <MessageCircle className="h-3 w-3" />
-                      {post._count.Reply}
+                      {post._count.belongReplies}
                     </span>
                   </div>
                 ))}

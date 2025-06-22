@@ -63,7 +63,7 @@ type Post = {
     } | null;
     _count: {
         likes: number;
-        Reply: number;
+        belongReplies: number;
     };
     topics: {
         name: string;
@@ -263,7 +263,7 @@ export default async function HomePage({ params }: Props) {
                 _count: {
                     select: {
                         likes: true,
-                        Reply: true,
+                        belongReplies: true,
                     },
                 },
                 topics: {
@@ -284,7 +284,7 @@ export default async function HomePage({ params }: Props) {
                     take: 3,
                 },
             },
-            orderBy: [{ pin: 'desc' }, { createdAt: 'desc' }],
+            orderBy: [{ pin: 'desc' }, { updatedAt: 'desc' }],
             skip,
             take: POSTS_PER_PAGE,
         }),
@@ -352,7 +352,7 @@ export default async function HomePage({ params }: Props) {
         topLikedPosts: [...posts].sort((a, b) => b._count.likes - a._count.likes).slice(0, 3),
 
         // 回复最多的帖子 - 使用数组副本
-        topRepliedPosts: [...posts].sort((a, b) => b._count.Reply - a._count.Reply).slice(0, 3),
+        topRepliedPosts: [...posts].sort((a, b) => b._count.belongReplies - a._count.belongReplies).slice(0, 3),
 
         // 时间分布（柱状图数据）
         timeDistribution: (() => {
@@ -1148,7 +1148,7 @@ export default async function HomePage({ params }: Props) {
                                                 </div>
                                                 <div className='flex items-center gap-1'>
                                                     <MessageCircle className='h-3 w-3' />
-                                                    <span>{post._count.Reply}</span>
+                                                    <span>{post._count.belongReplies}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -1713,7 +1713,7 @@ export default async function HomePage({ params }: Props) {
                                         </Link>
                                         <span className='text-xs text-muted-foreground flex items-center gap-1'>
                                             <MessageCircle className='h-3 w-3' />
-                                            {post._count.Reply}
+                                            {post._count.belongReplies}
                                         </span>
                                     </div>
                                 ))}
