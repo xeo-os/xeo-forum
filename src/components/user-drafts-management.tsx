@@ -39,6 +39,7 @@ import {
 } from '@remixicon/react';
 import { toast } from 'sonner';
 import { MarkdownEditor } from '@/components/markdown-editor';
+import { EnhancedLoading, ContentTransition, ListItemTransition } from '@/components/enhanced-loading';
 import token from '@/utils/userToken';
 import lang from '@/lib/lang';
 
@@ -615,18 +616,11 @@ export function UserDraftsManagement({ locale }: UserDraftsManagementProps) {
     // 初始加载
     useEffect(() => {
         fetchDrafts(1);
-    }, [fetchDrafts]);
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-        );
-    }
-
-    return (
-        <div className="space-y-4">
+    }, [fetchDrafts]);    if (loading) {
+        return <EnhancedLoading type="drafts" />;
+    }    return (
+        <ContentTransition isLoading={loading}>
+            <div className="space-y-4">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <FileText className="h-5 w-5" />
@@ -701,14 +695,13 @@ export function UserDraftsManagement({ locale }: UserDraftsManagementProps) {
                         </p>
                     </CardContent>
                 </Card>
-            ) : (
-                <div className="space-y-4">
+            ) : (                <div className="space-y-4">
                     {drafts.map((draft, index) => (
-                        <Card 
-                            key={draft.id} 
-                            ref={index === drafts.length - 1 ? lastDraftRef : null}
-                            className="hover:shadow-md transition-shadow"
-                        >
+                        <ListItemTransition key={draft.id} index={index}>
+                            <Card 
+                                ref={index === drafts.length - 1 ? lastDraftRef : null}
+                                className="hover:shadow-md transition-shadow"
+                            >
                             <CardHeader className="pb-4">
                                 <div className="flex items-start justify-between">
                                     <div className="flex-1 min-w-0">
@@ -797,9 +790,9 @@ export function UserDraftsManagement({ locale }: UserDraftsManagementProps) {
                                 <p className="text-sm text-muted-foreground line-clamp-3">
                                     {draft.origin.substring(0, 200)}
                                     {draft.origin.length > 200 && '...'}
-                                </p>
-                            </CardContent>
+                                </p>                            </CardContent>
                         </Card>
+                        </ListItemTransition>
                     ))}
 
                     {loadingMore && (
@@ -1277,9 +1270,9 @@ export function UserDraftsManagement({ locale }: UserDraftsManagementProps) {
                                 'ko-KR': '삭제',
                             }, locale)}
                         </Button>
-                    </DialogFooter>
-                </DialogContent>
+                    </DialogFooter>                </DialogContent>
             </Dialog>
-        </div>
+            </div>
+        </ContentTransition>
     );
 }

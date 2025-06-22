@@ -73,7 +73,7 @@ export async function POST(request: Request) {
                         likes: true,
                     },
                 },
-                post: {
+                belongPost: {
                     select: {
                         id: true,
                         title: true,

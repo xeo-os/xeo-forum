@@ -18,6 +18,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { zhCN, enUS } from 'date-fns/locale';
 import { Bell, Mail, MailOpen, ExternalLink } from 'lucide-react';
 import { useBroadcast } from '@/store/useBroadcast';
+import { SheetLoading, SheetContentTransition, SheetListItemTransition } from '@/components/sheet-loading';
 import lang from '@/lib/lang';
 
 interface Notice {
@@ -499,14 +500,12 @@ export default function NoticeListSheet({
                             'zh-TW': '查看您的所有消息通知和系統提醒',
                         })}
                     </SheetDescription>
-                </SheetHeader>
-                <div className='mt-6'>
+                </SheetHeader>                <div className='mt-6'>
                     {loading ? (
-                        <div className='flex items-center justify-center py-12'>
-                            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
-                        </div>
+                        <SheetLoading type="notifications" />
                     ) : (
-                        <ScrollArea ref={scrollAreaRef} className='h-[calc(100vh-200px)]'>
+                        <SheetContentTransition isLoading={loading}>
+                            <ScrollArea ref={scrollAreaRef} className='h-[calc(100vh-200px)]'>
                             {notices.length === 0 ? (
                                 <div className='text-center text-muted-foreground py-12'>
                                     <Bell className='h-12 w-12 mx-auto mb-4 opacity-50' />
@@ -525,15 +524,14 @@ export default function NoticeListSheet({
                                         })}
                                     </p>
                                 </div>
-                            ) : (
-                                <div className='divide-y divide-border'>
-                                    {notices.map((notice) => (
-                                        <div
-                                            key={notice.id}
-                                            className={`py-4 px-4 transition-colors cursor-pointer hover:bg-muted/50 ${
-                                                !notice.isRead ? 'bg-muted/30' : ''
-                                            }`}
-                                            onClick={() => handleNoticeClick(notice)}>
+                            ) : (                                <div className='divide-y divide-border'>
+                                    {notices.map((notice, index) => (
+                                        <SheetListItemTransition key={notice.id} index={index}>
+                                            <div
+                                                className={`py-4 px-4 transition-colors cursor-pointer hover:bg-muted/50 ${
+                                                    !notice.isRead ? 'bg-muted/30' : ''
+                                                }`}
+                                                onClick={() => handleNoticeClick(notice)}>
                                             {/* 消息状态和时间行 */}
                                             <div className='flex items-center gap-3 mb-3'>
                                                 {notice.isRead ? (
@@ -626,9 +624,9 @@ export default function NoticeListSheet({
                                                                   'zh-TW': '標記為已讀',
                                                               })}
                                                     </Button>
-                                                </div>
-                                            )}
+                                                </div>                                            )}
                                         </div>
+                                        </SheetListItemTransition>
                                     ))}
 
                                     {/* 加载更多指示器 */}
@@ -669,9 +667,9 @@ export default function NoticeListSheet({
                                             })}
                                         </div>
                                     )}
-                                </div>
-                            )}
+                                </div>                            )}
                         </ScrollArea>
+                        </SheetContentTransition>
                     )}
                 </div>{' '}
                 {/* 底部操作按钮 */}

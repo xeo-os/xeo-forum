@@ -20,6 +20,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { zhCN, enUS } from 'date-fns/locale';
 import { FileText, MessageSquare, Clock, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
 import { useBroadcast } from '@/store/useBroadcast';
+import { SheetLoading, SheetContentTransition, SheetListItemTransition } from '@/components/sheet-loading';
 import lang from '@/lib/lang';
 
 interface Task {
@@ -493,15 +494,12 @@ export default function TaskListSheet({ children, open: externalOpen, onOpenChan
                             'zh-TW': '查看您的所有任務狀態和進度',
                         })}
                     </SheetDescription>
-                </SheetHeader>
-
-                <div className='mt-6'>
+                </SheetHeader>                <div className='mt-6'>
                     {loading ? (
-                        <div className='flex items-center justify-center py-12'>
-                            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
-                        </div>
+                        <SheetLoading type="tasks" />
                     ) : (
-                        <ScrollArea ref={scrollAreaRef} className='h-[calc(100vh-200px)]'>
+                        <SheetContentTransition isLoading={loading}>
+                            <ScrollArea ref={scrollAreaRef} className='h-[calc(100vh-200px)]'>
                             {tasks.length === 0 ? (
                                 <div className='text-center text-muted-foreground py-12'>
                                     <FileText className='h-12 w-12 mx-auto mb-4 opacity-50' />
@@ -520,12 +518,11 @@ export default function TaskListSheet({ children, open: externalOpen, onOpenChan
                                         })}
                                     </p>
                                 </div>
-                            ) : (
-                                <div className='divide-y divide-border'>
-                                    {tasks.map((task) => (
-                                        <div
-                                            key={task.id}
-                                            className='py-4 px-4 hover:bg-muted/50 transition-colors'>
+                            ) : (                                <div className='divide-y divide-border'>
+                                    {tasks.map((task, index) => (
+                                        <SheetListItemTransition key={task.id} index={index}>
+                                            <div
+                                                className='py-4 px-4 hover:bg-muted/50 transition-colors'>
                                             {/* 任务类型和标题行 */}
                                             <div className='flex items-center gap-3 mb-3'>
                                                 {task.post ? (
@@ -644,9 +641,9 @@ export default function TaskListSheet({ children, open: externalOpen, onOpenChan
                                                         'h-1.5',
                                                         getProgressClassName(task.status),
                                                     )}
-                                                />
-                                            </div>
+                                                />                                            </div>
                                         </div>
+                                        </SheetListItemTransition>
                                     ))}
 
                                     {/* 加载更多指示器 */}
@@ -687,9 +684,9 @@ export default function TaskListSheet({ children, open: externalOpen, onOpenChan
                                             })}
                                         </div>
                                     )}
-                                </div>
-                            )}
+                                </div>                            )}
                         </ScrollArea>
+                        </SheetContentTransition>
                     )}
                 </div>
 

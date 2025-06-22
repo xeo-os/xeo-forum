@@ -14,6 +14,7 @@ import {
 import { Heart, Trash2, Calendar, FileText, Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { EnhancedLoading, ContentTransition, ListItemTransition } from '@/components/enhanced-loading';
 import token from '@/utils/userToken';
 import lang from '@/lib/lang';
 
@@ -57,7 +58,7 @@ export function UserRepliesManagement({ locale }: UserPostsManagementProps) {
     const lastPostRef = useRef<HTMLDivElement>(null);
 
     const getLocalizedTitle = (reply: Reply): string => {
-        if (!reply.post) {
+        if (!reply.belongPost) {
             return lang({
                 'zh-CN': '未知帖子',
                 'en-US': 'Unknown Post',
@@ -73,18 +74,18 @@ export function UserRepliesManagement({ locale }: UserPostsManagementProps) {
         }
 
         const titleMap: Record<string, string | null | undefined> = {
-            'zh-CN': reply.post.titleZHCN,
-            'en-US': reply.post.titleENUS,
-            'zh-TW': reply.post.titleZHTW,
-            'es-ES': reply.post.titleESES,
-            'fr-FR': reply.post.titleFRFR,
-            'ru-RU': reply.post.titleRURU,
-            'ja-JP': reply.post.titleJAJP,
-            'de-DE': reply.post.titleDEDE,
-            'pt-BR': reply.post.titlePTBR,
-            'ko-KR': reply.post.titleKOKR,
+            'zh-CN': reply.belongPost.titleZHCN,
+            'en-US': reply.belongPost.titleENUS,
+            'zh-TW': reply.belongPost.titleZHTW,
+            'es-ES': reply.belongPost.titleESES,
+            'fr-FR': reply.belongPost.titleFRFR,
+            'ru-RU': reply.belongPost.titleRURU,
+            'ja-JP': reply.belongPost.titleJAJP,
+            'de-DE': reply.belongPost.titleDEDE,
+            'pt-BR': reply.belongPost.titlePTBR,
+            'ko-KR': reply.belongPost.titleKOKR,
         };
-        return titleMap[locale] || reply.post.title;
+        return titleMap[locale] || reply.belongPost.title;
     };
 
     const getReplyTitle = (reply: Reply): string => {
@@ -375,18 +376,13 @@ export function UserRepliesManagement({ locale }: UserPostsManagementProps) {
     // 初始加载
     useEffect(() => {
         fetchReplies(1);
-    }, [fetchReplies]);
-
-    if (loading) {
-        return (
-            <div className='flex items-center justify-center py-12'>
-                <Loader2 className='h-8 w-8 animate-spin' />
-            </div>
-        );
+    }, [fetchReplies]);    if (loading) {
+        return <EnhancedLoading type="replies" />;
     }
 
     return (
-        <div className='space-y-4'>
+        <ContentTransition isLoading={loading}>
+            <div className='space-y-4'>
             <div className='flex items-center justify-between'>
                 <div className='flex items-center gap-2'>
                     <FileText className='h-5 w-5' />
@@ -476,20 +472,19 @@ export function UserRepliesManagement({ locale }: UserPostsManagementProps) {
                         </p>
                     </CardContent>
                 </Card>
-            ) : (
-                <div className='space-y-4'>
+            ) : (                <div className='space-y-4'>
                     {replies.map((reply, index) => (
-                        <Card
-                            key={reply.id}
-                            ref={index === replies.length - 1 ? lastPostRef : null}
-                            className='hover:shadow-md transition-shadow'>
+                        <ListItemTransition key={reply.id} index={index}>
+                            <Card
+                                ref={index === replies.length - 1 ? lastPostRef : null}
+                                className='hover:shadow-md transition-shadow'>
                             <CardHeader className='pb-4'>
                                 <div className='flex items-start justify-between'>
                                     <div className='flex-1 min-w-0'>
                                         <h3 className='font-medium text-lg mb-2 line-clamp-2'>
-                                            {reply.post ? (
+                                            {reply.belongPost ? (
                                                 <Link
-                                                    href={`/${locale}/post/${reply.post.id}/${reply.post.titleENUS?.toLowerCase().replaceAll(" ","-").replace(/[^a-z-]/g, '')}`}
+                                                    href={`/${locale}/post/${reply.belongPost.id}/${reply.belongPost.titleENUS?.toLowerCase().replaceAll(" ","-").replace(/[^a-z-]/g, '')}`}
                                                     className='hover:text-primary transition-colors'
                                                     rel="noopener"
                                                 >
@@ -541,9 +536,9 @@ export function UserRepliesManagement({ locale }: UserPostsManagementProps) {
                                 <p className='text-sm text-muted-foreground line-clamp-3'>
                                     {reply.content.substring(0, 200)}
                                     {reply.content.length > 200 && '...'}
-                                </p>
-                            </CardContent>
+                                </p>                            </CardContent>
                         </Card>
+                        </ListItemTransition>
                     ))}
 
                     {loadingMore && (
@@ -698,8 +693,8 @@ export function UserRepliesManagement({ locale }: UserPostsManagementProps) {
                             )}
                         </Button>
                     </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        </div>
+                </DialogContent>            </Dialog>
+            </div>
+        </ContentTransition>
     );
 }

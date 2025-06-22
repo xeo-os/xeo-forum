@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { EnhancedLoading, ContentTransition, ListItemTransition } from '@/components/enhanced-loading';
 import token from '@/utils/userToken';
 import lang from '@/lib/lang';
 
@@ -340,18 +341,13 @@ export function UserPostsManagement({ locale }: UserPostsManagementProps) {
     // 初始加载
     useEffect(() => {
         fetchPosts(1);
-    }, [fetchPosts]);
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-        );
+    }, [fetchPosts]);    if (loading) {
+        return <EnhancedLoading type="posts" />;
     }
 
     return (
-        <div className="space-y-4">
+        <ContentTransition isLoading={loading}>
+            <div className="space-y-4">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <FileText className="h-5 w-5" />
@@ -426,14 +422,13 @@ export function UserPostsManagement({ locale }: UserPostsManagementProps) {
                         </p>
                     </CardContent>
                 </Card>
-            ) : (
-                <div className="space-y-4">
+            ) : (                <div className="space-y-4">
                     {posts.map((post, index) => (
-                        <Card 
-                            key={post.id} 
-                            ref={index === posts.length - 1 ? lastPostRef : null}
-                            className="hover:shadow-md transition-shadow"
-                        >
+                        <ListItemTransition key={post.id} index={index}>
+                            <Card 
+                                ref={index === posts.length - 1 ? lastPostRef : null}
+                                className="hover:shadow-md transition-shadow"
+                            >
                             <CardHeader className="pb-4">
                                 <div className="flex items-start justify-between">
                                     <div className="flex-1 min-w-0">
@@ -537,9 +532,9 @@ export function UserPostsManagement({ locale }: UserPostsManagementProps) {
                                 <p className="text-sm text-muted-foreground line-clamp-3">
                                     {post.origin.substring(0, 200)}
                                     {post.origin.length > 200 && '...'}
-                                </p>
-                            </CardContent>
+                                </p>                            </CardContent>
                         </Card>
+                        </ListItemTransition>
                     ))}
 
                     {loadingMore && (
@@ -670,8 +665,8 @@ export function UserPostsManagement({ locale }: UserPostsManagementProps) {
                             }, locale)}
                         </Button>
                     </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        </div>
+                </DialogContent>            </Dialog>
+            </div>
+        </ContentTransition>
     );
 }
