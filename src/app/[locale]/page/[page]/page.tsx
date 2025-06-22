@@ -162,7 +162,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
                 'zh-CN': `XEO OS 上全球用户热门讨论贴文的第${page}页。用您最熟悉的语言，探索全球用户们正在关注的最新观点与精彩交流。`,
                 'en-US': `Page ${page} of trending discussions on XEO OS. Explore the latest insights and engaging conversations from global users in your native language.`,
                 'zh-TW': `XEO OS 上全球用戶熱門討論貼文的第${page}頁。用您最熟悉的語言，探索全球用戶們正在關注的最新觀點與精彩交流。`,
-                'es-ES': `Página ${page} de discusiones populares en XEO OS. Explora las últimas perspectivas y conversaciones atractivas de usuarios globales en tu idioma nativo.`,
+                'es-ES': `Página ${page} de discusiones populares en XEO OS. Explora las últimas perspectivas y conversaciones atractivas de usuarios globales en tu lengua nativa.`,
                 'fr-FR': `Page ${page} des discussions tendances sur XEO OS. Explorez les dernières perspectives et conversations captivantes d'utilisateurs mondiaux dans votre langue maternelle.`,
                 'ru-RU': `Страница ${page} популярных обсуждений на XEO OS. Исследуйте последние идеи и увлекательные беседы глобальных пользователей на вашем родном языке.`,
                 'ja-JP': `XEO OS上のトレンド議論の${page}ページ目。あなたの母国語で、世界中のユーザーの最新の洞察と魅力的な会話を探索してください。`,
@@ -315,6 +315,32 @@ export default async function HomePage({ params }: Props) {
     console.log(posts);
 
     const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE);
+
+    // 计算当前页面交互数（点赞+回复）的最大值，用于动态颜色
+    const maxInteractionsOnPage = posts.length > 0 ? Math.max(...posts.map((post) => post._count.likes + post._count.belongReplies)) : 0;
+
+    // 计算交互颜色的函数 - 返回primary的透明度
+    const getInteractionOpacity = (likes: number, replies: number) => {
+        const totalInteractions = likes + replies;
+        
+        // 如果没有任何互动，返回0透明度（完全显示底层muted色）
+        if (totalInteractions === 0) return 0;
+        
+        let percentage: number;
+        
+        // 如果页面上没有其他帖子或最大值为0，根据绝对数值创建渐变
+        if (maxInteractionsOnPage === 0 || maxInteractionsOnPage === totalInteractions) {
+            // 使用对数缩放来处理绝对数值，创建更合理的渐变
+            percentage = Math.min(Math.log(totalInteractions + 1) / Math.log(21), 1); // log scale, max at 20 interactions
+        } else {
+            percentage = totalInteractions / maxInteractionsOnPage;
+        }
+        
+        // 使用平方根函数让低值变化更明显
+        const opacity = Math.sqrt(percentage);
+        
+        return Math.max(0.1, Math.min(0.95, 0.1 + opacity * 0.85));
+    };
 
     // 统计当前页面数据 - 使用数组副本避免影响原数组
     const currentPageStats = {
@@ -928,7 +954,7 @@ export default async function HomePage({ params }: Props) {
                                                 'ja-JP':
                                                     '2025年6月10日にサービス利用規約とプライバシーポリシーを更新しました。',
                                                 'de-DE':
-                                                    'Wir haben unsere Nutzungsbedingungen und Datenschutzrichtlinien am 10. Juni 2025 aktualisiert.',
+                                                    'Wir haben unsere Nutzungsbedingungen и Datenschutzrichtlinien am 10. Juni 2025 aktualisiert.',
                                                 'pt-BR':
                                                     'Atualizamos nossos Termos de Serviço e Política de Privacidade em 10 de junho de 2025.',
                                                 'ko-KR':
@@ -1062,7 +1088,7 @@ export default async function HomePage({ params }: Props) {
                                                                     .map((topic) => (
                                                                         <Link
                                                                             key={topic.name}
-                                                                            href={`/${locale}/topic/${topic.name}`}
+                                                                            href={`/${locale}/topic/${topic.name.replaceAll("_","-")}`}
                                                                             className='hover:opacity-80 transition-opacity'
                                                                             title={`${lang(
                                                                                 {
@@ -1142,13 +1168,39 @@ export default async function HomePage({ params }: Props) {
                                             </div>
 
                                             <div className='flex items-center gap-2 text-xs text-muted-foreground flex-shrink-0'>
-                                                <div className='flex items-center gap-1'>
-                                                    <Heart className='h-3 w-3' />
-                                                    <span>{post._count.likes}</span>
+                                                <div className='flex items-center gap-1 transition-colors relative'>
+                                                    {/* 底层 muted 颜色 */}
+                                                    <div className='absolute inset-0 text-muted-foreground flex items-center gap-1'>
+                                                        <Heart className='h-3 w-3' />
+                                                        <span>{post._count.likes}</span>
+                                                    </div>
+                                                    {/* 上层 primary 颜色，使用动态透明度 */}
+                                                    <div 
+                                                        className='relative text-primary flex items-center gap-1'
+                                                        style={{ 
+                                                            opacity: getInteractionOpacity(post._count.likes, post._count.belongReplies) 
+                                                        }}
+                                                    >
+                                                        <Heart className='h-3 w-3' />
+                                                        <span>{post._count.likes}</span>
+                                                    </div>
                                                 </div>
-                                                <div className='flex items-center gap-1'>
-                                                    <MessageCircle className='h-3 w-3' />
-                                                    <span>{post._count.belongReplies}</span>
+                                                <div className='flex items-center gap-1 transition-colors relative'>
+                                                    {/* 底层 muted 颜色 */}
+                                                    <div className='absolute inset-0 text-muted-foreground flex items-center gap-1'>
+                                                        <MessageCircle className='h-3 w-3' />
+                                                        <span>{post._count.belongReplies}</span>
+                                                    </div>
+                                                    {/* 上层 primary 颜色，使用动态透明度 */}
+                                                    <div 
+                                                        className='relative text-primary flex items-center gap-1'
+                                                        style={{ 
+                                                            opacity: getInteractionOpacity(post._count.likes, post._count.belongReplies) 
+                                                        }}
+                                                    >
+                                                        <MessageCircle className='h-3 w-3' />
+                                                        <span>{post._count.belongReplies}</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -1561,7 +1613,7 @@ export default async function HomePage({ params }: Props) {
                                         key={topic.name}
                                         className='flex items-center justify-between'>
                                         <Link
-                                            href={`/${locale}/topic/${topic.name}`}
+                                            href={`/${locale}/topic/${topic.name.replaceAll("_","-")}`}
                                             className='hover:opacity-80 transition-opacity'
                                             title={`${lang(
                                                 {
