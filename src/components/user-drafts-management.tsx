@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { 
@@ -21,7 +20,6 @@ import {
     SheetHeader, 
     SheetTitle 
 } from '@/components/ui/sheet';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { 
     Edit, 
@@ -41,8 +39,6 @@ import {
 } from '@remixicon/react';
 import { toast } from 'sonner';
 import { MarkdownEditor } from '@/components/markdown-editor';
-import { EmojiPicker } from '@/components/emoji-picker';
-import { markdownToHtml } from '@/lib/markdown-utils';
 import token from '@/utils/userToken';
 import lang from '@/lib/lang';
 
@@ -104,7 +100,6 @@ export function UserDraftsManagement({ locale }: UserDraftsManagementProps) {
     // 编辑表单状态
     const [editTitle, setEditTitle] = useState('');
     const [editContent, setEditContent] = useState('');
-    const [activeTab, setActiveTab] = useState('edit');
     const [selectedTopic, setSelectedTopic] = useState('');
     const [selectedTopicName, setSelectedTopicName] = useState('');
     const [topicDialogOpen, setTopicDialogOpen] = useState(false);
@@ -344,7 +339,6 @@ export function UserDraftsManagement({ locale }: UserDraftsManagementProps) {
             setSelectedTopicName('');
         }
         
-        setActiveTab('edit');
         setEditDialogOpen(true);
     };
 
@@ -1104,121 +1098,15 @@ export function UserDraftsManagement({ locale }: UserDraftsManagementProps) {
                                                 {editContent.length}/200
                                             </Badge>
                                         </Label>
-                                        <EmojiPicker onEmojiSelect={insertEmoji} locale={locale} />
                                     </div>
 
-                                    {/* Markdown 工具栏 */}
+                                    {/* 使用新的 MarkdownEditor 组件 */}
                                     <MarkdownEditor
                                         value={editContent}
                                         onChange={setEditContent}
                                         locale={locale}
+                                        maxLength={200}
                                     />
-
-                                    <div className='border-2 rounded-lg overflow-hidden bg-background transition-colors h-[350px]'>
-                                        <Tabs
-                                            value={activeTab}
-                                            onValueChange={setActiveTab}
-                                            className='h-full flex flex-col'
-                                        >
-                                            <div className='border-b bg-muted/30 flex-shrink-0'>
-                                                <TabsList className='grid w-full grid-cols-2 bg-transparent border-0 p-1 h-10'>
-                                                    <TabsTrigger
-                                                        value='edit'
-                                                        className='data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-[#f0b100] text-sm'
-                                                    >
-                                                        {lang({
-                                                            'zh-CN': '编辑',
-                                                            'zh-TW': '編輯',
-                                                            'en-US': 'Edit',
-                                                            'es-ES': 'Editar',
-                                                            'fr-FR': 'Modifier',
-                                                            'ru-RU': 'Редактировать',
-                                                            'ja-JP': '編集',
-                                                            'de-DE': 'Bearbeiten',
-                                                            'pt-BR': 'Editar',
-                                                            'ko-KR': '편집',
-                                                        }, locale)}
-                                                    </TabsTrigger>
-                                                    <TabsTrigger
-                                                        value='preview'
-                                                        className='data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-[#f0b100] text-sm'
-                                                    >
-                                                        {lang({
-                                                            'zh-CN': '预览',
-                                                            'zh-TW': '預覽',
-                                                            'en-US': 'Preview',
-                                                            'es-ES': 'Vista Previa',
-                                                            'fr-FR': 'Aperçu',
-                                                            'ru-RU': 'Предпросмотр',
-                                                            'ja-JP': 'プレビュー',
-                                                            'de-DE': 'Vorschau',
-                                                            'pt-BR': 'Visualizar',
-                                                            'ko-KR': '미리보기',
-                                                        }, locale)}
-                                                    </TabsTrigger>
-                                                </TabsList>
-                                            </div>
-
-                                            <TabsContent
-                                                value='edit'
-                                                className='flex-1 p-3 md:p-4 m-0 overflow-hidden'
-                                            >
-                                                <Textarea
-                                                    id='content-textarea'
-                                                    value={editContent}
-                                                    onChange={(e) => setEditContent(e.target.value)}
-                                                    placeholder={lang({
-                                                        'zh-CN': '分享你的想法，支持 Markdown 格式...',
-                                                        'zh-TW': '分享你的想法，支持 Markdown 格式...',
-                                                        'en-US': 'Share your thoughts, Markdown supported...',
-                                                        'es-ES': 'Comparte tus pensamientos, Markdown compatible...',
-                                                        'fr-FR': 'Partagez vos pensées, Markdown pris en charge...',
-                                                        'ru-RU': 'Поделитесь своими мыслями, поддерживается Markdown...',
-                                                        'ja-JP': 'あなたの考えを共有してください、Markdown対応...',
-                                                        'de-DE': 'Teilen Sie Ihre Gedanken mit, Markdown unterstützt...',
-                                                        'pt-BR': 'Compartilhe seus pensamentos, Markdown suportado...',
-                                                        'ko-KR': '생각을 공유하세요, 마크다운 지원...',
-                                                    }, locale)}
-                                                    className='h-full resize-none border-0 focus-visible:ring-0 focus:ring-0 focus:ring-offset-0 focus:outline-none text-sm md:text-base leading-relaxed'
-                                                    maxLength={200}
-                                                />
-                                            </TabsContent>
-
-                                            <TabsContent
-                                                value='preview'
-                                                className='flex-1 p-3 md:p-4 m-0 overflow-y-auto'
-                                            >
-                                                {editContent ? (
-                                                    <div
-                                                        className='prose prose-sm max-w-none dark:prose-invert'
-                                                        dangerouslySetInnerHTML={{
-                                                            __html: markdownToHtml(editContent),
-                                                        }}
-                                                    />
-                                                ) : (
-                                                    <div className='h-full flex items-center justify-center text-muted-foreground'>
-                                                        <div className='text-center'>
-                                                            <div className='text-2xl md:text-4xl mb-2 md:mb-4'>📝</div>
-                                                            <p className='text-sm md:text-base'>
-                                                                {lang({
-                                                                    'zh-CN': '在编辑选项卡中输入内容以查看预览',
-                                                                    'zh-TW': '在編輯選項卡中輸入內容以查看預覽',
-                                                                    'en-US': 'Enter content in the edit tab to see preview',
-                                                                    'es-ES': 'Ingrese contenido en la pestaña de edición para ver la vista previa',
-                                                                    'fr-FR': "Saisissez le contenu dans l'onglet d'édition pour voir l'aperçu",
-                                                                    'ru-RU': 'Введите содержимое во вкладке редактирования для предпросмотра',
-                                                                    'ja-JP': '編集タブでコンテンツを入力してプレビューを表示',
-                                                                    'de-DE': 'Geben Sie Inhalt im Bearbeitungstab ein, um die Vorschau zu sehen',
-                                                                    'pt-BR': 'Digite o conteúdo na aba de edição para ver a visualização',
-                                                                    'ko-KR': '미리보기를 보려면 편집 탭에서 내용을 입력하세요',
-                                                                }, locale)}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </TabsContent>
-                                        </Tabs>
-                                    </div>
                                 </div>
 
                                 <Separator className='my-3 md:my-4' />

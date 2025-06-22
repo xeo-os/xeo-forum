@@ -10,10 +10,10 @@ import dynamic from 'next/dynamic';
 // 动态导入 emoji-mart 组件以避免卡顿
 const Picker = dynamic(() => import('@emoji-mart/react'), {
     loading: () => (
-        <div className='w-[400px] h-[400px] p-4'>
+        <div className='w-[300px] h-[350px] p-4'>
             <Skeleton className='w-full h-8 mb-4' />
-            <div className='grid grid-cols-10 gap-2'>
-                {Array.from({ length: 50 }).map((_, i) => (
+            <div className='grid grid-cols-8 gap-2'>
+                {Array.from({ length: 40 }).map((_, i) => (
                     <Skeleton key={i} className='w-8 h-8' />
                 ))}
             </div>
@@ -116,7 +116,7 @@ export function EmojiPicker({ onEmojiSelect, locale, trigger, className }: Emoji
         <Popover open={isOpen} onOpenChange={setIsOpen}>
             <PopoverTrigger asChild>
                 {trigger || (
-                    <Button variant='outline' size='sm' className={`h-9 w-9 p-0 ${className}`}>
+                    <Button variant='ghost' size='sm' className={`h-8 w-8 p-0 ${className}`}>
                         <Smile className='h-4 w-4' />
                     </Button>
                 )}
@@ -134,26 +134,26 @@ export function EmojiPicker({ onEmojiSelect, locale, trigger, className }: Emoji
                         autoFocus={true}
                         theme='auto'
                         searchPosition='sticky'
-                        perLine={12}
-                        emojiSize={24}
-                        emojiButtonSize={32}
+                        perLine={8}
+                        emojiSize={20}
+                        emojiButtonSize={28}
                         maxFrequentRows={2}
                         navPosition='bottom'
                         noResultsEmoji='😢'
                         set='native'
                         previewPosition='none'
                         skinTonePosition='search'
-                        // 自定义样式
+                        // 优化工具栏使用的样式
                         style={{
-                            width: '400px',
-                            height: '400px',
+                            width: '300px',
+                            height: '350px',
                         }}
                     />
                 ) : (
-                    <div className='w-[400px] h-[400px] p-4'>
+                    <div className='w-[300px] h-[350px] p-4'>
                         <Skeleton className='w-full h-8 mb-4' />
-                        <div className='grid grid-cols-10 gap-2'>
-                            {Array.from({ length: 50 }).map((_, i) => (
+                        <div className='grid grid-cols-8 gap-2'>
+                            {Array.from({ length: 40 }).map((_, i) => (
                                 <Skeleton key={i} className='w-8 h-8' />
                             ))}
                         </div>

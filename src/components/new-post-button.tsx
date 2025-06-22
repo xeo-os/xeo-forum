@@ -6,10 +6,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -26,8 +24,6 @@ import { motion, useDragControls } from 'motion/react';
 import { toast } from 'sonner';
 import lang from '@/lib/lang';
 import { MarkdownEditor } from '@/components/markdown-editor';
-import { EmojiPicker } from '@/components/emoji-picker';
-import { markdownToHtml } from '@/lib/markdown-utils';
 import token from '@/utils/userToken';
 import { useBroadcast } from '@/store/useBroadcast';
 
@@ -65,7 +61,6 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
     const [selectedTopic, setSelectedTopic] = useState('');
     const [selectedTopicName, setSelectedTopicName] = useState(''); // 添加选中主题的name
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [activeTab, setActiveTab] = useState('edit');
     const [sheetHeight, setSheetHeight] = useState(85);
     const [topicDialogOpen, setTopicDialogOpen] = useState(false);
     const [topicSearchQuery, setTopicSearchQuery] = useState('');
@@ -522,8 +517,8 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
             const windowHeight = window.innerHeight;
             const currentY = info.point.y;
             const newHeight = Math.min(
-                85,
-                Math.max(30, ((windowHeight - currentY) / windowHeight) * 100),
+                90,
+                Math.max(40, ((windowHeight - currentY) / windowHeight) * 100),
             );
             setSheetHeight(newHeight);
         }
@@ -669,7 +664,7 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
                                                                 {lang(
                                                                     {
                                                                         'zh-CN': '正在重新翻译...',
-                                                                        'zh-TW': '正在重新翻譯...',
+                                                                        'zh-TW': '正在重新譯...',
                                                                         'en-US': 'Retranslating...',
                                                                         'es-ES': 'Retraduciendo...',
                                                                         'fr-FR': 'Retraduction en cours...',
@@ -880,7 +875,7 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
                     </SheetContent>
                 </Sheet>
 
-                {/* 原有的创建帖子 Sheet */}
+                {/* 创建帖子 Sheet */}
                 <Sheet open={open} onOpenChange={handleSheetOpenChange}>
                     <SheetContent
                         side='bottom'
@@ -896,6 +891,8 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
                             dragConstraints={{ top: 0, bottom: 0 }}
                             dragElastic={0}
                             onDrag={handleDrag}
+                            dragMomentum={false}
+                            style={{ touchAction: 'none' }}
                         >
                             <div className='w-12 h-1 bg-muted-foreground/20 group-hover:bg-[#f0b100]/50 rounded-full transition-colors duration-300' />
                         </motion.div>
@@ -924,7 +921,7 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
                                 </SheetHeader>
 
                                 <div className='space-y-4 md:space-y-6'>
-                                    {/* 标题和主题行 - 移动版改为纵向布局 */}
+                                    {/* 标题和主题行 */}
                                     <div className='grid grid-cols-1 gap-3 md:gap-4 lg:grid-cols-2 lg:gap-6'>
                                         <div className='space-y-2 md:space-y-3'>
                                             <Label
@@ -1212,158 +1209,15 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
                                                     {content.length}/200
                                                 </Badge>
                                             </Label>
-                                            <EmojiPicker
-                                                onEmojiSelect={insertEmoji}
-                                                locale={locale}
-                                            />
                                         </div>
 
-                                        {/* Markdown 工具栏 */}
+                                        {/* 使用新的 MarkdownEditor 组件 */}
                                         <MarkdownEditor
                                             value={content}
                                             onChange={setContent}
                                             locale={locale}
+                                            maxLength={200}
                                         />
-
-                                        <div className='border-2 rounded-lg overflow-hidden bg-background transition-colors h-[350px]'>
-                                            <Tabs
-                                                value={activeTab}
-                                                onValueChange={setActiveTab}
-                                                className='h-full flex flex-col'
-                                            >
-                                                <div className='border-b bg-muted/30 flex-shrink-0'>
-                                                    <TabsList className='grid w-full grid-cols-2 bg-transparent border-0 p-1 h-10'>
-                                                        <TabsTrigger
-                                                            value='edit'
-                                                            className='data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-[#f0b100] text-sm'
-                                                        >
-                                                            {lang(
-                                                                {
-                                                                    'zh-CN': '编辑',
-                                                                    'zh-TW': '編輯',
-                                                                    'en-US': 'Edit',
-                                                                    'es-ES': 'Editar',
-                                                                    'fr-FR': 'Modifier',
-                                                                    'ru-RU': 'Редактировать',
-                                                                    'ja-JP': '編集',
-                                                                    'de-DE': 'Bearbeiten',
-                                                                    'pt-BR': 'Editar',
-                                                                    'ko-KR': '편집',
-                                                                },
-                                                                locale,
-                                                            )}
-                                                        </TabsTrigger>
-                                                        <TabsTrigger
-                                                            value='preview'
-                                                            className='data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-[#f0b100] text-sm'
-                                                        >
-                                                            {lang(
-                                                                {
-                                                                    'zh-CN': '预览',
-                                                                    'zh-TW': '預覽',
-                                                                    'en-US': 'Preview',
-                                                                    'es-ES': 'Vista Previa',
-                                                                    'fr-FR': 'Aperçu',
-                                                                    'ru-RU': 'Предпросмотр',
-                                                                    'ja-JP': 'プレビュー',
-                                                                    'de-DE': 'Vorschau',
-                                                                    'pt-BR': 'Visualizar',
-                                                                    'ko-KR': '미리보기',
-                                                                },
-                                                                locale,
-                                                            )}
-                                                        </TabsTrigger>
-                                                    </TabsList>
-                                                </div>
-
-                                                <TabsContent
-                                                    value='edit'
-                                                    className='flex-1 p-3 md:p-4 m-0 overflow-hidden'
-                                                >
-                                                    <Textarea
-                                                        id='content-textarea'
-                                                        value={content}
-                                                        onChange={(e) => setContent(e.target.value)}
-                                                        placeholder={lang(
-                                                            {
-                                                                'zh-CN':
-                                                                    '分享你的想法，支持 Markdown 格式...',
-                                                                'zh-TW':
-                                                                    '分享你的想法，支持 Markdown 格式...',
-                                                                'en-US':
-                                                                    'Share your thoughts, Markdown supported...',
-                                                                'es-ES':
-                                                                    'Comparte tus pensamientos, Markdown compatible...',
-                                                                'fr-FR':
-                                                                    'Partagez vos pensées, Markdown pris en charge...',
-                                                                'ru-RU':
-                                                                    'Поделитесь своими мыслями, поддерживается Markdown...',
-                                                                'ja-JP':
-                                                                    'あなたの考えを共有してください、Markdown対応...',
-                                                                'de-DE':
-                                                                    'Teilen Sie Ihre Gedanken mit, Markdown unterstützt...',
-                                                                'pt-BR':
-                                                                    'Compartilhe seus pensamentos, Markdown suportado...',
-                                                                'ko-KR':
-                                                                    '생각을 공유하세요, 마크다운 지원...',
-                                                            },
-                                                            locale,
-                                                        )}
-                                                        className='h-full resize-none border-0 focus-visible:ring-0 focus:ring-0 focus:ring-offset-0 focus:outline-none text-sm md:text-base leading-relaxed'
-                                                        maxLength={200}
-                                                    />
-                                                </TabsContent>
-
-                                                <TabsContent
-                                                    value='preview'
-                                                    className='flex-1 p-3 md:p-4 m-0 overflow-y-auto'
-                                                >
-                                                    {content ? (
-                                                        <div
-                                                            className='prose prose-sm max-w-none dark:prose-invert'
-                                                            dangerouslySetInnerHTML={{
-                                                                __html: markdownToHtml(content),
-                                                            }}
-                                                        />
-                                                    ) : (
-                                                        <div className='h-full flex items-center justify-center text-muted-foreground'>
-                                                            <div className='text-center'>
-                                                                <div className='text-2xl md:text-4xl mb-2 md:mb-4'>
-                                                                    📝
-                                                                </div>
-                                                                <p className='text-sm md:text-base'>
-                                                                    {lang(
-                                                                        {
-                                                                            'zh-CN':
-                                                                                '在编辑选项卡中输入内容以查看预览',
-                                                                            'zh-TW':
-                                                                                '在編輯選項卡中輸入內容以查看預覽',
-                                                                            'en-US':
-                                                                                'Enter content in the edit tab to see preview',
-                                                                            'es-ES':
-                                                                                'Ingrese contenido en la pestaña de edición para ver la vista previa',
-                                                                            'fr-FR':
-                                                                                "Saisissez le contenu dans l'onglet d'édition pour voir l'aperçu",
-                                                                            'ru-RU':
-                                                                                'Введите содержимое во вкладке редактирования для предпросмотра',
-                                                                            'ja-JP':
-                                                                                '編集タブでコンテンツを入力してプレビューを表示',
-                                                                            'de-DE':
-                                                                                'Geben Sie Inhalt im Bearbeitungstab ein, um die Vorschau zu sehen',
-                                                                            'pt-BR':
-                                                                                'Digite o conteúdo na aba de edição para ver a visualização',
-                                                                            'ko-KR':
-                                                                                '미리보기를 보려면 편집 탭에서 내용을 입력하세요',
-                                                                        },
-                                                                        locale,
-                                                                    )}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </TabsContent>
-                                            </Tabs>
-                                        </div>
                                     </div>
 
                                     <Separator className='my-3 md:my-4' />
