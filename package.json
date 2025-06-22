@@ -36,7 +36,6 @@
         "cmdk": "^1.1.1",
         "date-fns": "^4.1.0",
         "embla-carousel-react": "^8.6.0",
-        "emoji-regex": "^10.4.0",
         "input-otp": "^1.4.2",
         "ioredis": "^5.6.1",
         "isomorphic-dompurify": "^2.25.0",
@@ -44,6 +43,7 @@
         "js-cookie": "^3.0.5",
         "jsdom": "^26.1.0",
         "jsonwebtoken": "^9.0.2",
+        "keyv": "^5.3.4",
         "lucide-react": "^0.513.0",
         "marked": "^15.0.12",
         "motion": "^12.16.0",
@@ -60,6 +60,11 @@
         "sonner": "^2.0.5",
         "tailwind-merge": "^3.3.0",
         "zustand": "^5.0.5"
+    },
+    "pnpm": {
+        "overrides": {
+            "keyv": "^5.3.4"
+        }
     },
     "devDependencies": {
         "@eslint/eslintrc": "^3",
