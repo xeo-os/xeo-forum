@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import lang from '@/lib/lang';
 import prisma from '@/app/api/_utils/prisma';
 import { PostDetailClient } from '@/components/post-detail-client';
+import { PostContent } from '@/components/post-content';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -492,24 +493,11 @@ export default async function PostDetailPage({ params }: Props) {
                             </div>
                         </div>
                     </div>
-                </CardHeader>
-
-                <CardContent>
-                    <div
-                        className='prose prose-base prose-slate dark:prose-invert max-w-none
-                     prose-headings:font-bold prose-headings:text-foreground
-                     prose-h1:text-2xl prose-h1:mb-4 prose-h1:mt-6
-                     prose-h2:text-xl prose-h2:mb-3 prose-h2:mt-5
-                     prose-h3:text-lg prose-h3:mb-2 prose-h3:mt-4
-                     prose-p:text-foreground prose-p:leading-7 prose-p:mb-4
-                     prose-strong:text-foreground prose-strong:font-semibold
-                     prose-ul:my-4 prose-ul:pl-6 prose-li:my-2 prose-li:text-foreground
-                     prose-ol:my-4 prose-ol:pl-6
-                     prose-code:bg-muted prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-sm
-                     prose-pre:bg-muted prose-pre:p-4 prose-pre:rounded-lg prose-pre:overflow-x-auto
-                     prose-a:text-primary prose-a:no-underline hover:prose-a:underline
-                     prose-blockquote:border-l-primary prose-blockquote:pl-4 prose-blockquote:italic'
-                        dangerouslySetInnerHTML={{ __html: content }}
+                </CardHeader>                <CardContent>
+                    <PostContent 
+                        initialContent={content}
+                        postId={post.id}
+                        locale={locale}
                     />
                 </CardContent>
             </Card>{' '}
@@ -520,6 +508,7 @@ export default async function PostDetailPage({ params }: Props) {
                     title,
                     likes: post._count.likes,
                     replies: post._count.belongReplies,
+                    isTranslated: post.originLang !== locale,
                 }}
                 replies={finalReplies}
                 locale={locale}

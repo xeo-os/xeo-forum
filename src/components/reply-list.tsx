@@ -22,7 +22,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useBroadcast } from '@/store/useBroadcast';
 import { EmojiPicker } from '@/components/emoji-picker';
 
-
 // 单个回复组件
 interface SingleReplyProps {
     reply: any;
@@ -59,9 +58,10 @@ function SingleReply({
     onReplyLikeChange,
 }: SingleReplyProps) {
     const [isLiked, setIsLiked] = useState(replyLikes[reply.id] || false);
-    const [isLiking, setIsLiking] = useState(false);
-    const [isReplying, setIsReplying] = useState(false);
+    const [isLiking, setIsLiking] = useState(false);    const [isReplying, setIsReplying] = useState(false);
     const [showOriginal, setShowOriginal] = useState(false);
+    const [originalContent, setOriginalContent] = useState<string | null>(null);
+    const [isLoadingOriginal, setIsLoadingOriginal] = useState(false);
     const [likeCount, setLikeCount] = useState(reply._count?.likes || 0);
     const [content, setContent] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -308,11 +308,12 @@ function SingleReply({
         return () => {
             unregisterCallback(handleBroadcastMessage);
         };
-    }, [registerCallback, unregisterCallback, translationProgress, locale]);    const isTranslated = reply.originLang !== locale;
+    }, [registerCallback, unregisterCallback, translationProgress, locale]);
+    const isTranslated = reply.originLang !== locale;
     const maxLevel = 99; // 增加最大回复层级深度
     // 确保 parentPath 是数组
     const safeParentPath = Array.isArray(parentPath) ? parentPath : [];
-    const currentPath = [...safeParentPath, reply.id];    // Git tree 风格的连接线渲染 - 保留但简化
+    const currentPath = [...safeParentPath, reply.id]; // Git tree 风格的连接线渲染 - 保留但简化
     const renderTreeLines = () => {
         return null; // 保留为null，使用CSS连接线
     };
@@ -322,7 +323,7 @@ function SingleReply({
         if (level === 0) return {};
         const indentSize = isMobile ? 2 : 3; // 移动版减少缩进以节省空间
         return { paddingLeft: `${indentSize}%` };
-    };    // 连接线样式 - 统一支持移动版和桌面版
+    }; // 连接线样式 - 统一支持移动版和桌面版
     const getConnectionLineStyle = () => {
         if (level === 0) return '';
         // 移动版使用更细更亮的连接线，桌面版保持原样
@@ -426,10 +427,76 @@ function SingleReply({
         } finally {
             setIsLiking(false);
         }
+    };    // 获取原文内容
+    const fetchOriginalContent = async () => {
+        if (originalContent) {
+            // 如果已经有原文内容，直接切换
+            setShowOriginal(!showOriginal);
+            return;
+        }
+
+        setIsLoadingOriginal(true);
+        try {
+            const response = await fetch(`/api/origin?type=reply&id=${reply.id}`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.ok && data.data?.originalContent) {
+                    setOriginalContent(data.data.originalContent);
+                    // 添加短暂延迟，让动画效果更明显
+                    setTimeout(() => {
+                        setShowOriginal(true);
+                    }, 100);
+                } else {
+                    toast.error(
+                        lang(
+                            {
+                                'zh-CN': '获取原文失败',
+                                'en-US': 'Failed to get original content',
+                                'zh-TW': '獲取原文失敗',
+                                'es-ES': 'Error al obtener contenido original',
+                                'fr-FR': 'Échec de la récupération du contenu original',
+                                'ru-RU': 'Не удалось получить оригинальный контент',
+                                'ja-JP': '原文の取得に失敗しました',
+                                'de-DE': 'Originalinhalt konnte nicht abgerufen werden',
+                                'pt-BR': 'Falha ao obter conteúdo original',
+                                'ko-KR': '원문 가져오기 실패',
+                            },
+                            locale,
+                        ),
+                    );
+                }
+            } else {
+                throw new Error('API request failed');
+            }
+        } catch (error) {
+            console.error('Error fetching original content:', error);
+            toast.error(
+                lang(
+                    {
+                        'zh-CN': '网络错误，请重试',
+                        'en-US': 'Network error, please try again',
+                        'zh-TW': '網路錯誤，請重試',
+                        'es-ES': 'Error de red, por favor intente de nuevo',
+                        'fr-FR': 'Erreur réseau, veuillez réessayer',
+                        'ru-RU': 'Сетевая ошибка, попробуйте еще раз',
+                        'ja-JP': 'ネットワークエラー、もう一度お試しください',
+                        'de-DE': 'Netzwerkfehler, bitte versuchen Sie es erneut',
+                        'pt-BR': 'Erro de rede, tente novamente',
+                        'ko-KR': '네트워크 오류, 다시 시도하세요',
+                    },
+                    locale,
+                ),
+            );
+        } finally {
+            setIsLoadingOriginal(false);
+        }
     };
 
     // 获取显示内容
     const getDisplayContent = () => {
+        if (showOriginal && originalContent) {
+            return originalContent;
+        }
         if (!isTranslated || showOriginal) {
             return reply.content;
         }
@@ -595,15 +662,18 @@ function SingleReply({
     );
 
     // 桌面版操作按钮组件
-    const DesktopActionButtons = () => (
-        <div className='flex items-center gap-1 flex-wrap'>
+    const DesktopActionButtons = () => (        <div className='flex items-center gap-1 flex-wrap'>
             {isTranslated && (
                 <Button
                     variant='ghost'
                     size='sm'
-                    onClick={() => setShowOriginal(!showOriginal)}
+                    onClick={fetchOriginalContent}
+                    disabled={isLoadingOriginal}
                     className='h-5 px-1.5 text-xs hover:bg-muted/50'>
-                    {showOriginal
+                    {isLoadingOriginal ? (
+                        <Loader2 className='h-3 w-3 mr-1 animate-spin' />
+                    ) : null}
+                    {showOriginal && originalContent
                         ? lang(
                               {
                                   'zh-CN': '译文',
@@ -672,13 +742,15 @@ function SingleReply({
                 </Button>
             )}
         </div>
-    );    return (
+    );
+    return (
         <div
             id={`reply-${reply.id}`}
             style={getIndentStyle()}
             className={`relative ${level > 0 ? 'border-l-2 border-transparent' : ''} transition-all duration-300 ${
                 isHighlighted ? 'bg-primary/10 border-primary/20 rounded-lg' : ''
-            }`}            onMouseEnter={!isMobile ? handleMouseEnter : undefined}
+            }`}
+            onMouseEnter={!isMobile ? handleMouseEnter : undefined}
             onMouseLeave={!isMobile ? handleMouseLeave : undefined}>
             {/* Git tree 连接线（保留为空） */}
             {!isMobile && renderTreeLines()}
@@ -686,9 +758,7 @@ function SingleReply({
             {/* 连接线 - 移动版和桌面版都显示 */}
             {level > 0 && <div className={getConnectionLineStyle()} />}
 
-            <div
-                className={`flex gap-2 py-2 relative`}
-            >
+            <div className={`flex gap-2 py-2 relative`}>
                 {/* 头像 */}
                 <div className='flex-shrink-0'>
                     <Link
@@ -732,20 +802,13 @@ function SingleReply({
                         <span
                             className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-xs'}`}>
                             {reply.formattedTime}
-                        </span>
+                        </span>{' '}
                         {/* 移动版显示层级指示器 */}
                         {isMobile && level > 0 && (
                             <span className='text-muted-foreground text-xs bg-muted/30 px-1.5 py-0.5 rounded-full'>
                                 L{level}
                             </span>
                         )}
-                        {level > 0 && (
-                            <span
-                                className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-xs'}`}>
-                                #{reply.id.slice(-6)}
-                            </span>
-                        )}
-
                         {/* 桌面版的额外信息 */}
                         {!isMobile && (
                             <>
@@ -884,7 +947,8 @@ function SingleReply({
                                 )}
                             </>
                         )}
-                    </div>                    {/* 移动版折叠按钮 - 显示为小徽章，添加取消高亮按钮 */}
+                    </div>{' '}
+                    {/* 移动版折叠按钮 - 显示为小徽章，添加取消高亮按钮 */}
                     {isMobile && hasChildReplies() && (
                         <div className='mb-2 flex items-center gap-2'>
                             <button
@@ -928,7 +992,8 @@ function SingleReply({
                                               locale,
                                           )}
                                 </span>
-                            </button>                            {/* 移动版取消高亮按钮 - 只在当前回复被高亮时显示 */}
+                            </button>{' '}
+                            {/* 移动版取消高亮按钮 - 只在当前回复被高亮时显示 */}
                             {highlightedReplyId === reply.id && (
                                 <motion.button
                                     initial={{ opacity: 0, scale: 0.8 }}
@@ -956,7 +1021,9 @@ function SingleReply({
                                     </span>
                                 </motion.button>
                             )}
-                        </div>                    )}                    {/* 移动版独立的取消高亮按钮 - 当没有子回复但当前回复被高亮时显示 */}
+                        </div>
+                    )}{' '}
+                    {/* 移动版独立的取消高亮按钮 - 当没有子回复但当前回复被高亮时显示 */}
                     {isMobile && !hasChildReplies() && highlightedReplyId === reply.id && (
                         <div className='mb-2'>
                             <motion.button
@@ -984,24 +1051,35 @@ function SingleReply({
                                     )}
                                 </span>
                             </motion.button>
-                        </div>
-                    )}
-
-                    {/* 回复内容 */}
-                    <div
-                        className={`prose prose-sm max-w-none dark:prose-invert mb-2
-                       prose-p:my-1 prose-p:leading-relaxed prose-p:text-sm
-                       prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
-                       prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-a:text-sm
-                       prose-strong:text-sm prose-em:text-sm prose-li:text-sm
-                       ${isMobile ? 'text-xs' : 'text-sm'}`}
-                        dangerouslySetInnerHTML={{
-                            __html: markdownToHtmlSync(getDisplayContent()),
-                        }}
-                    />
-
+                        </div>                    )}                    {/* 回复内容 */}
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={`content-${showOriginal}-${originalContent ? 'orig' : 'trans'}`}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ 
+                                opacity: 1, 
+                                y: 0,
+                                transition: { duration: 0.3, ease: 'easeOut' }
+                            }}
+                            exit={{ 
+                                opacity: 0, 
+                                y: -10,
+                                transition: { duration: 0.2, ease: 'easeIn' }
+                            }}
+                            className={`prose prose-sm max-w-none dark:prose-invert mb-2
+                           prose-p:my-1 prose-p:leading-relaxed prose-p:text-sm
+                           prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
+                           prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-a:text-sm
+                           prose-strong:text-sm prose-em:text-sm prose-li:text-sm
+                           ${isMobile ? 'text-xs' : 'text-sm'}`}
+                            dangerouslySetInnerHTML={{
+                                __html: markdownToHtmlSync(getDisplayContent()),
+                            }}
+                        />
+                    </AnimatePresence>
                     {/* 操作按钮 */}
-                    {isMobile ? <MobileActionButtons /> : <DesktopActionButtons />}                    {/* 移动版更多操作面板 - 添加展开动画 */}
+                    {isMobile ? <MobileActionButtons /> : <DesktopActionButtons />}{' '}
+                    {/* 移动版更多操作面板 - 添加展开动画 */}
                     <AnimatePresence>
                         {isMobile && showMoreActions && (
                             <motion.div
@@ -1026,17 +1104,20 @@ function SingleReply({
                                 }}
                                 style={{ overflow: 'hidden' }}
                                 className='mt-2 p-2 bg-muted/20 rounded border'>
-                                <div className='flex flex-wrap gap-2'>
-                                    {isTranslated && (
+                                <div className='flex flex-wrap gap-2'>                                    {isTranslated && (
                                         <Button
                                             variant='outline'
                                             size='sm'
                                             onClick={() => {
-                                                setShowOriginal(!showOriginal);
+                                                fetchOriginalContent();
                                                 setShowMoreActions(false);
                                             }}
+                                            disabled={isLoadingOriginal}
                                             className='h-6 px-2 text-xs'>
-                                            {showOriginal
+                                            {isLoadingOriginal && (
+                                                <Loader2 className='h-3 w-3 mr-1 animate-spin' />
+                                            )}
+                                            {showOriginal && originalContent
                                                 ? lang(
                                                       {
                                                           'zh-CN': '显示译文',
@@ -1130,7 +1211,6 @@ function SingleReply({
                             </motion.div>
                         )}
                     </AnimatePresence>
-
                     {/* 回复编辑器 */}
                     <AnimatePresence mode='wait'>
                         {isReplying && (
@@ -1362,7 +1442,7 @@ function SingleReply({
                     >
                         {reply.replies.map((subReply: any, index: number) => {
                             // 连接状态处理
-                            const newChildrenStatus =  [...childrenStatus];
+                            const newChildrenStatus = [...childrenStatus];
                             if (level >= 0) {
                                 newChildrenStatus[level] = index < reply.replies.length - 1;
                             }
@@ -1416,7 +1496,10 @@ export function ReplyList({
     const [hoveredReplyPath, setHoveredReplyPath] = useState<string[] | null>(null);
     const [focusedReplyId, setFocusedReplyId] = useState<string | null>(null);
     const [focusedReplies, setFocusedReplies] = useState<any | null>(null);
-    const [highlightedReplyId, setHighlightedReplyId] = useState<string | null>(null);
+    const [highlightedReplyId, setHighlightedReplyId] = useState<string | null>(null);    // 同步外部 replies 变化
+    useEffect(() => {
+        setLocalReplies(replies);
+    }, [replies]);
 
     // 处理高亮变化
     const handleHighlightChange = (replyId: string | null) => {
@@ -1530,83 +1613,147 @@ export function ReplyList({
         if (onRepliesUpdate) {
             onRepliesUpdate(updatedReplies);
         }
-    };
-
-    // 如果处于聚焦模式，显示聚焦的回复
+    };    // 如果处于聚焦模式，显示聚焦的回复
     if (focusedReplies) {
         return (
-            <Card className='overflow-hidden'>
-                <CardContent className='p-4'>
-                    {' '}
-                    {/* 从 p-3 改为 p-4 */}
-                    {/* 聚焦模式头部 */}
-                    <div className='mb-4 p-3 bg-primary/10 rounded-lg border border-primary/20'>
-                        <div className='flex items-center justify-between'>
-                            <div className='flex items-center gap-2'>
-                                <Focus className='h-4 w-4 text-primary' />
-                                <span className='text-sm font-medium text-primary'>
-                                    {lang(
-                                        {
-                                            'zh-CN': `聚焦模式 - 显示回复 #${focusedReplyId?.slice(-6)} 及其子回复`,
-                                            'en-US': `Focus Mode - Showing reply #${focusedReplyId?.slice(-6)} and its replies`,
-                                            'zh-TW': `聚焦模式 - 顯示回覆 #${focusedReplyId?.slice(-6)} 及其子回覆`,
-                                            'es-ES': `Modo Enfoque - Mostrando respuesta #${focusedReplyId?.slice(-6)} y sus respuestas`,
-                                            'fr-FR': `Mode Focus - Affichage de la réponse #${focusedReplyId?.slice(-6)} et ses réponses`,
-                                            'ru-RU': `Режим фокуса - Показ ответа #${focusedReplyId?.slice(-6)} и его ответов`,
-                                            'ja-JP': `フォーカスモード - 返信 #${focusedReplyId?.slice(-6)} とその返信を表示`,
-                                            'de-DE': `Fokus-Modus - Antwort #${focusedReplyId?.slice(-6)} und ihre Antworten anzeigen`,
-                                            'pt-BR': `Modo Foco - Mostrando resposta #${focusedReplyId?.slice(-6)} e suas respostas`,
-                                            'ko-KR': `포커스 모드 - 답글 #${focusedReplyId?.slice(-6)} 및 하위 답글 표시`,
-                                        },
-                                        locale,
-                                    )}
-                                </span>
-                            </div>
-                            <Button
-                                variant='outline'
-                                size='sm'
-                                onClick={exitFocusMode}
-                                className='h-7 px-2 text-xs'>
-                                {lang(
-                                    {
-                                        'zh-CN': '退出聚焦',
-                                        'en-US': 'Exit Focus',
-                                        'zh-TW': '退出聚焦',
-                                        'es-ES': 'Salir del Enfoque',
-                                        'fr-FR': 'Sortir du Focus',
-                                        'ru-RU': 'Выйти из фокуса',
-                                        'ja-JP': 'フォーカス終了',
-                                        'de-DE': 'Fokus verlassen',
-                                        'pt-BR': 'Sair do Foco',
-                                        'ko-KR': '포커스 종료',
-                                    },
-                                    locale,
-                                )}
-                            </Button>
-                        </div>
-                    </div>{' '}
-                    {/* 聚焦的回复 - 包含该回复及其所有子回复 */}
-                    <div className='space-y-0'>
-                        {' '}
-                        <SingleReply
-                            key={focusedReplies.id}
-                            reply={focusedReplies}
-                            locale={locale}
-                            level={0}
-                            onReplySuccess={handleReplySuccess}
-                            hoveredReplyPath={hoveredReplyPath || undefined}
-                            onHover={handleHover}
-                            parentPath={[]}
-                            onFocusReply={handleFocusReply}
-                            focusedReplyId={focusedReplyId}
-                            highlightedReplyId={highlightedReplyId}
-                            onHighlightChange={handleHighlightChange}
-                            replyLikes={replyLikes}
-                            onReplyLikeChange={onReplyLikeChange}
-                        />
-                    </div>
-                </CardContent>
-            </Card>
+            <AnimatePresence mode='wait'>
+                <motion.div
+                    key={`focus-mode-${focusedReplyId}`}
+                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                    animate={{
+                        opacity: 1,
+                        scale: 1,
+                        y: 0,
+                        transition: {
+                            duration: 0.3,
+                            ease: 'easeOut',
+                            scale: { duration: 0.2 },
+                            y: { duration: 0.25 },
+                        },
+                    }}
+                    exit={{
+                        opacity: 0,
+                        scale: 0.95,
+                        y: -20,
+                        transition: {
+                            duration: 0.2,
+                            ease: 'easeIn',
+                        },
+                    }}>
+                    <Card className='overflow-hidden'>
+                        <CardContent className='p-4'>
+                            {/* 聚焦模式头部 */}
+                            <motion.div
+                                className='mb-4 p-3 bg-primary/10 rounded-lg border border-primary/20'
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{
+                                    opacity: 1,
+                                    x: 0,
+                                    transition: { delay: 0.1, duration: 0.25 },
+                                }}>
+                                <div className='flex items-center justify-between'>
+                                    <div className='flex items-center gap-2'>
+                                        <motion.div
+                                            initial={{ rotate: -180, scale: 0 }}
+                                            animate={{
+                                                rotate: 0,
+                                                scale: 1,
+                                                transition: {
+                                                    delay: 0.2,
+                                                    duration: 0.3,
+                                                    ease: 'easeOut',
+                                                },
+                                            }}>
+                                            <Focus className='h-4 w-4 text-primary' />
+                                        </motion.div>
+                                        <span className='text-sm font-medium text-primary'>
+                                            {lang(
+                                                {
+                                                    'zh-CN': '聚焦模式 - 显示特定回复及其子回复',
+                                                    'en-US':
+                                                        'Focus Mode - Showing specific reply and its replies',
+                                                    'zh-TW': '聚焦模式 - 顯示特定回覆及其子回覆',
+                                                    'es-ES':
+                                                        'Modo Enfoque - Mostrando respuesta específica y sus respuestas',
+                                                    'fr-FR':
+                                                        'Mode Focus - Affichage de la réponse spécifique et ses réponses',
+                                                    'ru-RU':
+                                                        'Режим фокуса - Показ конкретного ответа и его ответов',
+                                                    'ja-JP':
+                                                        'フォーカスモード - 特定の返信とその返信を表示',
+                                                    'de-DE':
+                                                        'Fokus-Modus - Spezifische Antwort und ihre Antworten anzeigen',
+                                                    'pt-BR':
+                                                        'Modo Foco - Mostrando resposta específica e suas respostas',
+                                                    'ko-KR':
+                                                        '포커스 모드 - 특정 답글 및 하위 답글 표시',
+                                                },
+                                                locale,
+                                            )}
+                                        </span>
+                                    </div>
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.8 }}
+                                        animate={{
+                                            opacity: 1,
+                                            scale: 1,
+                                            transition: { delay: 0.25, duration: 0.2 },
+                                        }}>
+                                        <Button
+                                            variant='outline'
+                                            size='sm'
+                                            onClick={exitFocusMode}
+                                            className='h-7 px-2 text-xs hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 transition-colors'>
+                                            {lang(
+                                                {
+                                                    'zh-CN': '退出聚焦',
+                                                    'en-US': 'Exit Focus',
+                                                    'zh-TW': '退出聚焦',
+                                                    'es-ES': 'Salir del Enfoque',
+                                                    'fr-FR': 'Sortir du Focus',
+                                                    'ru-RU': 'Выйти из фокуса',
+                                                    'ja-JP': 'フォーカス終了',
+                                                    'de-DE': 'Fokus verlassen',
+                                                    'pt-BR': 'Sair do Foco',
+                                                    'ko-KR': '포커스 종료',
+                                                },
+                                                locale,
+                                            )}
+                                        </Button>
+                                    </motion.div>
+                                </div>
+                            </motion.div>
+
+                            {/* 聚焦的回复 - 包含该回复及其所有子回复 */}
+                            <motion.div
+                                className='space-y-0'
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{
+                                    opacity: 1,
+                                    y: 0,
+                                    transition: { delay: 0.15, duration: 0.3 },
+                                }}>
+                                <SingleReply
+                                    key={focusedReplies.id}
+                                    reply={focusedReplies}
+                                    locale={locale}
+                                    level={0}
+                                    onReplySuccess={handleReplySuccess}
+                                    hoveredReplyPath={hoveredReplyPath || undefined}
+                                    onHover={handleHover}
+                                    parentPath={[]}
+                                    onFocusReply={handleFocusReply}
+                                    focusedReplyId={focusedReplyId}
+                                    highlightedReplyId={highlightedReplyId}
+                                    onHighlightChange={handleHighlightChange}
+                                    replyLikes={replyLikes}
+                                    onReplyLikeChange={onReplyLikeChange}
+                                />
+                            </motion.div>
+                        </CardContent>
+                    </Card>
+                </motion.div>
+            </AnimatePresence>
         );
     }
 
@@ -1651,31 +1798,75 @@ export function ReplyList({
             </div>
         );
     }
-
     return (
-        <Card className='overflow-hidden'>
-            <CardContent className='p-6'>
-                <div className='space-y-0'>
-                    {localReplies.map((reply) => (
-                        <SingleReply
-                            key={reply.id}
-                            reply={reply}
-                            locale={locale}
-                            level={0}
-                            onReplySuccess={handleReplySuccess}
-                            hoveredReplyPath={hoveredReplyPath || undefined}
-                            onHover={handleHover}
-                            parentPath={[]}
-                            onFocusReply={handleFocusReply}
-                            focusedReplyId={focusedReplyId}
-                            highlightedReplyId={highlightedReplyId}
-                            onHighlightChange={handleHighlightChange}
-                            replyLikes={replyLikes}
-                            onReplyLikeChange={onReplyLikeChange}
-                        />
-                    ))}
-                </div>
-            </CardContent>
-        </Card>
+        <AnimatePresence mode='wait'>
+            <motion.div
+                key='normal-mode'
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{
+                    opacity: 1,
+                    scale: 1,
+                    y: 0,
+                    transition: {
+                        duration: 0.3,
+                        ease: 'easeOut',
+                        scale: { duration: 0.2 },
+                        y: { duration: 0.25 },
+                    },
+                }}
+                exit={{
+                    opacity: 0,
+                    scale: 0.95,
+                    y: -20,
+                    transition: {
+                        duration: 0.2,
+                        ease: 'easeIn',
+                    },
+                }}>
+                <Card className='overflow-hidden'>
+                    <CardContent className='p-6'>
+                        <motion.div
+                            className='space-y-0'
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{
+                                opacity: 1,
+                                y: 0,
+                                transition: { delay: 0.1, duration: 0.3 },
+                            }}>
+                            {localReplies.map((reply, index) => (
+                                <motion.div
+                                    key={reply.id}
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{
+                                        opacity: 1,
+                                        x: 0,
+                                        transition: {
+                                            delay: 0.15 + index * 0.05,
+                                            duration: 0.25,
+                                            ease: 'easeOut',
+                                        },
+                                    }}>
+                                    <SingleReply
+                                        reply={reply}
+                                        locale={locale}
+                                        level={0}
+                                        onReplySuccess={handleReplySuccess}
+                                        hoveredReplyPath={hoveredReplyPath || undefined}
+                                        onHover={handleHover}
+                                        parentPath={[]}
+                                        onFocusReply={handleFocusReply}
+                                        focusedReplyId={focusedReplyId}
+                                        highlightedReplyId={highlightedReplyId}
+                                        onHighlightChange={handleHighlightChange}
+                                        replyLikes={replyLikes}
+                                        onReplyLikeChange={onReplyLikeChange}
+                                    />
+                                </motion.div>
+                            ))}
+                        </motion.div>
+                    </CardContent>
+                </Card>
+            </motion.div>
+        </AnimatePresence>
     );
 }
