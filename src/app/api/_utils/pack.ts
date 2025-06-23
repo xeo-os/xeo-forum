@@ -15,13 +15,13 @@ interface UserInfo {
     lastUseAt?: Date | null;
     gender?: Gender | null;
     timearea?: string | null;
-    emailNoticeLang: string;
+    emailNoticeLang: string | null;
     exp: number;
-    profileEmoji: string;
+    profileEmoji: string | null;
     avatar?: { id: string; emoji: string; background: string }[] | null;
 }
 
-type Gender = 'MALE' | 'FEMALE' | 'UNSET';
+type Gender = 'MALE' | 'FEMALE' | 'INTERSEX' | 'UNSET';
 
 interface PackedUserInfo {
     uid: number;
@@ -36,11 +36,11 @@ interface PackedUserInfo {
     country?: string | null;
     timearea?: string | null;
     role: string;
-    emailNoticeLang: string;
+    emailNoticeLang: string | null;
     updatedAt: Date;
     createdAt: Date;
     lastUseAt: Date;
-    profileEmoji: string;
+    profileEmoji: string | null;
     gender?: Gender | null;
     userExp: number;
 }

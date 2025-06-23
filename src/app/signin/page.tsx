@@ -6,9 +6,10 @@ import lang from '@/lib/lang';
 export async function generateMetadata({
     searchParams,
 }: {
-    searchParams: { [key: string]: string | string[] | undefined };
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }): Promise<Metadata> {
-    const locale = (searchParams?.lang as string) || 'en-US';
+    const params = await searchParams;
+    const locale = (params?.lang as string) || 'en-US';
 
     const langURL = {
         'en-US': 'https://xeoos.net/signin?lang=en-US',

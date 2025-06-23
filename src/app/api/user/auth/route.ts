@@ -173,11 +173,9 @@ export async function POST(request: Request) {
                             },
                             lang,
                         ),
-                        // @ts-expect-error ass
-                        user: pack(result, startTime),
-                        // @ts-expect-error ass
+                        user: pack(result, startTime) as unknown as object,
                         jwt: token.sign({
-                            inner: pack(result, startTime),
+                            inner: pack(result, startTime) as unknown as Record<string, unknown>,
                             ablyToken: ablyToken || undefined,
                             expired: expiredTime || '7d',
                             
@@ -303,11 +301,9 @@ export async function POST(request: Request) {
                             },
                             lang,
                         ),
-                        // @ts-expect-error fuckass
-                        user: pack(result, startTime),
-                        // @ts-expect-error fuckass
+                        user: pack(result, startTime) as unknown as object,
                         jwt: token.sign({
-                            inner: pack(result, startTime),
+                            inner: pack(result, startTime) as unknown as Record<string, unknown>,
                             ablyToken: ablyToken || undefined,
                             expired: expiredTime || '7d',
                             

@@ -7,7 +7,6 @@ import limitControl from '../../_utils/limit';
 export async function POST(request: Request) {
     const { id } = await request.json();
     const locale = request.headers.get('Accept-Language')?.split(',')[0] || 'en-US';
-    console.log(locale);
     try {
         const isAllowed = await limitControl.check(request);
 

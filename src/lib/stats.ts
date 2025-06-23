@@ -130,14 +130,14 @@ export const getTopPostsByScore = unstable_cache(
                 },
             },
             take: limit * 3, // 取更多数据以便排序
-        });
-
-        // 计算综合得分 (回复数 + 点赞数)
-        const postsWithScore = posts.map(post => ({
-            ...post,
-            user: post.User,
-            score: post._count.likes + post._count.Reply,
-        }));
+        });        // 计算综合得分 (回复数 + 点赞数) 并过滤掉没有用户的帖子
+        const postsWithScore = posts
+            .filter(post => post.User !== null) // 过滤掉没有用户的帖子
+            .map(post => ({
+                ...post,
+                user: post.User!,
+                score: post._count.likes + post._count.Reply,
+            }));
 
         // 按得分排序并取前N个
         return postsWithScore
@@ -171,6 +171,9 @@ export const getTopUsersByPosts = unstable_cache(
                     select: {
                         post: true,
                         reply: true,
+                        likes: true,
+                        following: true,
+                        followed: true,
                     },
                 },
             },
@@ -205,11 +208,13 @@ export const getTopUsersByReplies = unstable_cache(
                         background: true,
                     },
                     take: 1,
-                },
-                _count: {
+                },                _count: {
                     select: {
                         post: true,
                         reply: true,
+                        likes: true,
+                        following: true,
+                        followed: true,
                     },
                 },
             },
@@ -316,10 +321,12 @@ export async function getTopPostsByLikes(limit: number = 10): Promise<Leaderboar
         take: limit,
     });
 
-    return posts.map(post => ({
-        ...post,
-        user: post.User,
-    }));
+    return posts
+        .filter(post => post.User !== null) // 过滤掉没有用户的帖子
+        .map(post => ({
+            ...post,
+            user: post.User!,
+        }));
 }
 
 export async function getTopPostsByReplies(limit: number = 10): Promise<LeaderboardPost[]> {
@@ -370,12 +377,12 @@ export async function getTopPostsByReplies(limit: number = 10): Promise<Leaderbo
             },
         },
         take: limit,
-    });
-
-    return posts.map(post => ({
-        ...post,
-        user: post.User,
-    }));
+    });    return posts
+        .filter(post => post.User !== null) // 过滤掉没有用户的帖子
+        .map(post => ({
+            ...post,
+            user: post.User!,
+        }));
 }
 
 export function formatCount(count: number): string {

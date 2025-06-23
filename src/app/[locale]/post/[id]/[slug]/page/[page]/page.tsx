@@ -13,7 +13,7 @@ import { markdownToHtml } from '@/lib/markdown-utils';
 import { cache } from 'react';
 
 type Props = {
-    params: { locale: string; id: string; slug: string; page: string };
+    params: Promise<{ locale: string; id: string; slug: string; page: string }>;
 };
 
 const REPLIES_PER_PAGE = 20;
@@ -65,14 +65,14 @@ type User = {
     username: string;
     profileEmoji: string | null;
     avatar: {
-        id: number;
+        id: string;
         emoji: string;
         background: string;
     }[];
 };
 
 type ReplyData = {
-    id: number;
+    id: string;
     content: string;
     contentZHCN: string | null;
     contentENUS: string | null;
@@ -84,10 +84,9 @@ type ReplyData = {
     contentDEDE: string | null;
     contentPTBR: string | null;
     contentKOKR: string | null;
-    origin: string;
     createdAt: Date;
-    belongPostid: number;
-    commentUid: number | null;
+    belongPostid: number | null;
+    commentUid: string | null;
     originLang: string | null;
     user: User;
     _count: {
@@ -150,7 +149,7 @@ const getPostForMetadata = cache(async (postId: number): Promise<PostForMetadata
 // 缓存获取完整帖子数据的函数
 const getPostWithReplies = cache(async (postId: number, page: number) => {
     const skip = (page - 1) * REPLIES_PER_PAGE;
-
+    
     return await Promise.all([
         prisma.post.findUnique({
             where: {
@@ -227,8 +226,9 @@ const getPostWithReplies = cache(async (postId: number, page: number) => {
                         likes: true,
                         replies: true,
                     },
-                },
-            },
+                },            },
+            skip: skip,
+            take: REPLIES_PER_PAGE,
             orderBy: {
                 createdAt: 'asc',
             },
@@ -273,7 +273,24 @@ function getLocalizedContent(post: ContentWithLocalization, locale: string): str
         'pt-BR': post.contentPTBR || post.origin || post.content,
         'ko-KR': post.contentKOKR || post.origin || post.content,
     };
-    return contentMap[locale] || post.origin || '';
+    return contentMap[locale] || post.origin || post.content || '';
+}
+
+// 获取回复的本地化内容
+function getLocalizedReplyContent(reply: ReplyData, locale: string): string {
+    const contentMap: Record<string, string | null | undefined> = {
+        'zh-CN': reply.contentZHCN || reply.content,
+        'en-US': reply.contentENUS || reply.content,
+        'zh-TW': reply.contentZHTW || reply.content,
+        'es-ES': reply.contentESES || reply.content,
+        'fr-FR': reply.contentFRFR || reply.content,
+        'ru-RU': reply.contentRURU || reply.content,
+        'ja-JP': reply.contentJAJP || reply.content,
+        'de-DE': reply.contentDEDE || reply.content,
+        'pt-BR': reply.contentPTBR || reply.content,
+        'ko-KR': reply.contentKOKR || reply.content,
+    };
+    return contentMap[locale] || reply.content || '';
 }
 
 // 获取本地化主题名称
@@ -335,25 +352,20 @@ export default async function PostDetailPage({ params }: Props) {
 
     // 获取用户点赞状态 - 这里需要从 cookie 或 header 中获取用户信息
     // 简化处理，先设置为空，在客户端通过 API 获取
-    const likeStatus = { postLiked: false, replyLikes: {} };
-
-    const totalPages = Math.ceil(totalReplies / REPLIES_PER_PAGE);
+    const likeStatus = { postLiked: false, replyLikes: {} };    const totalPages = Math.ceil(totalReplies / REPLIES_PER_PAGE);
     const title = getLocalizedTitle(post, locale);
-    const content = getLocalizedContent(post, locale);
+    const contentMarkdown = getLocalizedContent(post, locale);
+    const content = await markdownToHtml(contentMarkdown);
 
     // 格式化时间函数需要传入locale参数
-    const formatTime = (date: Date) => formatRelativeTime(date, locale);
-
-    // 重新组织回复的层级关系
+    const formatTime = (date: Date) => formatRelativeTime(date, locale);    // 重新组织回复的层级关系
     const organizeReplies = (replies: ReplyData[]): ProcessedReply[] => {
-        const replyMap = new Map<number, ProcessedReply>();
-        const rootReplies: ProcessedReply[] = [];
-
-        // 首先处理所有回复，添加到 map 中
+        const replyMap = new Map<string, ProcessedReply>();
+        const rootReplies: ProcessedReply[] = [];        // 首先处理所有回复，添加到 map 中
         replies.forEach(reply => {
             const processedReply: ProcessedReply = {
                 ...reply,
-                content: getLocalizedContent(reply, locale),
+                content: getLocalizedReplyContent(reply, locale),
                 formattedTime: formatTime(reply.createdAt),
                 replies: [],
             };
@@ -484,7 +496,7 @@ export default async function PostDetailPage({ params }: Props) {
                      prose-pre:bg-muted prose-pre:p-4 prose-pre:rounded-lg prose-pre:overflow-x-auto
                      prose-a:text-primary prose-a:no-underline hover:prose-a:underline
                      prose-blockquote:border-l-primary prose-blockquote:pl-4 prose-blockquote:italic'
-                        dangerouslySetInnerHTML={{ __html: markdownToHtml(content) }}
+                        dangerouslySetInnerHTML={{ __html: content }}
                     />
                 </CardContent>
             </Card>            {/* 交互按钮和回复区域 */}

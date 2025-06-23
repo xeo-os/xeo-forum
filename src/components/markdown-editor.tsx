@@ -18,12 +18,21 @@ import {
     Quote,
     Code2,
     Eye,
-    Edit3
+    Edit3,
+    LucideIcon
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import lang from '@/lib/lang';
 import { EmojiPicker } from '@/components/emoji-picker';
-import { markdownToHtml } from '@/lib/markdown-utils';
+import { markdownToHtmlSync } from '@/lib/markdown-utils';
+
+type ToolbarButton = {
+    icon: LucideIcon;
+    label: string;
+    action: () => void;
+} | {
+    type: 'separator';
+};
 
 interface MarkdownEditorProps {
     value: string;
@@ -101,7 +110,7 @@ export function MarkdownEditor({
     }, [value, onChange]);
 
     // 工具栏按钮配置
-    const toolbarButtons = [
+    const toolbarButtons: ToolbarButton[] = [
         {
             icon: Heading1,
             label: lang({
@@ -538,11 +547,13 @@ export function MarkdownEditor({
                 <div className="p-2">
                     <div className="flex flex-wrap items-center gap-1">
                         {toolbarButtons.map((button, index) => {
-                            if (button.type === 'separator') {
+                            if ('type' in button && button.type === 'separator') {
                                 return <Separator key={index} orientation="vertical" className="h-6 mx-1" />;
                             }
                             
-                            const IconComponent = button.icon;
+                            // Type assertion since we know this is not a separator
+                            const iconButton = button as { icon: LucideIcon; label: string; action: () => void };
+                            const IconComponent = iconButton.icon;
                             return (
                                 <motion.div
                                     key={index}
@@ -552,9 +563,9 @@ export function MarkdownEditor({
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        onClick={button.action}
+                                        onClick={iconButton.action}
                                         className="h-8 w-8 p-0 hover:bg-[#f0b100]/10 hover:text-[#f0b100] transition-colors"
-                                        title={button.label}
+                                        title={iconButton.label}
                                     >
                                         <IconComponent className="h-4 w-4" />
                                     </Button>
@@ -639,7 +650,7 @@ export function MarkdownEditor({
                             }}
                             className="prose prose-sm max-w-none dark:prose-invert"
                             dangerouslySetInnerHTML={{
-                                __html: markdownToHtml(value)
+                                __html: markdownToHtmlSync(value)
                             }}
                         />
                     ) : (

@@ -12,7 +12,7 @@ import lang from '@/lib/lang';
 import '@/app/globals.css';
 
 type Props = {
-    params: { locale: string; uid: string; page: string };
+    params: Promise<{ locale: string; uid: string; page: string }>;
 };
 
 type User = {
@@ -61,12 +61,12 @@ const ITEMS_PER_PAGE = 10;
 export async function generateMetadata({
     params,
 }: {
-    params: { locale: string; uid: string };
+    params: Promise<{ locale: string; uid: string }>;
 }): Promise<Metadata> {
-    const locale = params.locale || 'en-US';
+    const { locale, uid } = await params;
 
     const user = await prisma.user.findUnique({
-        where: { uid: parseInt(params.uid) },
+        where: { uid: parseInt(uid) },
         select: { username: true, nickname: true },
     });
 
@@ -97,12 +97,12 @@ export async function generateMetadata({
 }
 
 export default async function UserPostsPage({ params }: Props) {
-    const page = Number(params.page) || 1;
+    const { page: pageParam, locale, uid } = await params;
+    const page = Number(pageParam) || 1;
     const skip = (page - 1) * ITEMS_PER_PAGE;
-    const locale = params.locale || 'en-US';
 
     const user: User | null = await prisma.user.findUnique({
-        where: { uid: parseInt(params.uid) },
+        where: { uid: parseInt(uid) },
         select: {
             uid: true,
             username: true,
@@ -150,27 +150,25 @@ export default async function UserPostsPage({ params }: Props) {
         orderBy: { updatedAt: 'desc' },
         skip,
         take: ITEMS_PER_PAGE,
-    });
-
-    const timelineItems: TimelineItem[] = posts.map((post) => ({
+    });    const timelineItems: TimelineItem[] = posts.map((post) => ({
         id: `post-${post.id}`,
         type: 'post' as const,
         createdAt: post.createdAt,
-        originLang: post.originLang,
+        originLang: post.originLang || undefined,
         content: {
             ...post,
             id: post.id.toString(),
+            originLang: post.originLang || undefined,
         },
-        titleENUS: post.titleENUS,
-        titleZHCN: post.titleZHCN,
-        titleZHTW: post.titleZHTW,
-        titleESES: post.titleESES,
-        titleFRFR: post.titleFRFR,
-        titleRURU: post.titleRURU,
-        titleJAJP: post.titleJAJP,
-        titleKOKR: post.titleKOKR,
-        titleDEDE: post.titleDEDE,
-        titlePTBR: post.titlePTBR,
+        titleENUS: post.titleENUS || undefined,
+        titleZHCN: post.titleZHCN || undefined,
+        titleZHTW: post.titleZHTW || undefined,
+        titleESES: post.titleESES || undefined,
+        titleFRFR: post.titleFRFR || undefined,
+        titleRURU: post.titleRURU || undefined,        titleJAJP: post.titleJAJP || undefined,
+        titleKOKR: post.titleKOKR || undefined,
+        titleDEDE: post.titleDEDE || undefined,
+        titlePTBR: post.titlePTBR || undefined,
     }));
 
     const totalPages = Math.ceil(user._count.post / ITEMS_PER_PAGE);
@@ -357,7 +355,7 @@ export default async function UserPostsPage({ params }: Props) {
                             </div>
                         </div>
                         <Button variant="outline" size="sm" asChild>
-                            <Link href={`/${locale}/user/${params.uid}`}>
+                            <Link href={`/${locale}/user/${uid}`}>
                                 <ArrowLeft className="h-4 w-4 mr-1" />
                                 {texts.backToProfile}
                             </Link>
@@ -477,9 +475,8 @@ export default async function UserPostsPage({ params }: Props) {
                                 <Button variant="outline" size="sm" asChild>
                                     <Link
                                         href={
-                                            page == 2 
-                                                ? `/${locale}/user/${params.uid}/post/page/1` 
-                                                : `/${locale}/user/${params.uid}/post/page/${page - 1}`
+                                            page == 2                                                ? `/${locale}/user/${uid}/post/page/1`
+                                                : `/${locale}/user/${uid}/post/page/${page - 1}`
                                         }
                                         rel="prev"
                                     >
@@ -511,7 +508,7 @@ export default async function UserPostsPage({ params }: Props) {
                                             className="w-8 h-8 p-0"
                                         >
                                             <Link
-                                                href={`/${locale}/user/${params.uid}/post/page/${pageNum}`}
+                                                href={`/${locale}/user/${uid}/post/page/${pageNum}`}
                                                 aria-current={pageNum === page ? "page" : undefined}
                                             >
                                                 {pageNum}
@@ -524,7 +521,7 @@ export default async function UserPostsPage({ params }: Props) {
                             {page < totalPages && (
                                 <Button variant="outline" size="sm" asChild>
                                     <Link
-                                        href={`/${locale}/user/${params.uid}/post/page/${page + 1}`}
+                                        href={`/${locale}/user/${uid}/post/page/${page + 1}`}
                                         rel="next"
                                     >
                                         {texts.next}

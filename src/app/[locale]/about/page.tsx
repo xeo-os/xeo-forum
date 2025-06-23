@@ -24,15 +24,15 @@ import EmojiBackground from '@/components/emoji-background';
 import { getGlobalStats, formatCount } from '@/lib/stats';
 
 type Props = {
-    params: { locale: string };
+    params: Promise<{ locale: string }>;
 };
 
 export async function generateMetadata({
     params,
 }: {
-    params: { locale: string };
+    params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
-    const locale = params.locale || 'en-US';
+    const { locale } = await params;
 
     const title = lang(
         {
@@ -82,7 +82,7 @@ export async function generateMetadata({
 }
 
 export default async function AboutPage({ params }: Props) {
-    const locale = params.locale || 'en-US';
+    const { locale } = await params;
     
     // 获取动态统计数据
     const { userCount, translationCount } = await getGlobalStats();

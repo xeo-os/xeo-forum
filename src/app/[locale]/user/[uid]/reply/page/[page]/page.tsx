@@ -12,7 +12,7 @@ import lang from '@/lib/lang';
 import '@/app/globals.css';
 
 type Props = {
-    params: { locale: string; uid: string; page: string };
+    params: Promise<{ locale: string; uid: string; page: string }>;
 };
 
 type User = {
@@ -71,15 +71,14 @@ type TimelineItem = {
 
 const ITEMS_PER_PAGE = 10;
 
-export async function generateMetadata({
-    params,
+export async function generateMetadata({    params,
 }: {
-    params: { locale: string; uid: string };
+    params: Promise<{ locale: string; uid: string }>;
 }): Promise<Metadata> {
-    const locale = params.locale || 'en-US';
+    const { locale, uid } = await params;
 
     const user = await prisma.user.findUnique({
-        where: { uid: parseInt(params.uid) },
+        where: { uid: parseInt(uid) },
         select: { username: true, nickname: true },
     });
 
@@ -110,12 +109,12 @@ export async function generateMetadata({
 }
 
 export default async function UserRepliesPage({ params }: Props) {
-    const page = Number(params.page) || 1;
+    const { page: pageParam, locale, uid } = await params;
+    const page = Number(pageParam) || 1;
     const skip = (page - 1) * ITEMS_PER_PAGE;
-    const locale = params.locale || 'en-US';
 
     const user: User | null = await prisma.user.findUnique({
-        where: { uid: parseInt(params.uid) },
+        where: { uid: parseInt(uid) },
         select: {
             uid: true,
             username: true,
@@ -153,11 +152,10 @@ export default async function UserRepliesPage({ params }: Props) {
             contentESES: true,
             contentFRFR: true,
             contentRURU: true,
-            contentJAJP: true,
-            contentKOKR: true,
-            contentDEDE: true,
-            contentPTBR: true,
-            post: {
+            contentJAJP: true,                contentKOKR: true,
+                contentDEDE: true,
+                contentPTBR: true,
+                belongPost: {
                 select: {
                     id: true,
                     title: true,
@@ -179,33 +177,40 @@ export default async function UserRepliesPage({ params }: Props) {
         orderBy: { updatedAt: 'desc' },
         skip,
         take: ITEMS_PER_PAGE,
-    });
-
-    const timelineItems: TimelineItem[] = replies.map((reply) => ({
+    });    const timelineItems: TimelineItem[] = replies.map((reply) => ({
         id: `reply-${reply.id}`,
         type: 'reply' as const,
         createdAt: reply.createdAt,
-        originLang: reply.originLang,
+        originLang: reply.originLang || undefined,
         content: {
             ...reply,
-            post: reply.post
+            originLang: reply.originLang || undefined,
+            post: reply.belongPost
                 ? {
-                    id: reply.post.id.toString(),
-                    title: reply.post.title,
-                    originLang: reply.post.originLang,
-                    ...reply.post
+                    ...reply.belongPost,
+                    id: reply.belongPost.id.toString(),
+                    originLang: reply.belongPost.originLang || undefined,
+                    titleENUS: reply.belongPost.titleENUS || undefined,
+                    titleZHCN: reply.belongPost.titleZHCN || undefined,
+                    titleZHTW: reply.belongPost.titleZHTW || undefined,
+                    titleESES: reply.belongPost.titleESES || undefined,
+                    titleFRFR: reply.belongPost.titleFRFR || undefined,
+                    titleRURU: reply.belongPost.titleRURU || undefined,
+                    titleJAJP: reply.belongPost.titleJAJP || undefined,
+                    titleKOKR: reply.belongPost.titleKOKR || undefined,
+                    titleDEDE: reply.belongPost.titleDEDE || undefined,
+                    titlePTBR: reply.belongPost.titlePTBR || undefined,
                   }
                 : undefined,
-            contentENUS: reply.contentENUS,
-            contentZHCN: reply.contentZHCN,
-            contentZHTW: reply.contentZHTW,
-            contentESES: reply.contentESES,
-            contentFRFR: reply.contentFRFR,
-            contentRURU: reply.contentRURU,
-            contentJAJP: reply.contentJAJP,
-            contentKOKR: reply.contentKOKR,
-            contentDEDE: reply.contentDEDE,
-            contentPTBR: reply.contentPTBR,
+            contentENUS: reply.contentENUS || undefined,
+            contentZHCN: reply.contentZHCN || undefined,
+            contentZHTW: reply.contentZHTW || undefined,            contentESES: reply.contentESES || undefined,
+            contentFRFR: reply.contentFRFR || undefined,
+            contentRURU: reply.contentRURU || undefined,
+            contentJAJP: reply.contentJAJP || undefined,
+            contentKOKR: reply.contentKOKR || undefined,
+            contentDEDE: reply.contentDEDE || undefined,
+            contentPTBR: reply.contentPTBR || undefined,
         },
     }));
 
@@ -274,34 +279,76 @@ export default async function UserRepliesPage({ params }: Props) {
         ),
     };
 
-    const getLocalizedContent = (reply: any) => {
+    const getLocalizedContent = (reply: {
+        content?: string;
+        originLang?: string | null;
+        contentENUS?: string | null;
+        contentZHCN?: string | null;
+        contentZHTW?: string | null;
+        contentESES?: string | null;
+        contentFRFR?: string | null;
+        contentRURU?: string | null;
+        contentJAJP?: string | null;
+        contentKOKR?: string | null;
+        contentDEDE?: string | null;
+        contentPTBR?: string | null;
+    }) => {
         if (!reply?.content) return '';
 
         // 如果原始语言等于当前语言，返回原始内容
         if (reply.originLang === locale) {
             return reply.content;
-        }
+        }        // 根据locale获取对应的多语言内容
+        const contentMap: Record<string, string | null | undefined> = {
+            'zh-CN': reply.contentZHCN,
+            'en-US': reply.contentENUS,
+            'zh-TW': reply.contentZHTW,
+            'es-ES': reply.contentESES,
+            'fr-FR': reply.contentFRFR,
+            'ru-RU': reply.contentRURU,
+            'ja-JP': reply.contentJAJP,
+            'ko-KR': reply.contentKOKR,
+            'de-DE': reply.contentDEDE,
+            'pt-BR': reply.contentPTBR,
+        };
 
-        // 根据locale获取对应的多语言内容
-        const localeKey = locale.replace('-', '').toUpperCase();
-        const contentField = `content${localeKey}`;
-
-        return reply[contentField] || reply.content;
+        return contentMap[locale] || reply.content;
     };
 
-    const getLocalizedPostTitle = (post: any) => {
+    const getLocalizedPostTitle = (post: {
+        title?: string;
+        originLang?: string | null;
+        titleENUS?: string | null;
+        titleZHCN?: string | null;
+        titleZHTW?: string | null;
+        titleESES?: string | null;
+        titleFRFR?: string | null;
+        titleRURU?: string | null;
+        titleJAJP?: string | null;
+        titleKOKR?: string | null;
+        titleDEDE?: string | null;
+        titlePTBR?: string | null;
+    }) => {
         if (!post?.title) return '';
 
         // 如果原始语言等于当前语言，返回原始标题
         if (post.originLang === locale) {
             return post.title;
-        }
+        }        // 根据locale获取对应的多语言标题
+        const titleMap: Record<string, string | null | undefined> = {
+            'zh-CN': post.titleZHCN,
+            'en-US': post.titleENUS,
+            'zh-TW': post.titleZHTW,
+            'es-ES': post.titleESES,
+            'fr-FR': post.titleFRFR,
+            'ru-RU': post.titleRURU,
+            'ja-JP': post.titleJAJP,
+            'ko-KR': post.titleKOKR,
+            'de-DE': post.titleDEDE,
+            'pt-BR': post.titlePTBR,
+        };
 
-        // 根据locale获取对应的多语言标题
-        const localeKey = locale.replace('-', '').toUpperCase();
-        const titleField = `title${localeKey}`;
-
-        return post[titleField] || post.title;
+        return titleMap[locale] || post.title;
     };
 
     const getRelativeTime = (date: Date) => {
@@ -409,7 +456,7 @@ export default async function UserRepliesPage({ params }: Props) {
                             </div>
                         </div>
                         <Button variant="outline" size="sm" asChild>
-                            <Link href={`/${locale}/user/${params.uid}`}>
+                            <Link href={`/${locale}/user/${uid}`}>
                                 <ArrowLeft className="h-4 w-4 mr-1" />
                                 {texts.backToProfile}
                             </Link>
@@ -524,11 +571,10 @@ export default async function UserRepliesPage({ params }: Props) {
                         <div className="flex items-center justify-center gap-2 mt-6">
                             {page > 1 && (
                                 <Button variant="outline" size="sm" asChild>
-                                    <Link
-                                        href={
+                                    <Link                                        href={
                                             page == 2 
-                                                ? `/${locale}/user/${params.uid}/reply/page/1` 
-                                                : `/${locale}/user/${params.uid}/reply/page/${page - 1}`
+                                                ? `/${locale}/user/${uid}/reply/page/1` 
+                                                : `/${locale}/user/${uid}/reply/page/${page - 1}`
                                         }
                                         rel="prev"
                                     >
@@ -560,7 +606,7 @@ export default async function UserRepliesPage({ params }: Props) {
                                             className="w-8 h-8 p-0"
                                         >
                                             <Link
-                                                href={`/${locale}/user/${params.uid}/reply/page/${pageNum}`}
+                                                href={`/${locale}/user/${uid}/reply/page/${pageNum}`}
                                                 aria-current={pageNum === page ? "page" : undefined}
                                             >
                                                 {pageNum}
@@ -573,7 +619,7 @@ export default async function UserRepliesPage({ params }: Props) {
                             {page < totalPages && (
                                 <Button variant="outline" size="sm" asChild>
                                     <Link
-                                        href={`/${locale}/user/${params.uid}/reply/page/${page + 1}`}
+                                        href={`/${locale}/user/${uid}/reply/page/${page + 1}`}
                                         rel="next"
                                     >
                                         {texts.next}

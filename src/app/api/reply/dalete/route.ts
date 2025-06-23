@@ -77,10 +77,9 @@ export async function POST(request: Request) {
         // 查找帖子并验证所有权
         const post = await prisma.reply.findUnique({
             where: { id: id },
-            select: {
-                id: true,
+            select: {                id: true,
                 userUid: true,
-                post: {
+                belongPost: {
                     select: {
                         id: true,
                         topics: {
@@ -140,7 +139,7 @@ export async function POST(request: Request) {
 
         // 重新验证相关页面
         revalidatePath('/[locale]/page');
-        post.post?.topics.forEach((topic) => {
+        post.belongPost?.topics.forEach((topic: { name: string }) => {
             revalidatePath(`/[locale]/topic/${topic.name.replace('_', '-')}/page`);
         });
         revalidatePath(`/[locale]/user/${user.uid}`);

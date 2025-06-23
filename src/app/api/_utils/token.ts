@@ -39,8 +39,8 @@ const token: Token = {
             header: {
                 typ: 'JWT',
                 alg: 'RS512',
-                "x-ably-token": ablyToken || undefined,
-            }
+                ...(ablyToken && { "x-ably-token": ablyToken }),
+            } as SignOptions['header']
         };
 
         // 如果inner中没有exp属性，才设置expiresIn

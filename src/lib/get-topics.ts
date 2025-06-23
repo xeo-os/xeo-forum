@@ -57,7 +57,7 @@ async function fetchTopicsFromDatabase(): Promise<ClassificationData[]> {
 export const getCachedTopics = unstable_cache(fetchTopicsFromDatabase, ['topics-data'], {
     tags: ['topics'],
     // 在开发环境下不缓存，生产环境缓存一年
-    revalidate: process.env.NODE_ENV === 'development' ? false : 365 * 24 * 60 * 60,
+    revalidate: process.env.NODE_ENV === 'development' ? false : 31536000, // 365 days in seconds
 });
 
 export function transformTopicsData(

@@ -9,15 +9,15 @@ import Link from 'next/link';
 import { RiGithubFill } from '@remixicon/react';
 
 type Props = {
-    params: { locale: string };
+    params: Promise<{ locale: string }>;
 };
 
 export async function generateMetadata({
     params,
 }: {
-    params: { locale: string };
+    params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
-    const locale = params.locale || 'en-US';
+    const { locale } = await params;
 
     const title = lang(
         {
@@ -94,7 +94,7 @@ async function getPrivacyPolicy() {
 }
 
 export default async function PrivacyPolicyPage({ params }: Props) {
-    const locale = params.locale || 'en-US';
+    const { locale } = await params;
     const { html, cacheTime } = await getPrivacyPolicy();
 
     const languageNotice = lang(

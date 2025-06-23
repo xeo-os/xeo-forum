@@ -4,7 +4,7 @@ import { UserRepliesManagement } from '@/components/user-replies-management';
 import '@/app/globals.css';
 
 type Props = {
-    params: { locale: string };
+    params: Promise<{ locale: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

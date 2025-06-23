@@ -14,7 +14,7 @@ import EmojiBackground from '@/components/emoji-background';
 import '@/app/globals.css';
 
 type Props = {
-    params: { locale: string; uid: string, page: string };
+    params: Promise<{ locale: string; uid: string, page: string }>;
 };
 
 type User = {
@@ -120,13 +120,13 @@ const ITEMS_PER_PAGE = 10;
 export async function generateMetadata({
     params,
 }: {
-    params: { locale: string; uid: string };
+    params: Promise<{ locale: string; uid: string }>;
 }): Promise<Metadata> {
-    const locale = params.locale || 'en-US';
+    const { locale, uid } = await params;
 
     // 获取用户信息用于生成标题
     const user = await prisma.user.findUnique({
-        where: { uid: parseInt(params.uid) },
+        where: { uid: parseInt(uid) },
         select: { username: true, nickname: true },
     });
 
@@ -176,14 +176,14 @@ export async function generateMetadata({
 }
 
 export default async function UserPage({ params,}: Props) {
-    const page = Number(params.page) || 1;
+    const { page: pageParam, locale, uid } = await params;
+    const page = Number(pageParam) || 1;
     const skip = (page - 1) * ITEMS_PER_PAGE;
-    const locale = params.locale || 'en-US';
 
     // 获取用户信息
     const user: User | null = await prisma.user.findUnique({
         where: {
-            uid: parseInt(params.uid),
+            uid: parseInt(uid),
         },
         select: {
             uid: true,
@@ -268,7 +268,7 @@ export default async function UserPage({ params,}: Props) {
                 contentKOKR: true,
                 contentDEDE: true,
                 contentPTBR: true,
-                post: { 
+                belongPost: { 
                     select: { 
                         id: true, 
                         title: true,
@@ -355,49 +355,60 @@ export default async function UserPage({ params,}: Props) {
             id: `post-${post.id}`,
             type: 'post' as const,
             createdAt: post.createdAt,
-            originLang: post.originLang,
+            originLang: post.originLang || undefined,
             content: {
                 ...post,
                 id: post.id.toString(),
+                originLang: post.originLang || undefined,
             },
             // 添加多语言标题字段
-            titleENUS: post.titleENUS,
-            titleZHCN: post.titleZHCN,
-            titleZHTW: post.titleZHTW,
-            titleESES: post.titleESES,
-            titleFRFR: post.titleFRFR,
-            titleRURU: post.titleRURU,
-            titleJAJP: post.titleJAJP,
-            titleKOKR: post.titleKOKR,
-            titleDEDE: post.titleDEDE,
-            titlePTBR: post.titlePTBR,
+            titleENUS: post.titleENUS || undefined,
+            titleZHCN: post.titleZHCN || undefined,
+            titleZHTW: post.titleZHTW || undefined,
+            titleESES: post.titleESES || undefined,
+            titleFRFR: post.titleFRFR || undefined,
+            titleRURU: post.titleRURU || undefined,
+            titleJAJP: post.titleJAJP || undefined,
+            titleKOKR: post.titleKOKR || undefined,
+            titleDEDE: post.titleDEDE || undefined,
+            titlePTBR: post.titlePTBR || undefined,
         })),
         ...replies.map((reply) => ({
             id: `reply-${reply.id}`,
             type: 'reply' as const,
             createdAt: reply.createdAt,
-            originLang: reply.originLang,
+            originLang: reply.originLang || undefined,
             content: {
                 ...reply,
-                post: reply.post
+                originLang: reply.originLang || undefined,
+                post: reply.belongPost
                     ? { 
-                        id: reply.post.id.toString(), 
-                        title: reply.post.title,
-                        originLang: reply.post.originLang,
-                        ...reply.post // 包含所有多语言字段
+                        ...reply.belongPost, // 包含所有字段
+                        id: reply.belongPost.id.toString(), // 确保 id 是字符串类型
+                        originLang: reply.belongPost.originLang || undefined,
+                        titleENUS: reply.belongPost.titleENUS || undefined,
+                        titleZHCN: reply.belongPost.titleZHCN || undefined,
+                        titleZHTW: reply.belongPost.titleZHTW || undefined,
+                        titleESES: reply.belongPost.titleESES || undefined,
+                        titleFRFR: reply.belongPost.titleFRFR || undefined,
+                        titleRURU: reply.belongPost.titleRURU || undefined,
+                        titleJAJP: reply.belongPost.titleJAJP || undefined,
+                        titleKOKR: reply.belongPost.titleKOKR || undefined,
+                        titleDEDE: reply.belongPost.titleDEDE || undefined,
+                        titlePTBR: reply.belongPost.titlePTBR || undefined,
                       }
                     : undefined,
                 // 添加多语言内容字段
-                contentENUS: reply.contentENUS,
-                contentZHCN: reply.contentZHCN,
-                contentZHTW: reply.contentZHTW,
-                contentESES: reply.contentESES,
-                contentFRFR: reply.contentFRFR,
-                contentRURU: reply.contentRURU,
-                contentJAJP: reply.contentJAJP,
-                contentKOKR: reply.contentKOKR,
-                contentDEDE: reply.contentDEDE,
-                contentPTBR: reply.contentPTBR,
+                contentENUS: reply.contentENUS || undefined,
+                contentZHCN: reply.contentZHCN || undefined,
+                contentZHTW: reply.contentZHTW || undefined,
+                contentESES: reply.contentESES || undefined,
+                contentFRFR: reply.contentFRFR || undefined,
+                contentRURU: reply.contentRURU || undefined,
+                contentJAJP: reply.contentJAJP || undefined,
+                contentKOKR: reply.contentKOKR || undefined,
+                contentDEDE: reply.contentDEDE || undefined,
+                contentPTBR: reply.contentPTBR || undefined,
             },
         })),
         ...likes.map((like) => ({
@@ -407,17 +418,34 @@ export default async function UserPage({ params,}: Props) {
             content: {
                 post: like.post
                     ? { 
-                        id: like.post.id.toString(), 
-                        title: like.post.title,
-                        originLang: like.post.originLang,
-                        ...like.post // 包含所有多语言字段
+                        ...like.post, // 包含所有字段
+                        id: like.post.id.toString(), // 确保 id 是字符串类型
+                        originLang: like.post.originLang || undefined,
+                        titleENUS: like.post.titleENUS || undefined,
+                        titleZHCN: like.post.titleZHCN || undefined,
+                        titleZHTW: like.post.titleZHTW || undefined,
+                        titleESES: like.post.titleESES || undefined,
+                        titleFRFR: like.post.titleFRFR || undefined,
+                        titleRURU: like.post.titleRURU || undefined,
+                        titleJAJP: like.post.titleJAJP || undefined,
+                        titleKOKR: like.post.titleKOKR || undefined,
+                        titleDEDE: like.post.titleDEDE || undefined,
+                        titlePTBR: like.post.titlePTBR || undefined,
                       }
                     : undefined,
                 reply: like.reply ? { 
-                    id: like.reply.id, 
-                    content: like.reply.content,
-                    originLang: like.reply.originLang,
-                    ...like.reply // 包含所有多语言字段
+                    ...like.reply, // 包含所有字段
+                    originLang: like.reply.originLang || undefined,
+                    contentENUS: like.reply.contentENUS || undefined,
+                    contentZHCN: like.reply.contentZHCN || undefined,
+                    contentZHTW: like.reply.contentZHTW || undefined,
+                    contentESES: like.reply.contentESES || undefined,
+                    contentFRFR: like.reply.contentFRFR || undefined,
+                    contentRURU: like.reply.contentRURU || undefined,
+                    contentJAJP: like.reply.contentJAJP || undefined,
+                    contentKOKR: like.reply.contentKOKR || undefined,
+                    contentDEDE: like.reply.contentDEDE || undefined,
+                    contentPTBR: like.reply.contentPTBR || undefined,
                   } : undefined,
             },
         })),
@@ -745,13 +773,13 @@ export default async function UserPage({ params,}: Props) {
                         <CardTitle>{texts.timeline}</CardTitle>
                         <div className="flex gap-2">
                             <Button variant="outline" size="sm" asChild>
-                                <Link href={`/${locale}/user/${params.uid}/post/page/1`}>
+                                <Link href={`/${locale}/user/${uid}/post/page/1`}>
                                     <FileText className="h-4 w-4 mr-1" />
                                     {texts.postsOnly} ({user._count.post})
                                 </Link>
                             </Button>
                             <Button variant="outline" size="sm" asChild>
-                                <Link href={`/${locale}/user/${params.uid}/reply/page/1`}>
+                                <Link href={`/${locale}/user/${uid}/reply/page/1`}>
                                     <MessageSquare className="h-4 w-4 mr-1" />
                                     {texts.repliesOnly} ({user._count.reply})
                                 </Link>
@@ -765,7 +793,7 @@ export default async function UserPage({ params,}: Props) {
                     ) : (
                         <div className='space-y-4'>
                             {timelineItems.map((item) => (
-                                <TimelineCard key={item.id} item={item} locale={params.locale} />
+                                <TimelineCard key={item.id} item={item} locale={locale} />
                             ))}
                         </div>
                     )}
@@ -777,7 +805,7 @@ export default async function UserPage({ params,}: Props) {
                                 <Button variant="outline" size="sm" asChild>
                                     <Link
                                         href={
-                                            page == 2 ? `/${locale}/user/${params.uid}` : `/${locale}/user/${params.uid}/page/${page - 1}`
+                                            page == 2 ? `/${locale}/user/${uid}` : `/${locale}/user/${uid}/page/${page - 1}`
                                         }
                                         title={`${texts.previous} - ${lang(
                                             {
@@ -826,8 +854,8 @@ export default async function UserPage({ params,}: Props) {
                                             <Link
                                                 href={
                                                     pageNum == 1
-                                                        ? `/${locale}/user/${params.uid}`
-                                                        : `/${locale}/user/${params.uid}/page/${pageNum}`
+                                                        ? `/${locale}/user/${uid}`
+                                                        : `/${locale}/user/${uid}/page/${pageNum}`
                                                 }
                                                 title={`${lang(
                                                     {
@@ -857,7 +885,7 @@ export default async function UserPage({ params,}: Props) {
                             {page < totalPages && (
                                 <Button variant="outline" size="sm" asChild>
                                     <Link
-                                        href={`/${locale}/user/${params.uid}/page/${page + 1}`}
+                                        href={`/${locale}/user/${uid}/page/${page + 1}`}
                                         title={`${texts.next} - ${lang(
                                             {
                                                 "zh-CN": "第",

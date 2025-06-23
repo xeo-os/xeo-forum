@@ -71,8 +71,6 @@ export async function GET(request) {
             ? decodeURIComponent(searchParams.get('background'))
             : backgrounds[Math.floor(Math.random() * backgrounds.length)];
 
-        console.log(`Generating image with emoji: ${emoji} and background: ${background}`);
-
         const headers =
             searchParams.get('emoji') || searchParams.get('background')
                 ? {

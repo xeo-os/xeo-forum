@@ -506,11 +506,6 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
         }
     };
 
-    // 插入表情符号
-    const insertEmoji = (emoji: string) => {
-        setContent((prev) => prev + emoji);
-    };
-
     // 处理拖拽调整高度
     const handleDrag = useCallback((_: unknown, info: { point: { y: number } }) => {
         if (sheetRef.current) {

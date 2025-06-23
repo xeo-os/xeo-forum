@@ -39,16 +39,13 @@ export function PostDetailClient({ post, replies, locale }: PostDetailClientProp
     const [replyLikes, setReplyLikes] = useState<Record<string, boolean>>({});
     const [likeStatusLoaded, setLikeStatusLoaded] = useState(false);
 
-    const MAX_REPLY_LENGTH = 200;
-
-    const editorVariants = {
+    const MAX_REPLY_LENGTH = 200;    const editorVariants = {
         hidden: {
             height: 0,
             opacity: 0,
             marginTop: 0,
             transition: {
                 duration: 0.3,
-                ease: 'easeInOut',
                 opacity: { duration: 0.15 },
             },
         },
@@ -58,7 +55,6 @@ export function PostDetailClient({ post, replies, locale }: PostDetailClientProp
             marginTop: 24, // 对应 mt-6 (1.5rem = 24px)
             transition: {
                 duration: 0.3,
-                ease: 'easeInOut',
                 opacity: { duration: 0.15, delay: 0.15 },
             },
         },
@@ -221,8 +217,7 @@ export function PostDetailClient({ post, replies, locale }: PostDetailClientProp
                 await navigator.share({
                     title: post.title,
                     url: window.location.href,
-                });
-            } catch (error) {
+                });            } catch {
                 console.log('Share cancelled');
             }
         } else {

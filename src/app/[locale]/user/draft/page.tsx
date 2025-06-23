@@ -4,7 +4,7 @@ import { UserDraftsManagement } from '@/components/user-drafts-management';
 import '@/app/globals.css';
 
 type Props = {
-    params: { locale: string };
+    params: Promise<{ locale: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

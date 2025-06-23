@@ -26,15 +26,15 @@ import {
 } from '@/lib/stats';
 
 type Props = {
-    params: { locale: string };
+    params: Promise<{ locale: string }>;
 };
 
 export async function generateMetadata({
     params,
 }: {
-    params: { locale: string };
+    params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
-    const locale = params.locale || 'en-US';
+    const { locale } = await params;
 
     const title = lang(
         {
@@ -193,12 +193,10 @@ function UserCard({ user, index, locale, type }: { user: LeaderboardUser; index:
     );
 }
 
-type ExtendedLeaderboardPost = LeaderboardPost & {
-    score: number;
-};
-
-function CompactPostItem({ post, index, locale }: { post: ExtendedLeaderboardPost; index: number; locale: string }) {
+function CompactPostItem({ post, index, locale }: { post: LeaderboardPost; index: number; locale: string }) {
     const userAvatar = post.user.avatar[0] || { emoji: '', background: '' };
+      // 计算 score（如果 post 有 score 属性就使用，否则计算）
+    const score = 'score' in post ? (post as LeaderboardPost & { score: number }).score : (post._count.likes + post._count.Reply);
 
     return (
         <div className="flex items-center gap-4 p-3 hover:bg-muted/50 rounded-lg transition-colors">
@@ -263,7 +261,7 @@ function CompactPostItem({ post, index, locale }: { post: ExtendedLeaderboardPos
                     <span>{post._count.Reply}</span>
                 </div>
                 <div className="text-primary font-bold">
-                    {formatCount(post.score)}
+                    {formatCount(score)}
                 </div>
             </div>
         </div>
@@ -271,7 +269,7 @@ function CompactPostItem({ post, index, locale }: { post: ExtendedLeaderboardPos
 }
 
 export default async function LeaderboardPage({ params }: Props) {
-    const locale = params.locale || 'en-US';
+    const { locale } = await params;
 
     // 并行获取所有排行榜数据
     const [

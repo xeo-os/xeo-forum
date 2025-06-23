@@ -15,7 +15,7 @@ interface ClientLayoutProps {
         title: string;
         icon: string;
         name: string;
-        items?: { title: string; url: string; icon: string }[];
+        items?: { title: string; url: string; icon: string; name: string }[];
     }[];
 }
 

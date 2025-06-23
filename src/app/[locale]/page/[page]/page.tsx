@@ -33,8 +33,8 @@ import {
 import '@/app/globals.css';
 
 type Props = {
-    params: { locale: string; page?: number };
-    searchParams: { page?: string };
+    params: Promise<{ locale: string; page?: number }>;
+    searchParams: Promise<{ page?: string }>;
 };
 
 type Post = {
@@ -89,7 +89,7 @@ export async function generateStaticParams() {
     }));
     return pages;
 }
-export const revalidate = 365 * 24 * 60 * 60;
+export const revalidate = 31536000; // 365 days in seconds
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     // read route params
@@ -311,8 +311,6 @@ export default async function HomePage({ params }: Props) {
         totalReplies: Number(globalStatsResult[0].totalReplies),
         totalLikes: Number(globalStatsResult[0].totalLikes),
     };
-
-    console.log(posts);
 
     const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE);
 

@@ -25,7 +25,7 @@ type Reply = {
     _count: {
         likes: number;
     };
-    post: {
+    belongPost: {
         id: number;
         title: string;
         titleENUS: string | null;

@@ -18,7 +18,7 @@ import {
 import { toast } from 'sonner';
 import lang from '@/lib/lang';
 import { MarkdownEditor } from '@/components/markdown-editor';
-import { markdownToHtml } from '@/lib/markdown-utils';
+import { markdownToHtmlSync } from '@/lib/markdown-utils';
 import token from '@/utils/userToken';
 import { motion, AnimatePresence } from 'motion/react';
 import { useBroadcast } from '@/store/useBroadcast';
@@ -982,7 +982,7 @@ function SingleReply({
                        prose-strong:text-sm prose-em:text-sm prose-li:text-sm
                        ${isMobile ? 'text-xs' : 'text-sm'}`}
                         dangerouslySetInnerHTML={{
-                            __html: markdownToHtml(getDisplayContent()),
+                            __html: markdownToHtmlSync(getDisplayContent()),
                         }}
                     />
 

@@ -10,13 +10,22 @@ type Props = {
     children: React.ReactNode;
 };
 
-export async function generateMetadata({
-    searchParams,
-}: {
-    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}): Promise<Metadata> {
-    const resolvedSearchParams = await searchParams;
-    const locale = (resolvedSearchParams?.lang as string) || 'en-US';
+export async function generateMetadata(): Promise<Metadata> {
+    // 从 headers 获取语言信息，如果没有则使用默认值
+    const headersList = await headers();
+    const acceptLanguage = headersList.get('accept-language') || '';
+    
+    // 简单的语言检测，默认为 en-US
+    let locale = 'en-US';
+    if (acceptLanguage.includes('zh-CN')) locale = 'zh-CN';
+    else if (acceptLanguage.includes('zh-TW')) locale = 'zh-TW';
+    else if (acceptLanguage.includes('es')) locale = 'es-ES';
+    else if (acceptLanguage.includes('fr')) locale = 'fr-FR';
+    else if (acceptLanguage.includes('ru')) locale = 'ru-RU';
+    else if (acceptLanguage.includes('ja')) locale = 'ja-JP';
+    else if (acceptLanguage.includes('de')) locale = 'de-DE';
+    else if (acceptLanguage.includes('pt')) locale = 'pt-BR';
+    else if (acceptLanguage.includes('ko')) locale = 'ko-KR';
 
     const title = lang(
         {

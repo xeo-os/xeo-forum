@@ -30,8 +30,8 @@ import '@/app/globals.css';
 import type { Topic } from '@/generated/prisma';
 
 type Props = {
-    params: { locale: string; page?: number; topic: string };
-    searchParams: { page?: string };
+    params: Promise<{ locale: string; page?: number; topic: string }>;
+    searchParams: Promise<{ page?: string }>;
 };
 
 type Post = {
@@ -275,10 +275,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export async function generateStaticParams() {
     const pages = Array.from({ length: 1 }, (_, i) => ({
         page: (i + 1).toString(),
-    }));
-    return pages;
+    }));    return pages;
 }
-export const revalidate = 365 * 24 * 60 * 60;
+export const revalidate = 31536000; // 365 days in seconds
 
 function getLocalizedTitle(post: Post, locale: string): string {
     const titleMap: Record<string, string | null> = {

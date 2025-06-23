@@ -9,15 +9,15 @@ import React from 'react';
 import ContactForm from '@/components/contact-form';
 
 type Props = {
-    params: { locale: string };
+    params: Promise<{ locale: string }>;
 };
 
 export async function generateMetadata({
     params,
 }: {
-    params: { locale: string };
+    params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
-    const locale = params.locale || 'en-US';
+    const { locale } = await params;
 
     const title = lang(
         {
@@ -65,8 +65,8 @@ export async function generateMetadata({
     };
 }
 
-export default function ContactPage({ params }: Props) {
-    const locale = params.locale || 'en-US';
+export default async function ContactPage({ params }: Props) {
+    const { locale } = await params;
 
     return (
         <div className='container mx-auto px-4 py-8 max-w-4xl'>
