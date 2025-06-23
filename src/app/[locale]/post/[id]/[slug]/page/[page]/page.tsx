@@ -7,7 +7,7 @@ import { PostDetailClient } from '@/components/post-detail-client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Heart, MessageCircle, Pin, Calendar, Eye } from 'lucide-react';
+import { Pin, Calendar } from 'lucide-react';
 import Link from 'next/link';
 import { markdownToHtml } from '@/lib/markdown-utils';
 import { cache } from 'react';
@@ -147,9 +147,7 @@ const getPostForMetadata = cache(async (postId: number): Promise<PostForMetadata
 });
 
 // 缓存获取完整帖子数据的函数
-const getPostWithReplies = cache(async (postId: number, page: number) => {
-    const skip = (page - 1) * REPLIES_PER_PAGE;
-    
+const getPostWithReplies = cache(async (postId: number) => {
     return await Promise.all([
         prisma.post.findUnique({
             where: {
@@ -196,8 +194,7 @@ const getPostWithReplies = cache(async (postId: number, page: number) => {
                     },
                 },
             },
-        }),
-        prisma.reply.findMany({
+        }),        prisma.reply.findMany({
             where: {
                 belongPostid: postId,
                 NOT: {
@@ -226,17 +223,10 @@ const getPostWithReplies = cache(async (postId: number, page: number) => {
                         likes: true,
                         replies: true,
                     },
-                },            },
-            skip: skip,
-            take: REPLIES_PER_PAGE,
+                },
+            },            // 移除分页限制，获取所有回复以正确构建层级结构
             orderBy: {
                 createdAt: 'asc',
-            },
-        }),
-        prisma.reply.count({
-            where: {
-                belongPostid: postId,
-                commentUid: null,
             },
         }),
     ]);
@@ -341,18 +331,14 @@ export default async function PostDetailPage({ params }: Props) {
 
     if (isNaN(postId)) {
         notFound();
-    }
-
-    // 获取帖子详情和回复
-    const [post, allReplies, totalReplies] = await getPostWithReplies(postId, page);
+    }    // 获取帖子详情和回复
+    const [post, allReplies] = await getPostWithReplies(postId);
 
     if (!post) {
         notFound();
-    }
-
-    // 获取用户点赞状态 - 这里需要从 cookie 或 header 中获取用户信息
+    }    // 获取用户点赞状态 - 这里需要从 cookie 或 header 中获取用户信息
     // 简化处理，先设置为空，在客户端通过 API 获取
-    const likeStatus = { postLiked: false, replyLikes: {} };    const totalPages = Math.ceil(totalReplies / REPLIES_PER_PAGE);
+    const likeStatus = { postLiked: false, replyLikes: {} };
     const title = getLocalizedTitle(post, locale);
     const contentMarkdown = getLocalizedContent(post, locale);
     const content = await markdownToHtml(contentMarkdown);
@@ -361,19 +347,23 @@ export default async function PostDetailPage({ params }: Props) {
     const formatTime = (date: Date) => formatRelativeTime(date, locale);    // 重新组织回复的层级关系
     const organizeReplies = (replies: ReplyData[]): ProcessedReply[] => {
         const replyMap = new Map<string, ProcessedReply>();
-        const rootReplies: ProcessedReply[] = [];        // 首先处理所有回复，添加到 map 中
-        replies.forEach(reply => {
+        const rootReplies: ProcessedReply[] = [];
+
+        // 首先处理所有回复，添加到 map 中
+        replies.forEach((reply) => {
             const processedReply: ProcessedReply = {
                 ...reply,
                 content: getLocalizedReplyContent(reply, locale),
                 formattedTime: formatTime(reply.createdAt),
                 replies: [],
+                level: 0, // 初始设为0，后面会更新
+                isCollapsed: false, // 初始设为false，后面会根据层级更新
             };
             replyMap.set(reply.id, processedReply);
         });
 
         // 然后建立父子关系
-        replies.forEach(reply => {
+        replies.forEach((reply) => {
             const processedReply = replyMap.get(reply.id);
             if (processedReply && reply.commentUid && replyMap.has(reply.commentUid)) {
                 // 这是一个子回复
@@ -385,23 +375,46 @@ export default async function PostDetailPage({ params }: Props) {
                 // 这是一个顶级回复
                 rootReplies.push(processedReply);
             }
-        });
+        });        // 递归设置层级和折叠状态
+        const setLevelsAndCollapse = (replies: ProcessedReply[], currentLevel: number) => {
+            replies.forEach((reply) => {
+                reply.level = currentLevel;
+                // 8层以后的回复默认折叠
+                reply.isCollapsed = currentLevel >= 8;
+                
+                // 调试日志
+                if (currentLevel >= 8) {
+                    // console.log(`Auto-collapsing reply at level ${currentLevel}:`, reply.id.slice(-6));
+                }
+                
+                if (reply.replies.length > 0) {
+                    setLevelsAndCollapse(reply.replies, currentLevel + 1);
+                }
+            });
+        };
 
+        setLevelsAndCollapse(rootReplies, 0);
         return rootReplies;
     };
 
-    const processedReplies = organizeReplies(allReplies);
-
-    // 递归处理所有子回复的时间格式化
+    const allProcessedReplies = organizeReplies(allReplies);
+    
+    // 实现分页：对顶级回复进行分页
+    const startIndex = (page - 1) * REPLIES_PER_PAGE;
+    const endIndex = startIndex + REPLIES_PER_PAGE;
+    const paginatedReplies = allProcessedReplies.slice(startIndex, endIndex);
+    
+    // 重新计算总页数（基于顶级回复数量）
+    const actualTotalPages = Math.ceil(allProcessedReplies.length / REPLIES_PER_PAGE);    // 递归处理所有子回复的时间格式化
     const processRepliesRecursively = (replies: ProcessedReply[]): ProcessedReply[] => {
-        return replies.map(reply => ({
+        return replies.map((reply) => ({
             ...reply,
             formattedTime: formatTime(reply.createdAt),
-            replies: reply.replies ? processRepliesRecursively(reply.replies) : []
+            replies: reply.replies ? processRepliesRecursively(reply.replies) : [],
         }));
     };
 
-    const finalReplies = processRepliesRecursively(processedReplies);
+    const finalReplies = processRepliesRecursively(paginatedReplies);
 
     return (
         <div className='container mx-auto px-4 py-6 max-w-4xl'>
@@ -465,7 +478,7 @@ export default async function PostDetailPage({ params }: Props) {
                                             {post.topics.map((topic) => (
                                                 <Link
                                                     key={topic.name}
-                                                    href={`/${locale}/topic/${topic.name.replaceAll("_","-")}`}
+                                                    href={`/${locale}/topic/${topic.name.replaceAll('_', '-')}`}
                                                     className='hover:opacity-80 transition-opacity'>
                                                     <Badge variant='secondary' className='text-xs'>
                                                         <span className='mr-1'>{topic.emoji}</span>
@@ -499,7 +512,8 @@ export default async function PostDetailPage({ params }: Props) {
                         dangerouslySetInnerHTML={{ __html: content }}
                     />
                 </CardContent>
-            </Card>            {/* 交互按钮和回复区域 */}
+            </Card>{' '}
+            {/* 交互按钮和回复区域 */}
             <PostDetailClient
                 post={{
                     id: post.id,
@@ -510,7 +524,7 @@ export default async function PostDetailPage({ params }: Props) {
                 replies={finalReplies}
                 locale={locale}
                 currentPage={page}
-                totalPages={totalPages}
+                totalPages={actualTotalPages}
                 initialLikeStatus={likeStatus}
             />
         </div>
