@@ -10,6 +10,7 @@ import { Heart, MessageCircle, Loader2, FileText, ChevronLeft, ChevronRight } fr
 import { toast } from 'sonner';
 import lang from '@/lib/lang';
 import { ReplyList } from '@/components/reply-list';
+import { NewRepliesBanner } from '@/components/new-replies-banner';
 import { EmojiPicker } from '@/components/emoji-picker';
 import token from '@/utils/userToken';
 import { useBroadcast } from '@/store/useBroadcast';
@@ -1027,7 +1028,7 @@ export function PostDetailClient({
                                                     ) : (
                                                         lang(
                                                             {
-                                                                'zh-CN': '  ',
+                                                                'zh-CN': '发布回复',
                                                                 'zh-TW': '發布回覆',
                                                                 'en-US': 'Post Reply',
                                                                 'es-ES': 'Publicar Respuesta',
@@ -1049,9 +1050,17 @@ export function PostDetailClient({
                             </CardContent>
                         </Card>
                     </motion.div>
-                )}
-            </AnimatePresence>{' '}
-            {/* 回复列表 */}{' '}
+                )}            </AnimatePresence>
+            
+            {/* 新回复横幅 */}
+            <NewRepliesBanner
+                locale={locale}
+                postId={post.id.toString()}
+                totalPages={totalPages}
+                postSlug={slug}
+            />
+            
+            {/* 回复列表 */}
             <ReplyList
                 replies={localReplies}
                 locale={locale}

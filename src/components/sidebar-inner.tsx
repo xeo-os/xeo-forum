@@ -16,8 +16,10 @@ import {
 } from '@/components/ui/sidebar';
 
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import { useEffect, useState } from 'react';
 import { useBroadcast } from '@/store/useBroadcast';
+import { AnimatedBadgeNumber } from '@/components/animated-badge-number';
 import Link from 'next/link';
 
 export function SidebarInner({
@@ -61,6 +63,11 @@ export function SidebarInner({
     // 记录是否已经初始化过localStorage
     const [hasInitialized, setHasInitialized] = useState(false);
 
+    // 新帖子计数状态
+    const [newPostsCount, setNewPostsCount] = useState(0);
+    // 主题级别的新帖子计数状态
+    const [topicPostsCount, setTopicPostsCount] = useState<Record<string, number>>({});
+
     const { registerCallback, unregisterCallback } = useBroadcast();
 
     const topic: {
@@ -85,7 +92,25 @@ export function SidebarInner({
 
     useEffect(() => {
         const handleMessage = (message: unknown) => {
-            const typedMessage = message as { action: string };
+            const typedMessage = message as {
+                action: string;
+                data?: {
+                    uuid?: string;
+                    status?: string;
+                    type?: string;
+                    topic?: string;
+                    message?: {
+                        content?: {
+                            uuid: string;
+                            status: string;
+                            type: string;
+                            topic: string;
+                        };
+                    };
+                };
+                type?: string;
+            };
+
             if (typedMessage.action == 'loadingComplete') {
                 // 页面初始化完成后，如果localStorage中没有数据，则展开所有话题
                 setTimeout(() => {
@@ -100,6 +125,29 @@ export function SidebarInner({
                     }
                 }, 1000);
             }
+
+            // 监听新帖子消息 - 只使用broadcast格式
+            const isNewPost =
+                typedMessage.action === 'broadcast' &&
+                typedMessage.type === 'task' &&
+                typedMessage.data?.type === 'post' &&
+                typedMessage.data?.status === 'DONE';
+
+            if (isNewPost) {
+                // 增加总计数
+                setNewPostsCount((prev) => prev + 1);
+
+                // 获取主题名称
+                const topicName = typedMessage.data?.topic;
+
+                if (topicName) {
+                    // 增加特定主题的计数
+                    setTopicPostsCount((prev) => ({
+                        ...prev,
+                        [topicName]: (prev[topicName] || 0) + 1,
+                    }));
+                }
+            }
         };
         registerCallback(handleMessage);
         return () => {
@@ -112,6 +160,35 @@ export function SidebarInner({
         if (typeof window !== 'undefined') {
             localStorage.setItem('sidebar-open-topics', JSON.stringify(Array.from(newOpenTopics)));
         }
+    };
+
+    // 处理主页点击
+    const handleHomeClick = () => {
+        // 清空主页计数
+        setNewPostsCount(0);
+        // 清空所有主题的计数
+        setTopicPostsCount({});
+    };
+
+    // 处理主题点击，清除该主题的计数
+    const handleTopicClick = (topicName: string) => {
+        // 清除特定主题的计数
+        setTopicPostsCount((prev) => ({
+            ...prev,
+            [topicName]: 0,
+        }));
+    };
+
+    // 计算主题组的总计数（汇总下级）
+    const getTopicGroupCount = (topicGroup: (typeof topic)[0]) => {
+        if (!topicGroup.items) return 0;
+
+        let totalCount = 0;
+        topicGroup.items.forEach((item) => {
+            const count = topicPostsCount[item.name] || 0;
+            totalCount += count;
+        });
+        return totalCount;
     };
 
     const toggleTopic = (title: string) => {
@@ -269,19 +346,47 @@ export function SidebarInner({
         <SidebarGroup>
             <SidebarGroupContent>
                 <SidebarMenu>
-                    {mainItems.map((item) => (
+                    {mainItems.map((item, index) => (
                         <SidebarMenuItem key={item.title}>
                             <motion.div
                                 whileHover={{ scale: 1.02, x: 4 }}
-                                transition={{ duration: 0.2, ease: 'easeOut' }}
-                            >
+                                transition={{ duration: 0.2, ease: 'easeOut' }}>
                                 <SidebarMenuButton
                                     asChild
-                                    className='transition-all duration-200 hover:bg-primary/10 hover:text-primary'
-                                >
-                                    <Link href={item.url}>
-                                        <item.icon />
-                                        <span>{item.title}</span>
+                                    className='transition-all duration-200 hover:bg-primary/10 hover:text-primary'>
+                                    <Link
+                                        href={item.url}
+                                        onClick={index === 0 ? handleHomeClick : undefined}
+                                        className='flex items-center justify-between w-full'>
+                                        <div className='flex items-center gap-2'>
+                                            <item.icon />
+                                            <span>{item.title}</span>
+                                        </div>
+                                        <AnimatePresence>
+                                            {index === 0 && newPostsCount > 0 && (
+                                                <motion.div
+                                                    initial={{ scale: 0, opacity: 0 }}
+                                                    animate={{ scale: 1, opacity: 1 }}
+                                                    exit={{ scale: 0, opacity: 0 }}
+                                                    transition={{
+                                                        duration: 0.2,
+                                                        ease: 'easeOut',
+                                                        scale: {
+                                                            type: 'spring',
+                                                            stiffness: 500,
+                                                            damping: 30,
+                                                        },
+                                                    }}>
+                                                    <Badge
+                                                        variant='secondary'
+                                                        className='bg-transparent text-primary text-xs px-1.5 py-0.5 h-5 min-w-5 flex items-center justify-center'>
+                                                        <AnimatedBadgeNumber
+                                                            value={newPostsCount}
+                                                        />
+                                                    </Badge>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
                                     </Link>
                                 </SidebarMenuButton>
                             </motion.div>
@@ -297,28 +402,70 @@ export function SidebarInner({
                             key={topic.title}
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.3, ease: 'easeOut' }}
-                        >
+                            transition={{ duration: 0.3, ease: 'easeOut' }}>
                             <SidebarMenuItem>
                                 <motion.div
                                     whileHover={{ scale: 1.02, x: 4 }}
-                                    transition={{ duration: 0.2, ease: 'easeOut' }}
-                                >
+                                    transition={{ duration: 0.2, ease: 'easeOut' }}>
                                     <SidebarMenuButton
                                         className='w-full transition-all duration-200 hover:bg-primary/10 hover:text-primary'
-                                        onClick={() => toggleTopic(topic.title)}
-                                    >
-                                        <topic.icon />
-                                        <span>{topic.title}</span>
-                                        <motion.div
-                                            animate={{
-                                                rotate: openTopics.has(topic.title) ? 180 : 0,
-                                            }}
-                                            transition={{ duration: 0.3, ease: 'easeInOut' }}
-                                            className='ml-auto'
-                                        >
-                                            <RiArrowDownSLine className='h-4 w-4' />
-                                        </motion.div>
+                                        onClick={() => toggleTopic(topic.title)}>
+                                        <div className='flex items-center justify-between w-full'>
+                                            <div className='flex items-center gap-2'>
+                                                <topic.icon />
+                                                <span>{topic.title}</span>
+                                            </div>
+                                            <div className='flex items-center gap-2'>
+                                                {(() => {
+                                                    const count = getTopicGroupCount(topic);
+                                                    return (
+                                                        <AnimatePresence>
+                                                            {count > 0 && (
+                                                                <motion.div
+                                                                    initial={{
+                                                                        scale: 0,
+                                                                        opacity: 0,
+                                                                    }}
+                                                                    animate={{
+                                                                        scale: 1,
+                                                                        opacity: 1,
+                                                                    }}
+                                                                    exit={{ scale: 0, opacity: 0 }}
+                                                                    transition={{
+                                                                        duration: 0.2,
+                                                                        ease: 'easeOut',
+                                                                        scale: {
+                                                                            type: 'spring',
+                                                                            stiffness: 500,
+                                                                            damping: 30,
+                                                                        },
+                                                                    }}>
+                                                                    <Badge
+                                                                        variant='secondary'
+                                                                        className='bg-transparent text-primary text-xs px-1.5 py-0.5 h-5 min-w-5 flex items-center justify-center'>
+                                                                        <AnimatedBadgeNumber
+                                                                            value={count}
+                                                                        />
+                                                                    </Badge>
+                                                                </motion.div>
+                                                            )}
+                                                        </AnimatePresence>
+                                                    );
+                                                })()}
+                                                <motion.div
+                                                    animate={{
+                                                        rotate: openTopics.has(topic.title)
+                                                            ? 180
+                                                            : 0,
+                                                    }}
+                                                    transition={{
+                                                        duration: 0.3,
+                                                        ease: 'easeInOut',
+                                                    }}>
+                                                    <RiArrowDownSLine className='h-4 w-4' />
+                                                </motion.div>
+                                            </div>
+                                        </div>
                                     </SidebarMenuButton>
                                 </motion.div>
                             </SidebarMenuItem>
@@ -333,8 +480,7 @@ export function SidebarInner({
                                             ease: 'easeInOut',
                                             opacity: { duration: 0.2 },
                                         }}
-                                        className='overflow-hidden'
-                                    >
+                                        className='overflow-hidden'>
                                         <SidebarMenu>
                                             {topic.items?.map((subItem, index) => (
                                                 <motion.div
@@ -345,20 +491,17 @@ export function SidebarInner({
                                                         duration: 0.3,
                                                         delay: index * 0.05,
                                                         ease: 'easeOut',
-                                                    }}
-                                                >
+                                                    }}>
                                                     <SidebarMenuItem>
                                                         <motion.div
                                                             whileHover={{ scale: 1.02, x: 8 }}
                                                             transition={{
                                                                 duration: 0.2,
                                                                 ease: 'easeOut',
-                                                            }}
-                                                        >
+                                                            }}>
                                                             <SidebarMenuButton
                                                                 asChild
-                                                                className='pl-8 transition-all duration-200 hover:bg-primary/10 hover:text-primary'
-                                                            >
+                                                                className='pl-8 transition-all duration-200 hover:bg-primary/10 hover:text-primary'>
                                                                 <Link
                                                                     href={
                                                                         '/' +
@@ -368,9 +511,60 @@ export function SidebarInner({
                                                                             .toLowerCase()
                                                                             .replaceAll('_', '-')
                                                                     }
-                                                                >
-                                                                    <subItem.icon />
-                                                                    <span>{subItem.title}</span>
+                                                                    onClick={() =>
+                                                                        handleTopicClick(
+                                                                            subItem.name,
+                                                                        )
+                                                                    }
+                                                                    className='flex items-center justify-between w-full'>
+                                                                    <div className='flex items-center gap-2'>
+                                                                        <subItem.icon />
+                                                                        <span>{subItem.title}</span>
+                                                                    </div>
+                                                                    <AnimatePresence>
+                                                                        {(() => {
+                                                                            const count =
+                                                                                topicPostsCount[
+                                                                                    subItem.name
+                                                                                ] || 0;
+                                                                            return (
+                                                                                count > 0 && (
+                                                                                    <motion.div
+                                                                                        initial={{
+                                                                                            scale: 0,
+                                                                                            opacity: 0,
+                                                                                        }}
+                                                                                        animate={{
+                                                                                            scale: 1,
+                                                                                            opacity: 1,
+                                                                                        }}
+                                                                                        exit={{
+                                                                                            scale: 0,
+                                                                                            opacity: 0,
+                                                                                        }}
+                                                                                        transition={{
+                                                                                            duration: 0.2,
+                                                                                            ease: 'easeOut',
+                                                                                            scale: {
+                                                                                                type: 'spring',
+                                                                                                stiffness: 500,
+                                                                                                damping: 30,
+                                                                                            },
+                                                                                        }}>
+                                                                                        <Badge
+                                                                                            variant='secondary'
+                                                                                            className='bg-transparent text-primary text-xs px-1.5 py-0.5 h-5 min-w-5 flex items-center justify-center'>
+                                                                                            <AnimatedBadgeNumber
+                                                                                                value={
+                                                                                                    count
+                                                                                                }
+                                                                                            />
+                                                                                        </Badge>
+                                                                                    </motion.div>
+                                                                                )
+                                                                            );
+                                                                        })()}
+                                                                    </AnimatePresence>
                                                                 </Link>
                                                             </SidebarMenuButton>
                                                         </motion.div>
@@ -390,12 +584,10 @@ export function SidebarInner({
                         <SidebarMenuItem key={item.title}>
                             <motion.div
                                 whileHover={{ scale: 1.02, x: 4 }}
-                                transition={{ duration: 0.2, ease: 'easeOut' }}
-                            >
+                                transition={{ duration: 0.2, ease: 'easeOut' }}>
                                 <SidebarMenuButton
                                     asChild
-                                    className='transition-all duration-200 hover:bg-primary/10 hover:text-primary'
-                                >
+                                    className='transition-all duration-200 hover:bg-primary/10 hover:text-primary'>
                                     <Link href={item.url}>
                                         <item.icon />
                                         <span>{item.title}</span>

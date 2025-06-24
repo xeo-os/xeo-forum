@@ -28,6 +28,8 @@ import {
 
 import '@/app/globals.css';
 import type { Topic } from '@/generated/prisma';
+import { NewPostsBannerTopic } from '@/components/new-posts-banner-topic';
+import { AnimatedCounterTopic } from '@/components/animated-counter-topic';
 
 type Props = {
     params: Promise<{ locale: string; page?: number; topic: string }>;
@@ -744,10 +746,9 @@ export default async function Topic({ params }: Props) {
                         locale,
                     )}
                 </p>
-            </div>
-
-            <div className='flex gap-6'>
+            </div>            <div className='flex gap-6'>
                 <div className='flex-1'>
+                    <NewPostsBannerTopic locale={locale} topicName={topic} />
                     <Card>
                         <CardContent className='p-2 sm:p-5'>
                             <div className='divide-y'>
@@ -1106,14 +1107,11 @@ export default async function Topic({ params }: Props) {
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className='grid grid-cols-2 gap-4'>
-                                <div className='text-center p-3 rounded-lg hover:bg-primary/5 transition-colors'>
+                            <div className='grid grid-cols-2 gap-4'>                                <div className='text-center p-3 rounded-lg hover:bg-primary/5 transition-colors'>
                                     <div className='flex items-center justify-center gap-1 text-primary mb-1'>
                                         <FileText className='h-4 w-4' />
                                     </div>
-                                    <div className='text-2xl font-bold text-primary'>
-                                        {totalPosts.toLocaleString()}
-                                    </div>
+                                    <AnimatedCounterTopic initialCount={totalPosts} topicName={topic} />
                                     <div className='text-xs text-muted-foreground mt-1'>
                                         {lang(
                                             {

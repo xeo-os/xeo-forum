@@ -31,6 +31,8 @@ import {
 } from 'lucide-react';
 
 import '@/app/globals.css';
+import { NewPostsBanner } from '@/components/new-posts-banner';
+import { AnimatedCounter } from '@/components/animated-counter';
 
 type Props = {
     params: Promise<{ locale: string; page?: number }>;
@@ -1009,11 +1011,10 @@ export default async function HomePage({ params }: Props) {
                         locale,
                     )}
                 </p>
-            </div>
-
-            <div className='flex gap-6'>
+            </div>            <div className='flex gap-6'>
                 {/* 主要内容区域 - 使用 Page 组件包裹，参与动画 */}
                 <div className='flex-1'>
+                    <NewPostsBanner locale={locale} />
                     <Card>
                         <CardContent className='p-2 sm:p-5'>
                             <div className='divide-y'>
@@ -1346,10 +1347,7 @@ export default async function HomePage({ params }: Props) {
                                 <div className='text-center p-3 rounded-lg hover:bg-primary/5 transition-colors'>
                                     <div className='flex items-center justify-center gap-1 text-primary mb-1'>
                                         <FileText className='h-4 w-4' />
-                                    </div>
-                                    <div className='text-2xl font-bold text-primary'>
-                                        {totalPosts.toLocaleString()}
-                                    </div>
+                                    </div>                                    <AnimatedCounter initialCount={totalPosts} />
                                     <div className='text-xs text-muted-foreground mt-1'>
                                         {lang(
                                             {

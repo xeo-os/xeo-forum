@@ -1033,7 +1033,7 @@ export default async function PostDetailPage({ params }: Props) {
                         slug={slug}
                         initialLikeStatus={likeStatus}
                     />
-                </div>{' '}
+                </div>
                 {/* 右侧统计区域 */}
                 <div className='hidden xl:block w-80 space-y-4'>
                     {/* 作者信息卡片 */}

@@ -452,10 +452,21 @@ export default function Message() {
                     if (messageData?.content) {
                         // 如果是任务状态更新
                         if (messageData.type === 'task') {
+                            // 发送原格式消息
                             broadcast({
                                 action: 'broadcast',
                                 data: messageData.content,
                                 type: messageData.type,
+                            });
+                            
+                            // 同时发送新格式消息，用于主题页组件
+                            broadcast({
+                                action: 'message.create',
+                                data: {
+                                    message: {
+                                        content: messageData.content
+                                    }
+                                }
                             });
                         } else {
                             broadcast({
@@ -469,7 +480,7 @@ export default function Message() {
                     console.error('Error processing broadcast message:', error);
                 }
             });
-            await broadcastChannel.presence.enter();// 监听用户专属频道
+            await broadcastChannel.presence.enter(); // 监听用户专属频道
             const userChannel = ablyRef.current.channels.get(`user-${userInfo.uid}`);
             userChannel.subscribe((message) => {
                 console.log('Received user message:', message);
@@ -477,12 +488,13 @@ export default function Message() {
 
                 try {
                     const messageData = message.data?.message as MessageData;
-                    if (messageData && messageData.type === 'message') {                        // 广播新消息事件给其他组件
+                    if (messageData && messageData.type === 'message') {
+                        // 广播新消息事件给其他组件
                         broadcast({
                             action: 'broadcast',
-                            data: { 
+                            data: {
                                 type: 'message',
-                                message: messageData
+                                message: messageData,
                             },
                         });
                     }
@@ -521,7 +533,8 @@ export default function Message() {
         } else {
             console.log('Production mode - initializing immediately');
             startInitialization();
-        }        return () => {
+        }
+        return () => {
             console.log('useEffect cleanup called');
             if (initTimeout) {
                 clearTimeout(initTimeout);

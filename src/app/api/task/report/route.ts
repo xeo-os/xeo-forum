@@ -69,6 +69,15 @@ export async function POST(request: Request) {
                             },
                         },
                     },
+                    post: {
+                        select: {
+                            topics: {
+                                select: {
+                                    name: true,
+                                },
+                            },
+                        },
+                    },
                 },
             });
             if (!task) {
@@ -85,11 +94,26 @@ export async function POST(request: Request) {
                         'pt-BR': 'Tarefa não encontrada',
                         'ko-KR': '작업을 찾을 수 없습니다.',
                     }),
-                });            }
-            
+                });
+            }
+
             // post任务，不发messager通知，只broadcast
             if (!task.reply) {
                 console.log('Post task completed, skipping messager notification');
+                await broadcast({
+                    type: 'task',
+                    content: {
+                        uuid: taskUuid,
+                        status: status,
+                        type: 'post',
+                        topic: task.post?.topics?.map((t) => t.name).join(', ') || '',
+                    },
+                    title: '',
+                    link: '',
+                });
+                return response(200, {
+                    message: 'Task report broadcasted successfully',
+                });
             } else {
                 // reply任务，发送messager通知
                 console.log(task);
@@ -97,7 +121,8 @@ export async function POST(request: Request) {
 
                 if (user) {
                     // 查询相应语言的详细信息
-                    const langSuffix = user.emailNoticeLang?.replace('-', '').toUpperCase() || 'ENUS';
+                    const langSuffix =
+                        user.emailNoticeLang?.replace('-', '').toUpperCase() || 'ENUS';
                     taskDetails = await prisma.task.findUnique({
                         where: { id: taskUuid },
                         select: {
@@ -128,7 +153,8 @@ export async function POST(request: Request) {
                         (taskDetails?.reply?.belongPost as unknown as Record<string, string>)?.[
                             `title${langSuffixForContent}`
                         ] ||
-                        (taskDetails?.reply?.belongPost as unknown as Record<string, string>)?.title ||
+                        (taskDetails?.reply?.belongPost as unknown as Record<string, string>)
+                            ?.title ||
                         (taskDetails?.reply?.parentReply as unknown as Record<string, string>)?.[
                             `content${langSuffixForContent}`
                         ] ||
@@ -232,21 +258,21 @@ export async function POST(request: Request) {
                     );
                 }
             }
+            await broadcast({
+                type: 'task',
+                content: {
+                    uuid: taskUuid,
+                    status: status,
+                    type: 'reply',
+                    postId: task.reply?.belongPost?.id.toString() || '',
+                },
+                title: '',
+                link: '',
+            });
+            return response(200, {
+                message: 'Task report broadcasted successfully',
+            });
         }
-
-        await broadcast({
-            type: 'task',
-            content: {
-                uuid: taskUuid,
-                status: status,
-                type: task?.reply ? 'reply' : 'post',
-            },
-            title: '',
-            link: '',
-        });
-        return response(200, {
-            message: 'Task report broadcasted successfully',
-        });
     } catch (e) {
         console.error('Error broadcasting task report:', e);
         return response(500, {
