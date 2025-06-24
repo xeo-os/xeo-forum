@@ -817,8 +817,7 @@ export function PostDetailClient({
                                 variant='outline'
                                 size='sm'
                                 onClick={fetchOriginalContent}
-                                disabled={isLoadingOriginal}
-                                className='text-xs'>
+                                disabled={isLoadingOriginal}>
                                 {isLoadingOriginal ? (
                                     <Loader2 className='h-4 w-4 mr-2 animate-spin' />
                                 ) : (
@@ -859,7 +858,7 @@ export function PostDetailClient({
                         )}
                     </div>
                 </CardContent>
-            </Card>
+            </Card>{' '}
             {/* 回复编辑器 */}
             <AnimatePresence mode='wait'>
                 {showReplyEditor && (
@@ -872,122 +871,187 @@ export function PostDetailClient({
                         layout>
                         <Card>
                             <CardContent className='p-4'>
-                                <div className='space-y-4'>
-                                    <Textarea
-                                        placeholder={lang(
-                                            {
-                                                'zh-CN': '写下你的回复...',
-                                                'en-US': 'Write your reply...',
-                                                'zh-TW': '寫下你的回覆...',
-                                                'es-ES': 'Escribe tu respuesta...',
-                                                'fr-FR': 'Écrivez votre réponse...',
-                                                'ru-RU': 'Напишите ваш ответ...',
-                                                'ja-JP': '返信を書いてください...',
-                                                'de-DE': 'Schreiben Sie Ihre Antwort...',
-                                                'pt-BR': 'Escreva sua resposta...',
-                                                'ko-KR': '답글을 작성하세요...',
-                                            },
-                                            locale,
-                                        )}
-                                        value={replyContent}
-                                        onChange={(e) => {
-                                            const newValue = e.target.value;
-                                            if (newValue.length <= MAX_REPLY_LENGTH) {
-                                                setReplyContent(newValue);
-                                            }
-                                        }}
-                                        className='min-h-[100px] resize-none'
-                                        maxLength={MAX_REPLY_LENGTH}
-                                    />
-                                    <div className='flex justify-between items-center'>
-                                        <div className='flex items-center gap-2'>
-                                            <EmojiPicker
-                                                onEmojiSelect={handleEmojiSelect}
-                                                locale={locale}
-                                            />
-                                            <div
-                                                className={`text-xs ${
-                                                    replyContent.length > MAX_REPLY_LENGTH * 0.9
-                                                        ? 'text-destructive'
-                                                        : 'text-muted-foreground'
-                                                }`}>
-                                                {replyContent.length}/{MAX_REPLY_LENGTH}
+                                {!token.get() ? (
+                                    // 未登录用户显示登录提示
+                                    <div className='relative'>
+                                        <div className='space-y-4'>
+                                            <div className='relative'>
+                                                <Textarea
+                                                    disabled
+                                                    className='min-h-[100px] resize-none bg-muted cursor-not-allowed'
+                                                />
+                                                {/* 居中的登录提示 */}
+                                                <div className='absolute inset-0 flex items-center justify-center'>
+                                                    <div className='text-center'>
+                                                        <p className='text-muted-foreground mb-3 text-sm'>
+                                                            {lang(
+                                                                {
+                                                                    'zh-CN': '请先登录后回复',
+                                                                    'en-US':
+                                                                        'Please login first to reply',
+                                                                    'zh-TW': '請先登錄後回覆',
+                                                                    'es-ES':
+                                                                        'Por favor inicia sesión primero para responder',
+                                                                    'fr-FR':
+                                                                        "Veuillez vous connecter d'abord pour répondre",
+                                                                    'ru-RU':
+                                                                        'Пожалуйста, войдите в систему, чтобы ответить',
+                                                                    'ja-JP':
+                                                                        '返信するには先にログインしてください',
+                                                                    'de-DE':
+                                                                        'Bitte melden Sie sich zuerst an, um zu antworten',
+                                                                    'pt-BR':
+                                                                        'Por favor, faça login primeiro para responder',
+                                                                    'ko-KR':
+                                                                        '답글을 작성하려면 먼저 로그인해주세요',
+                                                                },
+                                                                locale,
+                                                            )}
+                                                        </p>
+                                                        <Link href={`/${locale}/signin`}>
+                                                            <Button size='sm'>
+                                                                {lang(
+                                                                    {
+                                                                        'zh-CN': '去登录',
+                                                                        'en-US': 'Login',
+                                                                        'zh-TW': '去登錄',
+                                                                        'es-ES': 'Iniciar sesión',
+                                                                        'fr-FR': 'Se connecter',
+                                                                        'ru-RU': 'Войти',
+                                                                        'ja-JP': 'ログイン',
+                                                                        'de-DE': 'Anmelden',
+                                                                        'pt-BR': 'Entrar',
+                                                                        'ko-KR': '로그인',
+                                                                    },
+                                                                    locale,
+                                                                )}
+                                                            </Button>
+                                                        </Link>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className='flex items-center gap-2'>
-                                            <Button
-                                                variant='outline'
-                                                size='sm'
-                                                onClick={() => setShowReplyEditor(false)}>
-                                                {lang(
-                                                    {
-                                                        'zh-CN': '取消',
-                                                        'en-US': 'Cancel',
-                                                        'zh-TW': '取消',
-                                                        'es-ES': 'Cancelar',
-                                                        'fr-FR': 'Annuler',
-                                                        'ru-RU': 'Отмена',
-                                                        'ja-JP': 'キャンセル',
-                                                        'de-DE': 'Abbrechen',
-                                                        'pt-BR': 'Cancelar',
-                                                        'ko-KR': '취소',
-                                                    },
-                                                    locale,
-                                                )}
-                                            </Button>
-                                            <Button
-                                                size='sm'
-                                                onClick={submitReply}
-                                                disabled={
-                                                    isSubmitting ||
-                                                    !replyContent.trim() ||
-                                                    replyContent.length > MAX_REPLY_LENGTH
-                                                }>
-                                                {isSubmitting ? (
-                                                    <>
-                                                        <Loader2 className='h-4 w-4 mr-2 animate-spin' />
-                                                        {lang(
-                                                            {
-                                                                'zh-CN': '发送中...',
-                                                                'zh-TW': '發送中...',
-                                                                'en-US': 'Sending...',
-                                                                'es-ES': 'Enviando...',
-                                                                'fr-FR': 'Envoyer...',
-                                                                'ru-RU': 'Отправка...',
-                                                                'ja-JP': '送信中...',
-                                                                'de-DE': 'Senden...',
-                                                                'pt-BR': 'Enviando...',
-                                                                'ko-KR': '전송 중...',
-                                                            },
-                                                            locale,
-                                                        )}
-                                                    </>
-                                                ) : (
-                                                    lang(
+                                    </div>
+                                ) : (
+                                    // 已登录用户正常显示编辑器
+                                    <div className='space-y-4'>
+                                        <Textarea
+                                            placeholder={lang(
+                                                {
+                                                    'zh-CN': '写下你的回复...',
+                                                    'en-US': 'Write your reply...',
+                                                    'zh-TW': '寫下你的回覆...',
+                                                    'es-ES': 'Escribe tu respuesta...',
+                                                    'fr-FR': 'Écrivez votre réponse...',
+                                                    'ru-RU': 'Напишите ваш ответ...',
+                                                    'ja-JP': '返信を書いてください...',
+                                                    'de-DE': 'Schreiben Sie Ihre Antwort...',
+                                                    'pt-BR': 'Escreva sua resposta...',
+                                                    'ko-KR': '답글을 작성하세요...',
+                                                },
+                                                locale,
+                                            )}
+                                            value={replyContent}
+                                            onChange={(e) => {
+                                                const newValue = e.target.value;
+                                                if (newValue.length <= MAX_REPLY_LENGTH) {
+                                                    setReplyContent(newValue);
+                                                }
+                                            }}
+                                            className='min-h-[100px] resize-none'
+                                            maxLength={MAX_REPLY_LENGTH}
+                                        />
+                                        <div className='flex justify-between items-center'>
+                                            <div className='flex items-center gap-2'>
+                                                <EmojiPicker
+                                                    onEmojiSelect={handleEmojiSelect}
+                                                    locale={locale}
+                                                />
+                                                <div
+                                                    className={`text-xs ${
+                                                        replyContent.length > MAX_REPLY_LENGTH * 0.9
+                                                            ? 'text-destructive'
+                                                            : 'text-muted-foreground'
+                                                    }`}>
+                                                    {replyContent.length}/{MAX_REPLY_LENGTH}
+                                                </div>
+                                            </div>
+                                            <div className='flex items-center gap-2'>
+                                                <Button
+                                                    variant='outline'
+                                                    size='sm'
+                                                    onClick={() => setShowReplyEditor(false)}>
+                                                    {lang(
                                                         {
-                                                            'zh-CN': '发布回复',
-                                                            'zh-TW': '發布回覆',
-                                                            'en-US': 'Post Reply',
-                                                            'es-ES': 'Publicar Respuesta',
-                                                            'fr-FR': 'Publier la Réponse',
-                                                            'ru-RU': 'Опубликовать Ответ',
-                                                            'ja-JP': '返信を投稿',
-                                                            'de-DE': 'Antwort Posten',
-                                                            'pt-BR': 'Postar Resposta',
-                                                            'ko-KR': '답글 게시',
+                                                            'zh-CN': '取消',
+                                                            'en-US': 'Cancel',
+                                                            'zh-TW': '取消',
+                                                            'es-ES': 'Cancelar',
+                                                            'fr-FR': 'Annuler',
+                                                            'ru-RU': 'Отмена',
+                                                            'ja-JP': 'キャンセル',
+                                                            'de-DE': 'Abbrechen',
+                                                            'pt-BR': 'Cancelar',
+                                                            'ko-KR': '취소',
                                                         },
                                                         locale,
-                                                    )
-                                                )}
-                                            </Button>
+                                                    )}
+                                                </Button>
+                                                <Button
+                                                    size='sm'
+                                                    onClick={submitReply}
+                                                    disabled={
+                                                        isSubmitting ||
+                                                        !replyContent.trim() ||
+                                                        replyContent.length > MAX_REPLY_LENGTH
+                                                    }>
+                                                    {isSubmitting ? (
+                                                        <>
+                                                            <Loader2 className='h-4 w-4 mr-2 animate-spin' />
+                                                            {lang(
+                                                                {
+                                                                    'zh-CN': '发送中...',
+                                                                    'zh-TW': '發送中...',
+                                                                    'en-US': 'Sending...',
+                                                                    'es-ES': 'Enviando...',
+                                                                    'fr-FR': 'Envoyer...',
+                                                                    'ru-RU': 'Отправка...',
+                                                                    'ja-JP': '送信中...',
+                                                                    'de-DE': 'Senden...',
+                                                                    'pt-BR': 'Enviando...',
+                                                                    'ko-KR': '전송 중...',
+                                                                },
+                                                                locale,
+                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        lang(
+                                                            {
+                                                                'zh-CN': '  ',
+                                                                'zh-TW': '發布回覆',
+                                                                'en-US': 'Post Reply',
+                                                                'es-ES': 'Publicar Respuesta',
+                                                                'fr-FR': 'Publier la Réponse',
+                                                                'ru-RU': 'Опубликовать Ответ',
+                                                                'ja-JP': '返信を投稿',
+                                                                'de-DE': 'Antwort Posten',
+                                                                'pt-BR': 'Postar Resposta',
+                                                                'ko-KR': '답글 게시',
+                                                            },
+                                                            locale,
+                                                        )
+                                                    )}
+                                                </Button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                )}
                             </CardContent>
                         </Card>
                     </motion.div>
                 )}
-            </AnimatePresence>{' '}            {/* 回复列表 */}{' '}
+            </AnimatePresence>{' '}
+            {/* 回复列表 */}{' '}
             <ReplyList
                 replies={localReplies}
                 locale={locale}

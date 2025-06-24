@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2 } from 'lucide-react';
@@ -211,6 +212,25 @@ export function ReplyEditor({
   const submitReply = async () => {
     if (!content.trim()) return;
 
+    // 检查用户是否登录
+    if (!token.get()) {
+      toast.error(
+        lang({
+          'zh-CN': '请先登录后回复',
+          'en-US': 'Please login first to reply',
+          'zh-TW': '請先登錄後回覆',
+          'es-ES': 'Por favor inicia sesión primero para responder',
+          'fr-FR': 'Veuillez vous connecter d\'abord pour répondre',
+          'ru-RU': 'Пожалуйста, войдите в систему, чтобы ответить',
+          'ja-JP': '返信するには先にログインしてください',
+          'de-DE': 'Bitte melden Sie sich zuerst an, um zu antworten',
+          'pt-BR': 'Por favor, faça login primeiro para responder',
+          'ko-KR': '답글을 작성하려면 먼저 로그인해주세요',
+        }, locale),
+      );
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const response = await fetch('/api/reply/create', {
@@ -226,7 +246,7 @@ export function ReplyEditor({
         }),
       });
 
-      const result = await response.json();      if (result.ok) {
+      const result = await response.json();if (result.ok) {
         const replyUuid = result.data?.taskId;
         
         // 显示翻译进度 toast
@@ -331,79 +351,128 @@ export function ReplyEditor({
               token.getObject()?.nickname?.charAt(0) ||
               'U'}
           </AvatarFallback>
-        </Avatar>
-
-        <div className="flex-1 min-w-0">
-          <div className="mb-3">
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder={placeholder}
-              className="w-full p-3 border border-input rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-ring bg-background text-sm"
-              rows={3}
-              maxLength={200}
-            />
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span className="text-muted-foreground text-xs">
-              {content.length}/200
-            </span>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onCancel}
-                className="px-3 h-8 text-sm"
-              >
-                {lang({
-                  'zh-CN': '取消',
-                  'en-US': 'Cancel',
-                  'zh-TW': '取消',
-                  'es-ES': 'Cancelar',
-                  'fr-FR': 'Annuler',
-                  'ru-RU': 'Отмена',
-                  'ja-JP': 'キャンセル',
-                  'de-DE': 'Abbrechen',
-                  'pt-BR': 'Cancelar',
-                  'ko-KR': '취소',
-                }, locale)}
-              </Button>
-              <Button
-                onClick={submitReply}
-                disabled={isSubmitting || !content.trim()}
-                size="sm"
-                className="px-4 h-8 text-sm"
-              >
-                {isSubmitting ? 
-                  lang({
-                    'zh-CN': '发送中...',
-                    'en-US': 'Sending...',
-                    'zh-TW': '發送中...',
-                    'es-ES': 'Enviando...',
-                    'fr-FR': 'Envoi...',
-                    'ru-RU': 'Отправка...',
-                    'ja-JP': '送信中...',
-                    'de-DE': 'Senden...',
-                    'pt-BR': 'Enviando...',
-                    'ko-KR': '전송 중...',
-                  }, locale) :
-                  lang({
-                    'zh-CN': '回复',
-                    'en-US': 'Reply',
-                    'zh-TW': '回覆',
-                    'es-ES': 'Responder',
-                    'fr-FR': 'Répondre',
-                    'ru-RU': 'Ответить',
-                    'ja-JP': '返信',
-                    'de-DE': 'Antworten',
-                    'pt-BR': 'Responder',
-                    'ko-KR': '답글',
-                  }, locale)
-                }
-              </Button>
+        </Avatar>        <div className="flex-1 min-w-0">
+          {!token.get() ? (
+            // 未登录用户显示登录提示
+            <div className="relative">
+              <div className="mb-3">
+                <textarea
+                  disabled
+                  className="w-full p-3 border border-input rounded-lg resize-none bg-muted cursor-not-allowed text-sm"
+                  rows={3}
+                />
+                {/* 居中的登录提示 */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <p className="text-muted-foreground mb-3 text-sm">
+                      {lang({
+                        'zh-CN': '请先登录后回复',
+                        'en-US': 'Please login first to reply',
+                        'zh-TW': '請先登錄後回覆',
+                        'es-ES': 'Por favor inicia sesión primero para responder',
+                        'fr-FR': 'Veuillez vous connecter d\'abord pour répondre',
+                        'ru-RU': 'Пожалуйста, войдите в систему, чтобы ответить',
+                        'ja-JP': '返信するには先にログインしてください',
+                        'de-DE': 'Bitte melden Sie sich zuerst an, um zu antworten',
+                        'pt-BR': 'Por favor, faça login primeiro para responder',
+                        'ko-KR': '답글을 작성하려면 먼저 로그인해주세요',
+                      }, locale)}
+                    </p>
+                    <Link href={`/${locale}/signin`}>
+                      <Button size="sm" className="px-4 h-8 text-sm">
+                        {lang({
+                          'zh-CN': '去登录',
+                          'en-US': 'Login',
+                          'zh-TW': '去登錄',
+                          'es-ES': 'Iniciar sesión',
+                          'fr-FR': 'Se connecter',
+                          'ru-RU': 'Войти',
+                          'ja-JP': 'ログイン',
+                          'de-DE': 'Anmelden',
+                          'pt-BR': 'Entrar',
+                          'ko-KR': '로그인',
+                        }, locale)}
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          ) : (
+            // 已登录用户正常显示编辑器
+            <>
+              <div className="mb-3">
+                <textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder={placeholder}
+                  className="w-full p-3 border border-input rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-ring bg-background text-sm"
+                  rows={3}
+                  maxLength={200}
+                />
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground text-xs">
+                  {content.length}/200
+                </span>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onCancel}
+                    className="px-3 h-8 text-sm"
+                  >
+                    {lang({
+                      'zh-CN': '取消',
+                      'en-US': 'Cancel',
+                      'zh-TW': '取消',
+                      'es-ES': 'Cancelar',
+                      'fr-FR': 'Annuler',
+                      'ru-RU': 'Отмена',
+                      'ja-JP': 'キャンセル',
+                      'de-DE': 'Abbrechen',
+                      'pt-BR': 'Cancelar',
+                      'ko-KR': '취소',
+                    }, locale)}
+                  </Button>
+                  <Button
+                    onClick={submitReply}
+                    disabled={isSubmitting || !content.trim()}
+                    size="sm"
+                    className="px-4 h-8 text-sm"
+                  >
+                    {isSubmitting ? 
+                      lang({
+                        'zh-CN': '发送中...',
+                        'en-US': 'Sending...',
+                        'zh-TW': '發送中...',
+                        'es-ES': 'Enviando...',
+                        'fr-FR': 'Envoi...',
+                        'ru-RU': 'Отправка...',
+                        'ja-JP': '送信中...',
+                        'de-DE': 'Senden...',
+                        'pt-BR': 'Enviando...',
+                        'ko-KR': '전송 중...',
+                      }, locale) :
+                      lang({
+                        'zh-CN': '回复',
+                        'en-US': 'Reply',
+                        'zh-TW': '回覆',
+                        'es-ES': 'Responder',
+                        'fr-FR': 'Répondre',
+                        'ru-RU': 'Ответить',
+                        'ja-JP': '返信',
+                        'de-DE': 'Antworten',
+                        'pt-BR': 'Responder',
+                        'ko-KR': '답글',
+                      }, locale)
+                    }
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

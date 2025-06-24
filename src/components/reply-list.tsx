@@ -61,7 +61,8 @@ function SingleReply({
     postAuthorUid, // 新增参数
 }: SingleReplyProps) {
     const [isLiked, setIsLiked] = useState(replyLikes[reply.id] || false);
-    const [isLiking, setIsLiking] = useState(false);    const [isReplying, setIsReplying] = useState(false);
+    const [isLiking, setIsLiking] = useState(false);
+    const [isReplying, setIsReplying] = useState(false);
     const [showOriginal, setShowOriginal] = useState(false);
     const [originalContent, setOriginalContent] = useState<string | null>(null);
     const [isLoadingOriginal, setIsLoadingOriginal] = useState(false);
@@ -391,10 +392,32 @@ function SingleReply({
 
     const handleMouseLeave = () => {
         onHover?.(null, []);
-    };
-    // 处理点赞
+    }; // 处理点赞
     const handleLike = async () => {
         if (isLiking) return;
+
+        // 检查用户是否登录
+        if (!token.get()) {
+            toast.error(
+                lang(
+                    {
+                        'zh-CN': '请先登录后点赞',
+                        'en-US': 'Please login first to like',
+                        'zh-TW': '請先登錄後點讚',
+                        'es-ES': 'Por favor inicia sesión primero para dar like',
+                        'fr-FR': "Veuillez vous connecter d'abord pour aimer",
+                        'ru-RU': 'Пожалуйста, войдите в систему, чтобы поставить лайк',
+                        'ja-JP': 'いいねするには先にログインしてください',
+                        'de-DE': 'Bitte melden Sie sich zuerst an, um zu liken',
+                        'pt-BR': 'Por favor, faça login primeiro para curtir',
+                        'ko-KR': '좋아요를 누르려면 먼저 로그인해주세요',
+                    },
+                    locale,
+                ),
+            );
+            return;
+        }
+
         let result;
 
         setIsLiking(true);
@@ -430,7 +453,7 @@ function SingleReply({
         } finally {
             setIsLiking(false);
         }
-    };    // 获取原文内容
+    }; // 获取原文内容
     const fetchOriginalContent = async () => {
         if (originalContent) {
             // 如果已经有原文内容，直接切换
@@ -505,7 +528,7 @@ function SingleReply({
         }
         const translatedFieldName = `content${locale.replace('-', '').toUpperCase()}`;
         return reply[translatedFieldName] || reply.content;
-    };    // 处理回复
+    }; // 处理回复
     const submitReply = async () => {
         if (!content.trim()) return;
 
@@ -626,9 +649,7 @@ function SingleReply({
         setTimeout(() => {
             onHighlightChange?.(replyId);
         }, 50); // 短暂延迟确保状态更新
-    };
-
-    // 移动版操作按钮组件
+    }; // 移动版操作按钮组件
     const MobileActionButtons = () => (
         <div className='flex items-center gap-1'>
             {/* 主要操作按钮 */}
@@ -638,7 +659,11 @@ function SingleReply({
                 onClick={handleLike}
                 disabled={isLiking}
                 className='h-6 px-2 text-xs hover:bg-muted/50'>
-                <Heart className={`h-3 w-3 ${isLiked ? 'fill-current text-red-500' : ''}`} />
+                {isLiking ? (
+                    <Loader2 className='h-3 w-3 animate-spin' />
+                ) : (
+                    <Heart className={`h-3 w-3 ${isLiked ? 'fill-current text-red-500' : ''}`} />
+                )}
                 <span className='ml-1 text-xs'>{likeCount}</span>
             </Button>
 
@@ -664,7 +689,8 @@ function SingleReply({
     );
 
     // 桌面版操作按钮组件
-    const DesktopActionButtons = () => (        <div className='flex items-center gap-1 flex-wrap'>
+    const DesktopActionButtons = () => (
+        <div className='flex items-center gap-1 flex-wrap'>
             {isTranslated && (
                 <Button
                     variant='ghost'
@@ -672,9 +698,7 @@ function SingleReply({
                     onClick={fetchOriginalContent}
                     disabled={isLoadingOriginal}
                     className='h-5 px-1.5 text-xs hover:bg-muted/50'>
-                    {isLoadingOriginal ? (
-                        <Loader2 className='h-3 w-3 mr-1 animate-spin' />
-                    ) : null}
+                    {isLoadingOriginal ? <Loader2 className='h-3 w-3 mr-1 animate-spin' /> : null}
                     {showOriginal && originalContent
                         ? lang(
                               {
@@ -707,18 +731,22 @@ function SingleReply({
                               locale,
                           )}
                 </Button>
-            )}
-
+            )}{' '}
             <Button
                 variant='ghost'
                 size='sm'
                 onClick={handleLike}
                 disabled={isLiking}
                 className='h-5 px-1.5 text-xs hover:bg-muted/50'>
-                <Heart className={`h-3 w-3 mr-1 ${isLiked ? 'fill-current text-red-500' : ''}`} />
+                {isLiking ? (
+                    <Loader2 className='h-3 w-3 mr-1 animate-spin' />
+                ) : (
+                    <Heart
+                        className={`h-3 w-3 mr-1 ${isLiked ? 'fill-current text-red-500' : ''}`}
+                    />
+                )}
                 {likeCount}
             </Button>
-
             {level < maxLevel && (
                 <Button
                     variant='ghost'
@@ -793,7 +821,9 @@ function SingleReply({
                     </Link>
                 </div>
 
-                <div className='flex-1 min-w-0'>                    {/* 用户信息和时间 */}
+                <div className='flex-1 min-w-0'>
+                    {' '}
+                    {/* 用户信息和时间 */}
                     <div className='flex items-center gap-2 mb-1 flex-wrap'>
                         <Link
                             href={`/${locale}/user/${reply.user.uid}`}
@@ -803,9 +833,8 @@ function SingleReply({
                         {/* Owner 标识 */}
                         {postAuthorUid && reply.user.uid === postAuthorUid && (
                             <Badge
-                                variant="secondary"
-                                className="text-xs px-1.5 py-0.5 bg-primary/10 text-primary border-primary/20"
-                            >
+                                variant='secondary'
+                                className='text-xs px-1.5 py-0.5 bg-primary/10 text-primary border-primary/20'>
                                 {lang(
                                     {
                                         'zh-CN': '楼主',
@@ -1075,20 +1104,22 @@ function SingleReply({
                                     )}
                                 </span>
                             </motion.button>
-                        </div>                    )}                    {/* 回复内容 */}
-                    <AnimatePresence mode="wait">
+                        </div>
+                    )}{' '}
+                    {/* 回复内容 */}
+                    <AnimatePresence mode='wait'>
                         <motion.div
                             key={`content-${showOriginal}-${originalContent ? 'orig' : 'trans'}`}
                             initial={{ opacity: 0, y: 10 }}
-                            animate={{ 
-                                opacity: 1, 
+                            animate={{
+                                opacity: 1,
                                 y: 0,
-                                transition: { duration: 0.3, ease: 'easeOut' }
+                                transition: { duration: 0.3, ease: 'easeOut' },
                             }}
-                            exit={{ 
-                                opacity: 0, 
+                            exit={{
+                                opacity: 0,
                                 y: -10,
-                                transition: { duration: 0.2, ease: 'easeIn' }
+                                transition: { duration: 0.2, ease: 'easeIn' },
                             }}
                             className={`prose prose-sm max-w-none dark:prose-invert mb-2
                            prose-p:my-1 prose-p:leading-relaxed prose-p:text-sm
@@ -1128,7 +1159,9 @@ function SingleReply({
                                 }}
                                 style={{ overflow: 'hidden' }}
                                 className='mt-2 p-2 bg-muted/20 rounded border'>
-                                <div className='flex flex-wrap gap-2'>                                    {isTranslated && (
+                                <div className='flex flex-wrap gap-2'>
+                                    {' '}
+                                    {isTranslated && (
                                         <Button
                                             variant='outline'
                                             size='sm'
@@ -1174,7 +1207,6 @@ function SingleReply({
                                                   )}
                                         </Button>
                                     )}
-
                                     {/* 高亮原回复按钮 - 移动版新增 */}
                                     {getParentReplyId() && (
                                         <Button
@@ -1203,7 +1235,6 @@ function SingleReply({
                                             )}
                                         </Button>
                                     )}
-
                                     {hasChildReplies() && (
                                         <Button
                                             variant='outline'
@@ -1318,121 +1349,193 @@ function SingleReply({
                                                 locale,
                                             )}
                                         </span>
-                                    </div>
-
+                                    </div>{' '}
                                     {/* 回复内容输入区 */}
                                     <div className='mb-2'>
-                                        <textarea
-                                            value={content}
-                                            onChange={(e) => setContent(e.target.value)}
-                                            placeholder={lang(
-                                                {
-                                                    'zh-CN': `回复 @${reply.user.nickname || 'Anonymous'}...`,
-                                                    'en-US': `Reply to @${reply.user.nickname || 'Anonymous'}...`,
-                                                    'zh-TW': `回覆 @${reply.user.nickname || 'Anonymous'}...`,
-                                                    'es-ES': `Responder a @${reply.user.nickname || 'Anonymous'}...`,
-                                                    'fr-FR': `Répondre à @${reply.user.nickname || 'Anonymous'}...`,
-                                                    'ru-RU': `Ответить @${reply.user.nickname || 'Anonymous'}...`,
-                                                    'ja-JP': `@${reply.user.nickname || 'Anonymous'}に返信...`,
-                                                    'de-DE': `Antworten @${reply.user.nickname || 'Anonymous'}...`,
-                                                    'pt-BR': `Responder a @${reply.user.nickname || 'Anonymous'}...`,
-                                                    'ko-KR': `@${reply.user.nickname || 'Anonymous'}에게 답글...`,
-                                                },
-                                                locale,
-                                            )}
-                                            className={`w-full p-2 border border-input rounded-md resize-none focus:outline-none focus:ring-1 focus:ring-ring bg-background ${
-                                                isMobile ? 'text-xs' : 'text-sm'
-                                            }`}
-                                            rows={isMobile ? 2 : 3}
-                                            maxLength={200}
-                                        />
-                                    </div>
-
-                                    {/* 工具栏 */}
-                                    <div className='flex justify-between items-center'>
-                                        <div className='flex items-center gap-2'>
-                                            <EmojiPicker
-                                                onEmojiSelect={(emoji) =>
-                                                    setContent((prev) => prev + emoji)
-                                                }
-                                                locale={locale}
-                                                className={isMobile ? 'h-6 w-6' : 'h-7 w-7'}
-                                            />
-                                            <span
-                                                className={`text-muted-foreground ${
-                                                    content.length > 180 ? 'text-destructive' : ''
-                                                } ${isMobile ? 'text-xs' : 'text-xs'}`}>
-                                                {content.length}/200
-                                            </span>
-                                        </div>
-                                        <div className='flex gap-1'>
-                                            <Button
-                                                variant='outline'
-                                                size='sm'
-                                                onClick={() => {
-                                                    setIsReplying(false);
-                                                    setContent('');
-                                                }}
-                                                className={`px-2 ${isMobile ? 'h-6 text-xs' : 'h-7 text-xs'}`}>
-                                                {lang(
+                                        {!token.get() ? (
+                                            // 未登录用户显示登录提示
+                                            <div className='relative'>
+                                                <textarea
+                                                    disabled
+                                                    className={`w-full p-2 border border-input rounded-md resize-none bg-muted cursor-not-allowed ${
+                                                        isMobile ? 'text-xs' : 'text-sm'
+                                                    }`}
+                                                    rows={isMobile ? 2 : 3}
+                                                />
+                                                {/* 居中的登录提示 */}
+                                                <div className='absolute inset-0 flex items-center justify-center'>
+                                                    <div className='text-center'>
+                                                        <p
+                                                            className={`text-muted-foreground mb-2 ${isMobile ? 'text-xs' : 'text-sm'}`}>
+                                                            {lang(
+                                                                {
+                                                                    'zh-CN': '请先登录后回复',
+                                                                    'en-US':
+                                                                        'Please login first to reply',
+                                                                    'zh-TW': '請先登錄後回覆',
+                                                                    'es-ES':
+                                                                        'Por favor inicia sesión primero para responder',
+                                                                    'fr-FR':
+                                                                        "Veuillez vous connecter d'abord pour répondre",
+                                                                    'ru-RU':
+                                                                        'Пожалуйста, войдите в систему, чтобы ответить',
+                                                                    'ja-JP':
+                                                                        '返信するには先にログインしてください',
+                                                                    'de-DE':
+                                                                        'Bitte melden Sie sich zuerst an, um zu antworten',
+                                                                    'pt-BR':
+                                                                        'Por favor, faça login primeiro para responder',
+                                                                    'ko-KR':
+                                                                        '답글을 작성하려면 먼저 로그인해주세요',
+                                                                },
+                                                                locale,
+                                                            )}
+                                                        </p>
+                                                        <Link href={`/signin`}>
+                                                            <Button
+                                                                size='sm'
+                                                                className={
+                                                                    isMobile
+                                                                        ? 'h-6 text-xs px-3'
+                                                                        : 'h-7 text-xs px-4'
+                                                                }>
+                                                                {lang(
+                                                                    {
+                                                                        'zh-CN': '去登录',
+                                                                        'en-US': 'Login',
+                                                                        'zh-TW': '去登錄',
+                                                                        'es-ES': 'Iniciar sesión',
+                                                                        'fr-FR': 'Se connecter',
+                                                                        'ru-RU': 'Войти',
+                                                                        'ja-JP': 'ログイン',
+                                                                        'de-DE': 'Anmelden',
+                                                                        'pt-BR': 'Entrar',
+                                                                        'ko-KR': '로그인',
+                                                                    },
+                                                                    locale,
+                                                                )}
+                                                            </Button>
+                                                        </Link>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            // 已登录用户正常显示输入框
+                                            <textarea
+                                                value={content}
+                                                onChange={(e) => setContent(e.target.value)}
+                                                placeholder={lang(
                                                     {
-                                                        'zh-CN': '取消',
-                                                        'en-US': 'Cancel',
-                                                        'zh-TW': '取消',
-                                                        'es-ES': 'Cancelar',
-                                                        'fr-FR': 'Annuler',
-                                                        'ru-RU': 'Отмена',
-                                                        'ja-JP': 'キャンセル',
-                                                        'de-DE': 'Abbrechen',
-                                                        'pt-BR': 'Cancelar',
-                                                        'ko-KR': '취소',
+                                                        'zh-CN': `回复 @${reply.user.nickname || 'Anonymous'}...`,
+                                                        'en-US': `Reply to @${reply.user.nickname || 'Anonymous'}...`,
+                                                        'zh-TW': `回覆 @${reply.user.nickname || 'Anonymous'}...`,
+                                                        'es-ES': `Responder a @${reply.user.nickname || 'Anonymous'}...`,
+                                                        'fr-FR': `Répondre à @${reply.user.nickname || 'Anonymous'}...`,
+                                                        'ru-RU': `Ответить @${reply.user.nickname || 'Anonymous'}...`,
+                                                        'ja-JP': `@${reply.user.nickname || 'Anonymous'}に返信...`,
+                                                        'de-DE': `Antworten @${reply.user.nickname || 'Anonymous'}...`,
+                                                        'pt-BR': `Responder a @${reply.user.nickname || 'Anonymous'}...`,
+                                                        'ko-KR': `@${reply.user.nickname || 'Anonymous'}에게 답글...`,
                                                     },
                                                     locale,
                                                 )}
-                                            </Button>
-                                            <Button
-                                                onClick={submitReply}
-                                                disabled={
-                                                    isSubmitting ||
-                                                    !content.trim() ||
-                                                    content.length > 200
-                                                }
-                                                size='sm'
-                                                className={`px-2 ${isMobile ? 'h-6 text-xs' : 'h-7 text-xs'}`}>
-                                                {isSubmitting
-                                                    ? lang(
-                                                          {
-                                                              'zh-CN': '发送中...',
-                                                              'en-US': 'Sending...',
-                                                              'zh-TW': '發送中...',
-                                                              'es-ES': 'Enviando...',
-                                                              'fr-FR': 'Envoi...',
-                                                              'ru-RU': 'Отправка...',
-                                                              'ja-JP': '送信中...',
-                                                              'de-DE': 'Senden...',
-                                                              'pt-BR': 'Enviando...',
-                                                              'ko-KR': '전송 중...',
-                                                          },
-                                                          locale,
-                                                      )
-                                                    : lang(
-                                                          {
-                                                              'zh-CN': '回复',
-                                                              'en-US': 'Reply',
-                                                              'zh-TW': '回覆',
-                                                              'es-ES': 'Responder',
-                                                              'fr-FR': 'Répondre',
-                                                              'ru-RU': 'Ответить',
-                                                              'ja-JP': '返信',
-                                                              'de-DE': 'Antworten',
-                                                              'pt-BR': 'Responder',
-                                                              'ko-KR': '답글',
-                                                          },
-                                                          locale,
-                                                      )}
-                                            </Button>
+                                                className={`w-full p-2 border border-input rounded-md resize-none focus:outline-none focus:ring-1 focus:ring-ring bg-background ${
+                                                    isMobile ? 'text-xs' : 'text-sm'
+                                                }`}
+                                                rows={isMobile ? 2 : 3}
+                                                maxLength={200}
+                                            />
+                                        )}
+                                    </div>{' '}
+                                    {/* 工具栏 - 只有登录用户才显示 */}
+                                    {token.get() && (
+                                        <div className='flex justify-between items-center'>
+                                            <div className='flex items-center gap-2'>
+                                                <EmojiPicker
+                                                    onEmojiSelect={(emoji) =>
+                                                        setContent((prev) => prev + emoji)
+                                                    }
+                                                    locale={locale}
+                                                    className={isMobile ? 'h-6 w-6' : 'h-7 w-7'}
+                                                />
+                                                <span
+                                                    className={`text-muted-foreground ${
+                                                        content.length > 180
+                                                            ? 'text-destructive'
+                                                            : ''
+                                                    } ${isMobile ? 'text-xs' : 'text-xs'}`}>
+                                                    {content.length}/200
+                                                </span>
+                                            </div>
+                                            <div className='flex gap-1'>
+                                                <Button
+                                                    variant='outline'
+                                                    size='sm'
+                                                    onClick={() => {
+                                                        setIsReplying(false);
+                                                        setContent('');
+                                                    }}
+                                                    className={`px-2 ${isMobile ? 'h-6 text-xs' : 'h-7 text-xs'}`}>
+                                                    {lang(
+                                                        {
+                                                            'zh-CN': '取消',
+                                                            'en-US': 'Cancel',
+                                                            'zh-TW': '取消',
+                                                            'es-ES': 'Cancelar',
+                                                            'fr-FR': 'Annuler',
+                                                            'ru-RU': 'Отмена',
+                                                            'ja-JP': 'キャンセル',
+                                                            'de-DE': 'Abbrechen',
+                                                            'pt-BR': 'Cancelar',
+                                                            'ko-KR': '취소',
+                                                        },
+                                                        locale,
+                                                    )}
+                                                </Button>
+                                                <Button
+                                                    onClick={submitReply}
+                                                    disabled={
+                                                        isSubmitting ||
+                                                        !content.trim() ||
+                                                        content.length > 200
+                                                    }
+                                                    size='sm'
+                                                    className={`px-2 ${isMobile ? 'h-6 text-xs' : 'h-7 text-xs'}`}>
+                                                    {isSubmitting
+                                                        ? lang(
+                                                              {
+                                                                  'zh-CN': '发送中...',
+                                                                  'en-US': 'Sending...',
+                                                                  'zh-TW': '發送中...',
+                                                                  'es-ES': 'Enviando...',
+                                                                  'fr-FR': 'Envoi...',
+                                                                  'ru-RU': 'Отправка...',
+                                                                  'ja-JP': '送信中...',
+                                                                  'de-DE': 'Senden...',
+                                                                  'pt-BR': 'Enviando...',
+                                                                  'ko-KR': '전송 중...',
+                                                              },
+                                                              locale,
+                                                          )
+                                                        : lang(
+                                                              {
+                                                                  'zh-CN': '回复',
+                                                                  'en-US': 'Reply',
+                                                                  'zh-TW': '回覆',
+                                                                  'es-ES': 'Responder',
+                                                                  'fr-FR': 'Répondre',
+                                                                  'ru-RU': 'Ответить',
+                                                                  'ja-JP': '返信',
+                                                                  'de-DE': 'Antworten',
+                                                                  'pt-BR': 'Responder',
+                                                                  'ko-KR': '답글',
+                                                              },
+                                                              locale,
+                                                          )}
+                                                </Button>
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
                             </motion.div>
                         )}
@@ -1466,7 +1569,8 @@ function SingleReply({
                     >
                         {reply.replies.map((subReply: any, index: number) => {
                             // 连接状态处理
-                            const newChildrenStatus = [...childrenStatus];                            if (level >= 0) {
+                            const newChildrenStatus = [...childrenStatus];
+                            if (level >= 0) {
                                 newChildrenStatus[level] = index < reply.replies.length - 1;
                             }
 
@@ -1522,7 +1626,7 @@ export function ReplyList({
     const [hoveredReplyPath, setHoveredReplyPath] = useState<string[] | null>(null);
     const [focusedReplyId, setFocusedReplyId] = useState<string | null>(null);
     const [focusedReplies, setFocusedReplies] = useState<any | null>(null);
-    const [highlightedReplyId, setHighlightedReplyId] = useState<string | null>(null);    // 同步外部 replies 变化
+    const [highlightedReplyId, setHighlightedReplyId] = useState<string | null>(null); // 同步外部 replies 变化
     useEffect(() => {
         setLocalReplies(replies);
     }, [replies]);
@@ -1639,7 +1743,7 @@ export function ReplyList({
         if (onRepliesUpdate) {
             onRepliesUpdate(updatedReplies);
         }
-    };    // 如果处于聚焦模式，显示聚焦的回复
+    }; // 如果处于聚焦模式，显示聚焦的回复
     if (focusedReplies) {
         return (
             <AnimatePresence mode='wait'>
@@ -1758,7 +1862,9 @@ export function ReplyList({
                                     opacity: 1,
                                     y: 0,
                                     transition: { delay: 0.15, duration: 0.3 },
-                                }}>                                <SingleReply
+                                }}>
+                                {' '}
+                                <SingleReply
                                     key={focusedReplies.id}
                                     reply={focusedReplies}
                                     locale={locale}
@@ -1871,7 +1977,9 @@ export function ReplyList({
                                             duration: 0.25,
                                             ease: 'easeOut',
                                         },
-                                    }}>                                    <SingleReply
+                                    }}>
+                                    {' '}
+                                    <SingleReply
                                         reply={reply}
                                         locale={locale}
                                         level={0}
