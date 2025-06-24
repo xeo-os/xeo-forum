@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -39,6 +40,7 @@ interface SingleReplyProps {
     childrenStatus?: boolean[]; // 新增：子层级的连接状态
     replyLikes?: Record<string, boolean>; // 新增：回复点赞状态
     onReplyLikeChange?: (replyId: string, isLiked: boolean) => void; // 新增：回复点赞状态变化回调
+    postAuthorUid?: number; // 新增：帖子作者uid，用于显示Owner标识
 }
 
 function SingleReply({
@@ -56,6 +58,7 @@ function SingleReply({
     childrenStatus = [],
     replyLikes = {},
     onReplyLikeChange,
+    postAuthorUid, // 新增参数
 }: SingleReplyProps) {
     const [isLiked, setIsLiked] = useState(replyLikes[reply.id] || false);
     const [isLiking, setIsLiking] = useState(false);    const [isReplying, setIsReplying] = useState(false);
@@ -790,14 +793,36 @@ function SingleReply({
                     </Link>
                 </div>
 
-                <div className='flex-1 min-w-0'>
-                    {/* 用户信息和时间 */}
+                <div className='flex-1 min-w-0'>                    {/* 用户信息和时间 */}
                     <div className='flex items-center gap-2 mb-1 flex-wrap'>
                         <Link
                             href={`/${locale}/user/${reply.user.uid}`}
                             className={`font-medium hover:text-primary transition-colors ${isMobile ? 'text-xs' : 'text-sm'}`}>
                             {reply.user.nickname || 'Anonymous'}
                         </Link>
+                        {/* Owner 标识 */}
+                        {postAuthorUid && reply.user.uid === postAuthorUid && (
+                            <Badge
+                                variant="secondary"
+                                className="text-xs px-1.5 py-0.5 bg-primary/10 text-primary border-primary/20"
+                            >
+                                {lang(
+                                    {
+                                        'zh-CN': '楼主',
+                                        'en-US': 'Owner',
+                                        'zh-TW': '樓主',
+                                        'es-ES': 'Autor',
+                                        'fr-FR': 'Auteur',
+                                        'ru-RU': 'Автор',
+                                        'ja-JP': '作者',
+                                        'de-DE': 'Autor',
+                                        'pt-BR': 'Autor',
+                                        'ko-KR': '작성자',
+                                    },
+                                    locale,
+                                )}
+                            </Badge>
+                        )}
                         <span
                             className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-xs'}`}>
                             {reply.formattedTime}
@@ -1441,12 +1466,12 @@ function SingleReply({
                     >
                         {reply.replies.map((subReply: any, index: number) => {
                             // 连接状态处理
-                            const newChildrenStatus = [...childrenStatus];
-                            if (level >= 0) {
+                            const newChildrenStatus = [...childrenStatus];                            if (level >= 0) {
                                 newChildrenStatus[level] = index < reply.replies.length - 1;
                             }
 
-                            return (                                <SingleReply
+                            return (
+                                <SingleReply
                                     key={subReply.id}
                                     reply={subReply}
                                     locale={locale}
@@ -1463,6 +1488,7 @@ function SingleReply({
                                     childrenStatus={newChildrenStatus}
                                     replyLikes={replyLikes}
                                     onReplyLikeChange={onReplyLikeChange}
+                                    postAuthorUid={postAuthorUid} // 传递帖子作者uid
                                 />
                             );
                         })}
@@ -1480,6 +1506,7 @@ interface ReplyListProps {
     onRepliesUpdate?: (replies: any[]) => void;
     replyLikes?: Record<string, boolean>; // 新增：回复点赞状态
     onReplyLikeChange?: (replyId: string, isLiked: boolean) => void; // 新增：回复点赞状态变化回调
+    postAuthorUid?: number; // 新增：帖子作者uid
 }
 
 export function ReplyList({
@@ -1488,6 +1515,7 @@ export function ReplyList({
     onRepliesUpdate,
     replyLikes = {},
     onReplyLikeChange,
+    postAuthorUid, // 新增参数
 }: ReplyListProps) {
     console.log('ReplyList received replyLikes:', replyLikes); // 调试日志
     const [localReplies, setLocalReplies] = useState(replies);
@@ -1745,6 +1773,7 @@ export function ReplyList({
                                     onHighlightChange={handleHighlightChange}
                                     replyLikes={replyLikes}
                                     onReplyLikeChange={onReplyLikeChange}
+                                    postAuthorUid={postAuthorUid} // 传递帖子作者uid
                                 />
                             </motion.div>
                         </CardContent>
@@ -1856,6 +1885,7 @@ export function ReplyList({
                                         onHighlightChange={handleHighlightChange}
                                         replyLikes={replyLikes}
                                         onReplyLikeChange={onReplyLikeChange}
+                                        postAuthorUid={postAuthorUid} // 传递帖子作者uid
                                     />
                                 </motion.div>
                             ))}
