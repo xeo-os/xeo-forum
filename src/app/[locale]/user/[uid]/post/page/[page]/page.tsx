@@ -2,7 +2,15 @@ import prisma from '@/app/api/_utils/prisma';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ChevronLeft, ChevronRight, FileText, ArrowLeft, MessageSquare, Heart, Clock } from 'lucide-react';
+import {
+    ChevronLeft,
+    ChevronRight,
+    FileText,
+    ArrowLeft,
+    MessageSquare,
+    Heart,
+    Clock,
+} from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -40,7 +48,7 @@ type TimelineItem = {
         createdAt?: Date;
         originLang?: string;
         _count?: {
-            Reply?: number;
+            belongReplies?: number;
             likes?: number;
         };
     };
@@ -145,12 +153,13 @@ export default async function UserPostsPage({ params }: Props) {
             titleKOKR: true,
             titleDEDE: true,
             titlePTBR: true,
-            _count: { select: { Reply: true, likes: true } },
+            _count: { select: { belongReplies: true, likes: true } },
         },
-        orderBy: { updatedAt: 'desc' },
+        orderBy: { createdAt: 'desc' },
         skip,
         take: ITEMS_PER_PAGE,
-    });    const timelineItems: TimelineItem[] = posts.map((post) => ({
+    });
+    const timelineItems: TimelineItem[] = posts.map((post) => ({
         id: `post-${post.id}`,
         type: 'post' as const,
         createdAt: post.createdAt,
@@ -165,7 +174,8 @@ export default async function UserPostsPage({ params }: Props) {
         titleZHTW: post.titleZHTW || undefined,
         titleESES: post.titleESES || undefined,
         titleFRFR: post.titleFRFR || undefined,
-        titleRURU: post.titleRURU || undefined,        titleJAJP: post.titleJAJP || undefined,
+        titleRURU: post.titleRURU || undefined,
+        titleJAJP: post.titleJAJP || undefined,
         titleKOKR: post.titleKOKR || undefined,
         titleDEDE: post.titleDEDE || undefined,
         titlePTBR: post.titlePTBR || undefined,
@@ -240,12 +250,12 @@ export default async function UserPostsPage({ params }: Props) {
         // 根据locale获取对应的多语言标题
         const localeKey = locale.replace('-', '').toUpperCase();
         const titleField = `title${localeKey}` as keyof TimelineItem;
-        
+
         // 如果有对应语言的标题，使用它
         if (item[titleField]) {
             return item[titleField] as string;
         }
-        
+
         // 如果原始语言等于当前语言，或者没有对应翻译，返回原始标题
         return item.content.title || '';
     };
@@ -354,9 +364,9 @@ export default async function UserPostsPage({ params }: Props) {
                                 <p className='text-muted-foreground'>@{user.username}</p>
                             </div>
                         </div>
-                        <Button variant="outline" size="sm" asChild>
+                        <Button variant='outline' size='sm' asChild>
                             <Link href={`/${locale}/user/${uid}`}>
-                                <ArrowLeft className="h-4 w-4 mr-1" />
+                                <ArrowLeft className='h-4 w-4 mr-1' />
                                 {texts.backToProfile}
                             </Link>
                         </Button>
@@ -367,66 +377,71 @@ export default async function UserPostsPage({ params }: Props) {
             {/* 帖子列表 */}
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <FileText className="h-5 w-5" />
+                    <CardTitle className='flex items-center gap-2'>
+                        <FileText className='h-5 w-5' />
                         {texts.posts}
-                        <Badge variant="secondary" className="ml-2">
+                        <Badge variant='secondary' className='ml-2'>
                             {user._count.post}
                         </Badge>
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     {timelineItems.length === 0 ? (
-                        <div className="text-center py-12 text-muted-foreground">
-                            <div className="text-4xl mb-4">📝</div>
-                            <p className="text-lg">
-                                {lang({
-                                    'zh-CN': '暂无帖子',
-                                    'en-US': 'No posts yet',
-                                    'zh-TW': '暫無帖子',
-                                    'es-ES': 'Aún no hay publicaciones',
-                                    'fr-FR': 'Aucune publication pour le moment',
-                                    'ru-RU': 'Пока нет постов',
-                                    'ja-JP': 'まだ投稿がありません',
-                                    'de-DE': 'Noch keine Beiträge',
-                                    'pt-BR': 'Ainda não há postagens',
-                                    'ko-KR': '아직 게시물이 없습니다',
-                                }, locale)}
+                        <div className='text-center py-12 text-muted-foreground'>
+                            <div className='text-4xl mb-4'>📝</div>
+                            <p className='text-lg'>
+                                {lang(
+                                    {
+                                        'zh-CN': '暂无帖子',
+                                        'en-US': 'No posts yet',
+                                        'zh-TW': '暫無帖子',
+                                        'es-ES': 'Aún no hay publicaciones',
+                                        'fr-FR': 'Aucune publication pour le moment',
+                                        'ru-RU': 'Пока нет постов',
+                                        'ja-JP': 'まだ投稿がありません',
+                                        'de-DE': 'Noch keine Beiträge',
+                                        'pt-BR': 'Ainda não há postagens',
+                                        'ko-KR': '아직 게시물이 없습니다',
+                                    },
+                                    locale,
+                                )}
                             </p>
                         </div>
                     ) : (
                         <div className='space-y-6'>
                             {timelineItems.map((item) => (
-                                <div key={item.id} className="border-b border-border pb-6 last:border-b-0">
-                                    <div className="flex items-start gap-3">
-                                        <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/20">
-                                            <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                <div
+                                    key={item.id}
+                                    className='border-b border-border pb-6 last:border-b-0'>
+                                    <div className='flex items-start gap-3'>
+                                        <div className='p-2 rounded-lg bg-blue-100 dark:bg-blue-900/20'>
+                                            <FileText className='h-4 w-4 text-blue-600 dark:text-blue-400' />
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="mb-2">
+                                        <div className='flex-1 min-w-0'>
+                                            <div className='mb-2'>
                                                 <Link
                                                     href={`/${locale}/post/${item.content.id}/${item.titleENUS
                                                         ?.toLowerCase()
                                                         .replaceAll(' ', '-')
                                                         .replace(/[^a-z-]/g, '')}`}
-                                                    className="font-medium hover:underline text-lg"
-                                                >
+                                                    className='font-medium hover:underline text-lg'>
                                                     {getLocalizedTitle(item)}
                                                 </Link>
                                             </div>
                                             {item.content.origin && (
-                                                <div className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                                                <div className='text-sm text-muted-foreground mb-3 line-clamp-2'>
                                                     {item.content.origin}
                                                 </div>
                                             )}
-                                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                                <div className="flex items-center gap-1">
-                                                    <Clock className="h-3 w-3" />
+                                            <div className='flex items-center gap-4 text-xs text-muted-foreground'>
+                                                <div className='flex items-center gap-1'>
+                                                    <Clock className='h-3 w-3' />
                                                     {getRelativeTime(new Date(item.createdAt))}
                                                 </div>
-                                                <div className="flex items-center gap-1">
-                                                    <MessageSquare className="h-3 w-3" />
-                                                    {item.content._count?.Reply || 0} {lang(
+                                                <div className='flex items-center gap-1'>
+                                                    <MessageSquare className='h-3 w-3' />
+                                                    {item.content._count?.belongReplies || 0}{' '}
+                                                    {lang(
                                                         {
                                                             'zh-CN': '回复',
                                                             'en-US': 'replies',
@@ -442,9 +457,10 @@ export default async function UserPostsPage({ params }: Props) {
                                                         locale,
                                                     )}
                                                 </div>
-                                                <div className="flex items-center gap-1">
-                                                    <Heart className="h-3 w-3" />
-                                                    {item.content._count?.likes || 0} {lang(
+                                                <div className='flex items-center gap-1'>
+                                                    <Heart className='h-3 w-3' />
+                                                    {item.content._count?.likes || 0}{' '}
+                                                    {lang(
                                                         {
                                                             'zh-CN': '点赞',
                                                             'en-US': 'likes',
@@ -470,23 +486,23 @@ export default async function UserPostsPage({ params }: Props) {
 
                     {/* Pagination */}
                     {totalPages > 1 && (
-                        <div className="flex items-center justify-center gap-2 mt-6">
+                        <div className='flex items-center justify-center gap-2 mt-6'>
                             {page > 1 && (
-                                <Button variant="outline" size="sm" asChild>
+                                <Button variant='outline' size='sm' asChild>
                                     <Link
                                         href={
-                                            page == 2                                                ? `/${locale}/user/${uid}/post/page/1`
+                                            page == 2
+                                                ? `/${locale}/user/${uid}/post/page/1`
                                                 : `/${locale}/user/${uid}/post/page/${page - 1}`
                                         }
-                                        rel="prev"
-                                    >
-                                        <ChevronLeft className="h-4 w-4 mr-1" />
+                                        rel='prev'>
+                                        <ChevronLeft className='h-4 w-4 mr-1' />
                                         {texts.previous}
                                     </Link>
                                 </Button>
                             )}
 
-                            <div className="flex items-center gap-1">
+                            <div className='flex items-center gap-1'>
                                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                                     let pageNum;
                                     if (totalPages <= 5) {
@@ -502,15 +518,15 @@ export default async function UserPostsPage({ params }: Props) {
                                     return (
                                         <Button
                                             key={pageNum}
-                                            variant={pageNum === page ? "default" : "outline"}
-                                            size="sm"
+                                            variant={pageNum === page ? 'default' : 'outline'}
+                                            size='sm'
                                             asChild
-                                            className="w-8 h-8 p-0"
-                                        >
+                                            className='w-8 h-8 p-0'>
                                             <Link
                                                 href={`/${locale}/user/${uid}/post/page/${pageNum}`}
-                                                aria-current={pageNum === page ? "page" : undefined}
-                                            >
+                                                aria-current={
+                                                    pageNum === page ? 'page' : undefined
+                                                }>
                                                 {pageNum}
                                             </Link>
                                         </Button>
@@ -519,13 +535,12 @@ export default async function UserPostsPage({ params }: Props) {
                             </div>
 
                             {page < totalPages && (
-                                <Button variant="outline" size="sm" asChild>
+                                <Button variant='outline' size='sm' asChild>
                                     <Link
                                         href={`/${locale}/user/${uid}/post/page/${page + 1}`}
-                                        rel="next"
-                                    >
+                                        rel='next'>
                                         {texts.next}
-                                        <ChevronRight className="h-4 w-4 ml-1" />
+                                        <ChevronRight className='h-4 w-4 ml-1' />
                                     </Link>
                                 </Button>
                             )}

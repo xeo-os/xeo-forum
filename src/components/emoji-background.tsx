@@ -60,18 +60,14 @@ const EmojiBackground: React.FC<EmojiBackgroundProps> = ({
         // 如果没有匹配到表情符号，尝试按空格分割
         const userEmojiList = matches || emojiString.split(' ').filter((emoji) => emoji.trim() !== '');
 
-        // 如果用户表情符号太少，用默认表情符号补充
-        if (userEmojiList.length < 20) {
-            const needed = 28 - userEmojiList.length;
-            // 使用固定种子确保服务端和客户端一致
-            const shuffledDefaults = [...defaultEmojis]
-                .map((emoji, index) => ({
-                    emoji,
-                    sort: seededRandom(index + (userEmojis?.length || 0)),
-                }))
-                .sort((a, b) => a.sort - b.sort)
-                .map((item) => item.emoji);
-            return [...userEmojiList, ...shuffledDefaults.slice(0, needed)];
+        // 如果用户表情符号太少，重复用户表情符号
+        if (userEmojiList.length < 15) {
+            const needed = 15 - userEmojiList.length;
+            const repeated = [];
+            for (let i = 0; i < needed; i++) {
+          repeated.push(userEmojiList[i % userEmojiList.length]);
+            }
+            return [...userEmojiList, ...repeated];
         }
 
         return userEmojiList.slice(0, 28); // 最多28个表情符号

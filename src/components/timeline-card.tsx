@@ -161,7 +161,7 @@ export function TimelineCard({ item, locale }: Props) {
                             </time>
                             <div className='flex gap-4 text-xs text-muted-foreground'>
                                 <span>
-                                    {item.content._count.Reply}{' '}
+                                    {item.content._count.belongReplies}{' '}
                                     {lang(
                                         {
                                             'zh-CN': '回复',

@@ -502,8 +502,7 @@ function SingleReply({
         }
         const translatedFieldName = `content${locale.replace('-', '').toUpperCase()}`;
         return reply[translatedFieldName] || reply.content;
-    };
-    // 处理回复
+    };    // 处理回复
     const submitReply = async () => {
         if (!content.trim()) return;
 
@@ -1447,8 +1446,7 @@ function SingleReply({
                                 newChildrenStatus[level] = index < reply.replies.length - 1;
                             }
 
-                            return (
-                                <SingleReply
+                            return (                                <SingleReply
                                     key={subReply.id}
                                     reply={subReply}
                                     locale={locale}
@@ -1732,8 +1730,7 @@ export function ReplyList({
                                     opacity: 1,
                                     y: 0,
                                     transition: { delay: 0.15, duration: 0.3 },
-                                }}>
-                                <SingleReply
+                                }}>                                <SingleReply
                                     key={focusedReplies.id}
                                     reply={focusedReplies}
                                     locale={locale}
@@ -1845,8 +1842,7 @@ export function ReplyList({
                                             duration: 0.25,
                                             ease: 'easeOut',
                                         },
-                                    }}>
-                                    <SingleReply
+                                    }}>                                    <SingleReply
                                         reply={reply}
                                         locale={locale}
                                         level={0}

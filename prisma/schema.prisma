@@ -74,7 +74,6 @@ model Post {
   unsafeTags   Json?    @db.JsonB
   likes        Like[]
   User         User?    @relation(fields: [userUid], references: [uid])
-  Reply        Reply[]
   belongReplies Reply[] @relation("BelongPost")
   topics       Topic[]  @relation("PostTopics")
   tasks        Task[]
@@ -140,6 +139,7 @@ model Reply {
   userUid      Int
   likeUserUid  Int[]
   belongPostid Int?
+  belongReply  Int?
   belongPost   Post?    @relation("BelongPost", fields: [belongPostid], references: [id])
   childReplay  Boolean  @default(false)
   contentDEDE  String?
@@ -158,8 +158,6 @@ model Reply {
   replies      Reply[]  @relation("CommentReplies")
   user         User     @relation(fields: [userUid], references: [uid])
   tasks        Task[]
-  Post         Post?    @relation(fields: [postId], references: [id])
-  postId       Int?
 }
 
 model Task {

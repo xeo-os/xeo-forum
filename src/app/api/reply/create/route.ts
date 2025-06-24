@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache';
 
 export async function POST(request: Request) {
     const JWT = request.headers.get('Authorization')?.replace('Bearer ', '');
-    const { lang = 'en-US', content, postid, replyid } = await request.json();
+    const { lang = 'en-US', content, postid, replyid, belongReply } = await request.json();
 
     if (!JWT) {
         return response(401, {
@@ -50,17 +50,24 @@ export async function POST(request: Request) {
 
     const token = await auth(request);
 
-    if (token) {
-        try {
-            let result, fatherReply, post;
+    if (token) {        try {
+            let result, fatherReply, post, calculatedBelongReply;
             if (postid) {
-                // post 评论
+                // post 评论 - 计算属于第几个回复
+                const existingRepliesCount = await prisma.reply.count({
+                    where: {
+                        postUid: postid,
+                    },
+                });
+                calculatedBelongReply = existingRepliesCount + 1;
+
                 result = await prisma.reply.create({
                     data: {
                         content,
                         postUid: postid,
                         userUid: token.uid,
                         belongPostid: postid,
+                        belongReply: calculatedBelongReply,
                         originLang: lang,
                     },
                 });
@@ -77,7 +84,7 @@ export async function POST(request: Request) {
                     },
                 });
             } else if (replyid) {
-                // 回复的回复
+                // 回复的回复 - 继承父回复的 belongReply
                 fatherReply = await prisma.reply.findUnique({
                     where: {
                         id: replyid,
@@ -114,13 +121,12 @@ export async function POST(request: Request) {
                             },
                         },
                     },
-                });
-
-                result = await prisma.reply.create({
+                });                result = await prisma.reply.create({
                     data: {
                         content,
                         userUid: token.uid,
                         belongPostid: fatherReply?.belongPostid,
+                        belongReply: fatherReply?.belongReply || calculatedBelongReply,
                         commentUid: replyid,
                         childReplay: true,
                         originLang: lang,

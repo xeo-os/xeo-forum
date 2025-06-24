@@ -5,13 +5,16 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
-import { Heart, MessageCircle, Share2, Loader2, FileText } from 'lucide-react';
+import { ShareButton } from '@/components/share-button';
+import { Heart, MessageCircle, Loader2, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import lang from '@/lib/lang';
 import { ReplyList } from '@/components/reply-list';
 import { EmojiPicker } from '@/components/emoji-picker';
 import token from '@/utils/userToken';
 import { useBroadcast } from '@/store/useBroadcast';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export interface PostDetailClientProps {
     post: {
@@ -20,24 +23,34 @@ export interface PostDetailClientProps {
         likes: number;
         replies: number;
         isTranslated?: boolean;
+        authorUid?: number; // 添加作者uid
     };
-    replies: any[];
+    replies: unknown[];
     locale: string;
     currentPage: number;
     totalPages: number;
+    slug: string; // 添加 slug 参数
     initialLikeStatus?: {
         postLiked: boolean;
         replyLikes: Record<string, boolean>;
     };
 }
 
-export function PostDetailClient({ post, replies, locale }: PostDetailClientProps) {
+export function PostDetailClient({
+    post,
+    replies,
+    locale,
+    currentPage,
+    totalPages,
+    slug,
+}: PostDetailClientProps) {
     const [isLiked, setIsLiked] = useState(false);
     const [isLiking, setIsLiking] = useState(false);
     const [likeCount, setLikeCount] = useState(post.likes);
     const [showReplyEditor, setShowReplyEditor] = useState(false);
     const [replyContent, setReplyContent] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);    const [replyLikes, setReplyLikes] = useState<Record<string, boolean>>({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [replyLikes, setReplyLikes] = useState<Record<string, boolean>>({});
     const [likeStatusLoaded, setLikeStatusLoaded] = useState(false);
     const [localReplies, setLocalReplies] = useState(replies); // 添加本地回复状态
     const [translationProgress, setTranslationProgress] = useState<{
@@ -45,22 +58,23 @@ export function PostDetailClient({ post, replies, locale }: PostDetailClientProp
         toastId: string;
     } | null>(null);
 
-    const { registerCallback, unregisterCallback } = useBroadcast();// 原文相关状态 - 只用于按钮显示
+    const { registerCallback, unregisterCallback } = useBroadcast(); // 原文相关状态 - 只用于按钮显示
     const [showOriginal, setShowOriginal] = useState(false);
     const [isLoadingOriginal, setIsLoadingOriginal] = useState(false);
     const [hasOriginalContent, setHasOriginalContent] = useState(false);
 
     // 监听来自 PostContent 的状态更新
     useEffect(() => {
-        const handleStatusUpdate = (event: any) => {
-            const { showingOriginal, hasOriginal, loading } = event.detail;
+        const handleStatusUpdate = (event: Event) => {
+            const customEvent = event as CustomEvent;
+            const { showingOriginal, hasOriginal, loading } = customEvent.detail;
             setShowOriginal(showingOriginal);
             setHasOriginalContent(hasOriginal);
             setIsLoadingOriginal(loading);
         };
 
         window.addEventListener(`post-status-update-${post.id}`, handleStatusUpdate);
-        
+
         return () => {
             window.removeEventListener(`post-status-update-${post.id}`, handleStatusUpdate);
         };
@@ -70,22 +84,32 @@ export function PostDetailClient({ post, replies, locale }: PostDetailClientProp
     useEffect(() => {
         const handleBroadcastMessage = (message: unknown) => {
             if (typeof message === 'object' && message !== null && 'action' in message) {
-                const typedMessage = message as { action: string; data?: { uuid?: string; status?: string; type?: string } };
-                
+                const typedMessage = message as {
+                    action: string;
+                    data?: { uuid?: string; status?: string; type?: string };
+                };
+
                 // 处理翻译状态更新
-                if (typedMessage.action === 'broadcast' && typedMessage.data && translationProgress) {
+                if (
+                    typedMessage.action === 'broadcast' &&
+                    typedMessage.data &&
+                    translationProgress
+                ) {
                     console.log('Received broadcast data:', typedMessage.data);
                     console.log('Current translation progress:', translationProgress);
-                    
+
                     // 检查是否是任务状态更新且uuid匹配
-                    if (typedMessage.data.uuid === translationProgress.uuid && typedMessage.data.type === 'reply') {
+                    if (
+                        typedMessage.data.uuid === translationProgress.uuid &&
+                        typedMessage.data.type === 'reply'
+                    ) {
                         const status = typedMessage.data.status;
                         console.log('Task status update for matching UUID:', status);
-                        
+
                         if (status === 'DONE') {
                             // 关闭翻译进度toast
                             toast.dismiss(translationProgress.toastId);
-                            
+
                             // 显示完成提示
                             toast.success(
                                 lang(
@@ -102,7 +126,7 @@ export function PostDetailClient({ post, replies, locale }: PostDetailClientProp
                                         'ko-KR': '답글 번역 완료',
                                     },
                                     locale,
-                                )
+                                ),
                             );
                             setTranslationProgress(null);
                         } else if (status === 'FAIL') {
@@ -148,28 +172,40 @@ export function PostDetailClient({ post, replies, locale }: PostDetailClientProp
                                                         'Content-Type': 'application/json',
                                                         Authorization: `Bearer ${token.get()}`,
                                                     },
-                                                    body: JSON.stringify({ id: translationProgress.uuid }),
+                                                    body: JSON.stringify({
+                                                        id: translationProgress.uuid,
+                                                    }),
                                                 });
 
                                                 const result = await response.json();
                                                 if (result.ok) {
                                                     // 重试成功，重新显示进度toast
                                                     const newToastId = toast(
-                                                        <div className="flex items-center space-x-2">
-                                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                                        <div className='flex items-center space-x-2'>
+                                                            <Loader2 className='h-4 w-4 animate-spin' />
                                                             <span>
                                                                 {lang(
                                                                     {
-                                                                        'zh-CN': '正在重新翻译回复...',
-                                                                        'zh-TW': '正在重新翻譯回覆...',
-                                                                        'en-US': 'Retranslating reply...',
-                                                                        'es-ES': 'Retraduciendo respuesta...',
-                                                                        'fr-FR': 'Retraduction de la réponse...',
-                                                                        'ru-RU': 'Повторный перевод ответа...',
-                                                                        'ja-JP': '返信を再翻訳中...',
-                                                                        'de-DE': 'Antwort erneut übersetzen...',
-                                                                        'pt-BR': 'Retraduzindo resposta...',
-                                                                        'ko-KR': '답글 재번역 중...',
+                                                                        'zh-CN':
+                                                                            '正在重新翻译回复...',
+                                                                        'zh-TW':
+                                                                            '正在重新翻譯回覆...',
+                                                                        'en-US':
+                                                                            'Retranslating reply...',
+                                                                        'es-ES':
+                                                                            'Retraduciendo respuesta...',
+                                                                        'fr-FR':
+                                                                            'Retraduction de la réponse...',
+                                                                        'ru-RU':
+                                                                            'Повторный перевод ответа...',
+                                                                        'ja-JP':
+                                                                            '返信を再翻訳中...',
+                                                                        'de-DE':
+                                                                            'Antwort erneut übersetzen...',
+                                                                        'pt-BR':
+                                                                            'Retraduzindo resposta...',
+                                                                        'ko-KR':
+                                                                            '답글 재번역 중...',
                                                                     },
                                                                     locale,
                                                                 )}
@@ -178,7 +214,7 @@ export function PostDetailClient({ post, replies, locale }: PostDetailClientProp
                                                         {
                                                             duration: Infinity,
                                                             dismissible: false,
-                                                        }
+                                                        },
                                                     );
 
                                                     // 更新翻译进度状态
@@ -192,17 +228,25 @@ export function PostDetailClient({ post, replies, locale }: PostDetailClientProp
                                                             {
                                                                 'zh-CN': '重试失败，请稍后再试',
                                                                 'zh-TW': '重試失敗，請稍後再試',
-                                                                'en-US': 'Retry failed, please try again later',
-                                                                'es-ES': 'Reintento falló, por favor intente de nuevo más tarde',
-                                                                'fr-FR': 'Échec de la nouvelle tentative, veuillez réessayer plus tard',
-                                                                'ru-RU': 'Повтор не удался, попробуйте позже',
-                                                                'ja-JP': '再試行に失敗しました。後でもう一度お試しください',
-                                                                'de-DE': 'Wiederholung fehlgeschlagen, bitte versuchen Sie es später erneut',
-                                                                'pt-BR': 'Falha na nova tentativa, tente novamente mais tarde',
-                                                                'ko-KR': '재시도 실패, 나중에 다시 시도하세요',
+                                                                'en-US':
+                                                                    'Retry failed, please try again later',
+                                                                'es-ES':
+                                                                    'Reintento falló, por favor intente de nuevo más tarde',
+                                                                'fr-FR':
+                                                                    'Échec de la nouvelle tentative, veuillez réessayer plus tard',
+                                                                'ru-RU':
+                                                                    'Повтор не удался, попробуйте позже',
+                                                                'ja-JP':
+                                                                    '再試行に失敗しました。後でもう一度お試しください',
+                                                                'de-DE':
+                                                                    'Wiederholung fehlgeschlagen, bitte versuchen Sie es später erneut',
+                                                                'pt-BR':
+                                                                    'Falha na nova tentativa, tente novamente mais tarde',
+                                                                'ko-KR':
+                                                                    '재시도 실패, 나중에 다시 시도하세요',
                                                             },
                                                             locale,
-                                                        )
+                                                        ),
                                                     );
                                                 }
                                             } catch (error) {
@@ -214,21 +258,25 @@ export function PostDetailClient({ post, replies, locale }: PostDetailClientProp
                                                             'zh-TW': '重試請求失敗',
                                                             'en-US': 'Retry request failed',
                                                             'es-ES': 'Solicitud de reintento falló',
-                                                            'fr-FR': 'Échec de la demande de nouvelle tentative',
+                                                            'fr-FR':
+                                                                'Échec de la demande de nouvelle tentative',
                                                             'ru-RU': 'Запрос на повтор не удался',
-                                                            'ja-JP': '再試行リクエストが失敗しました',
-                                                            'de-DE': 'Wiederholungsanfrage fehlgeschlagen',
-                                                            'pt-BR': 'Falha na solicitação de nova tentativa',
+                                                            'ja-JP':
+                                                                '再試行リクエストが失敗しました',
+                                                            'de-DE':
+                                                                'Wiederholungsanfrage fehlgeschlagen',
+                                                            'pt-BR':
+                                                                'Falha na solicitação de nova tentativa',
                                                             'ko-KR': '재시도 요청 실패',
                                                         },
                                                         locale,
-                                                    )
+                                                    ),
                                                 );
                                             }
                                         },
                                     },
                                     duration: 10000,
-                                }
+                                },
                             );
                             // 关闭翻译进度toast
                             toast.dismiss(translationProgress.toastId);
@@ -245,7 +293,155 @@ export function PostDetailClient({ post, replies, locale }: PostDetailClientProp
         };
     }, [registerCallback, unregisterCallback, translationProgress, locale]);
 
-    const MAX_REPLY_LENGTH = 200;const editorVariants = {
+    const pathname = usePathname(); // 生成分页链接
+    const generatePageUrl = (page: number) => {
+        const pathParts = pathname.split('/');
+        // 检查当前URL是否已经包含 /page/ 结构
+        const pageIndex = pathParts.findIndex((part) => part === 'page');
+
+        if (pageIndex !== -1 && pageIndex < pathParts.length - 1) {
+            // 如果已经有 /page/ 结构，替换页码
+            pathParts[pageIndex + 1] = page.toString();
+        } else {
+            // 如果没有 /page/ 结构，添加 /page/X
+            pathParts.push('page', page.toString());
+        }
+
+        return pathParts.join('/');
+    };
+
+    // 分页组件
+    const PaginationControls = () => {
+        if (totalPages <= 1) return null;
+
+        const pages = [];
+        const maxVisiblePages = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+        const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+        // 调整起始页，确保显示足够的页面
+        if (endPage - startPage + 1 < maxVisiblePages) {
+            startPage = Math.max(1, endPage - maxVisiblePages + 1);
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            pages.push(i);
+        }
+
+        return (
+            <>
+                <div className='flex items-center justify-center gap-2'>
+                    {/* 上一页按钮 */}
+                    {currentPage > 1 && (
+                        <Link href={generatePageUrl(currentPage - 1)}>
+                            <Button variant='outline' size='sm' className='flex items-center gap-1'>
+                                <ChevronLeft className='h-4 w-4' />
+                                {lang(
+                                    {
+                                        'zh-CN': '上一页',
+                                        'zh-TW': '上一頁',
+                                        'en-US': 'Previous',
+                                        'es-ES': 'Anterior',
+                                        'fr-FR': 'Précédent',
+                                        'ru-RU': 'Назад',
+                                        'ja-JP': '前へ',
+                                        'de-DE': 'Zurück',
+                                        'pt-BR': 'Anterior',
+                                        'ko-KR': '이전',
+                                    },
+                                    locale,
+                                )}
+                            </Button>
+                        </Link>
+                    )}
+
+                    {/* 第一页和省略号 */}
+                    {startPage > 1 && (
+                        <>
+                            <Link href={generatePageUrl(1)}>
+                                <Button variant='outline' size='sm'>
+                                    1
+                                </Button>
+                            </Link>
+                            {startPage > 2 && <span className='text-muted-foreground'>...</span>}
+                        </>
+                    )}
+
+                    {/* 页码按钮 */}
+                    {pages.map((page) => (
+                        <Link key={page} href={generatePageUrl(page)}>
+                            <Button
+                                variant={page === currentPage ? 'default' : 'outline'}
+                                size='sm'
+                                className={page === currentPage ? 'pointer-events-none' : ''}>
+                                {page}
+                            </Button>
+                        </Link>
+                    ))}
+
+                    {/* 最后一页和省略号 */}
+                    {endPage < totalPages && (
+                        <>
+                            {endPage < totalPages - 1 && (
+                                <span className='text-muted-foreground'>...</span>
+                            )}
+                            <Link href={generatePageUrl(totalPages)}>
+                                <Button variant='outline' size='sm'>
+                                    {totalPages}
+                                </Button>
+                            </Link>
+                        </>
+                    )}
+
+                    {/* 下一页按钮 */}
+                    {currentPage < totalPages && (
+                        <Link href={generatePageUrl(currentPage + 1)}>
+                            <Button variant='outline' size='sm' className='flex items-center gap-1'>
+                                {lang(
+                                    {
+                                        'zh-CN': '下一页',
+                                        'zh-TW': '下一頁',
+                                        'en-US': 'Next',
+                                        'es-ES': 'Siguiente',
+                                        'fr-FR': 'Suivant',
+                                        'ru-RU': 'Далее',
+                                        'ja-JP': '次へ',
+                                        'de-DE': 'Weiter',
+                                        'pt-BR': 'Próximo',
+                                        'ko-KR': '다음',
+                                    },
+                                    locale,
+                                )}
+                                <ChevronRight className='h-4 w-4' />
+                            </Button>
+                        </Link>
+                    )}
+                </div>
+
+                {/* 页面信息 */}
+                <div className='text-center text-sm text-muted-foreground mt-2'>
+                    {lang(
+                        {
+                            'zh-CN': `第 ${currentPage} 页，共 ${totalPages} 页`,
+                            'zh-TW': `第 ${currentPage} 頁，共 ${totalPages} 頁`,
+                            'en-US': `Page ${currentPage} of ${totalPages}`,
+                            'es-ES': `Página ${currentPage} de ${totalPages}`,
+                            'fr-FR': `Page ${currentPage} sur ${totalPages}`,
+                            'ru-RU': `Страница ${currentPage} из ${totalPages}`,
+                            'ja-JP': `${currentPage} / ${totalPages} ページ`,
+                            'de-DE': `Seite ${currentPage} von ${totalPages}`,
+                            'pt-BR': `Página ${currentPage} de ${totalPages}`,
+                            'ko-KR': `${currentPage} / ${totalPages} 페이지`,
+                        },
+                        locale,
+                    )}
+                </div>
+            </>
+        );
+    };
+
+    const MAX_REPLY_LENGTH = 200;
+    const editorVariants = {
         hidden: {
             height: 0,
             opacity: 0,
@@ -413,46 +609,12 @@ export function PostDetailClient({ post, replies, locale }: PostDetailClientProp
                 ),
             );
         } finally {
-            setIsLiking(false);        }
-    };    // 获取原文内容 - 改为触发事件
+            setIsLiking(false);
+        }
+    }; // 获取原文内容 - 改为触发事件
     const fetchOriginalContent = async () => {
         // 触发 PostContent 组件的原文切换事件
         window.dispatchEvent(new Event(`post-original-toggle-${post.id}`));
-    };
-
-    const handleShare = async () => {
-        if (navigator.share) {
-            try {
-                await navigator.share({
-                    title: post.title,
-                    url: window.location.href,
-                });            } catch {
-                console.log('Share cancelled');
-            }
-        } else {
-            try {
-                await navigator.clipboard.writeText(window.location.href);
-                toast.success(
-                    lang(
-                        {
-                            'zh-CN': '链接已复制到剪贴板',
-                            'zh-TW': '連結已複製到剪貼簿',
-                            'en-US': 'Link copied to clipboard',
-                            'es-ES': 'Enlace copiado al portapapeles',
-                            'fr-FR': 'Lien copié dans le presse-papiers',
-                            'ru-RU': 'Ссылка скопирована в буфер обмена',
-                            'ja-JP': 'リンクがクリップボードにコピーされました',
-                            'de-DE': 'Link in die Zwischenablage kopiert',
-                            'pt-BR': 'Link copiado para a área de transferência',
-                            'ko-KR': '링크가 클립보드에 복사되었습니다',
-                        },
-                        locale,
-                    ),
-                );
-            } catch (error) {
-                console.error('Copy failed:', error);
-            }
-        }
     };
 
     const submitReply = async () => {
@@ -479,7 +641,6 @@ export function PostDetailClient({ post, replies, locale }: PostDetailClientProp
             );
             return;
         }
-
         setIsSubmitting(true);
         try {
             const response = await fetch('/api/reply/create', {
@@ -493,14 +654,15 @@ export function PostDetailClient({ post, replies, locale }: PostDetailClientProp
                     postid: post.id,
                     lang: locale,
                 }),
-            });            const result = await response.json();
+            });
+            const result = await response.json();
             if (result.ok) {
                 const replyUuid = result.data?.taskId;
-                
+
                 // 显示翻译进度 toast
                 const toastId = toast(
-                    <div className="flex items-center space-x-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                    <div className='flex items-center space-x-2'>
+                        <Loader2 className='h-4 w-4 animate-spin' />
                         <span>
                             {lang(
                                 {
@@ -522,7 +684,7 @@ export function PostDetailClient({ post, replies, locale }: PostDetailClientProp
                     {
                         duration: Infinity,
                         dismissible: false,
-                    }
+                    },
                 );
 
                 // 保存翻译进度状态
@@ -548,19 +710,20 @@ export function PostDetailClient({ post, replies, locale }: PostDetailClientProp
                         locale,
                     ),
                 );
-                  // 创建新回复对象
+                // 创建新回复对象
                 const newReply = {
                     id: result.data?.id ? String(result.data.id) : `temp-${Date.now()}`,
                     content: replyContent.trim(),
                     originLang: locale,
                     [`content${locale.replace('-', '').toUpperCase()}`]: replyContent.trim(),
-                    createdAt: new Date().toISOString(),formattedTime: lang(
+                    createdAt: new Date().toISOString(),
+                    formattedTime: lang(
                         {
                             'zh-CN': '刚刚',
                             'en-US': 'just now',
                             'zh-TW': '剛剛',
                             'es-ES': 'hace un momento',
-                            'fr-FR': 'à l\'instant',
+                            'fr-FR': "à l'instant",
                             'ru-RU': 'только что',
                             'ja-JP': '今すぐ',
                             'de-DE': 'gerade eben',
@@ -568,7 +731,8 @@ export function PostDetailClient({ post, replies, locale }: PostDetailClientProp
                             'ko-KR': '방금',
                         },
                         locale,
-                    ),                    user: {
+                    ),
+                    user: {
                         uid: token.getObject()?.uid,
                         nickname: token.getObject()?.nickname || 'Anonymous',
                         avatar: token.getObject()?.avatar ? [token.getObject()?.avatar] : [],
@@ -578,8 +742,8 @@ export function PostDetailClient({ post, replies, locale }: PostDetailClientProp
                         replies: 0,
                     },
                     replies: [],
-                };                // 添加新回复到本地状态
-                setLocalReplies(prev => [newReply, ...prev]);
+                }; // 添加新回复到本地状态
+                setLocalReplies((prev) => [newReply, ...prev]);
                 setReplyContent('');
                 setShowReplyEditor(false);
             } else {
@@ -611,7 +775,8 @@ export function PostDetailClient({ post, replies, locale }: PostDetailClientProp
 
     const handleEmojiSelect = (emoji: string) => {
         setReplyContent((prev) => prev + emoji);
-    };    return (
+    };
+    return (
         <div className='space-y-6'>
             {/* 交互按钮卡片 */}
             <Card>
@@ -626,36 +791,26 @@ export function PostDetailClient({ post, replies, locale }: PostDetailClientProp
                             {isLiking || !likeStatusLoaded ? (
                                 <Loader2 className='h-4 w-4 mr-2 animate-spin' />
                             ) : (
-                                <Heart className={`h-4 w-4 mr-2 ${isLiked ? 'fill-current' : ''}`} />
+                                <Heart
+                                    className={`h-4 w-4 mr-2 ${isLiked ? 'fill-current' : ''}`}
+                                />
                             )}
                             {likeCount}
-                        </Button>
-
+                        </Button>{' '}
                         <Button
                             variant='outline'
                             size='sm'
                             onClick={() => setShowReplyEditor(!showReplyEditor)}>
                             <MessageCircle className='h-4 w-4 mr-2' />
                             {post.replies}
-                        </Button>                        <Button variant='outline' size='sm' onClick={handleShare}>
-                            <Share2 className='h-4 w-4 mr-2' />
-                            {lang(
-                                {
-                                    'zh-CN': '分享',
-                                    'zh-TW': '分享',
-                                    'en-US': 'Share',
-                                    'es-ES': 'Compartir',
-                                    'fr-FR': 'Partager',
-                                    'ru-RU': 'Поделиться',
-                                    'ja-JP': 'シェア',
-                                    'de-DE': 'Teilen',
-                                    'pt-BR': 'Compartilhar',
-                                    'ko-KR': '공유',
-                                },
-                                locale,
-                            )}
-                        </Button>
-
+                        </Button>{' '}
+                        {/* 分享按钮 */}
+                        <ShareButton
+                            postId={post.id.toString()}
+                            slug={slug}
+                            title={post.title}
+                            locale={locale}
+                        />
                         {/* 查看原文按钮 - 仅在有翻译时显示 */}
                         {post.isTranslated && (
                             <Button
@@ -705,9 +860,8 @@ export function PostDetailClient({ post, replies, locale }: PostDetailClientProp
                     </div>
                 </CardContent>
             </Card>
-
             {/* 回复编辑器 */}
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode='wait'>
                 {showReplyEditor && (
                     <motion.div
                         initial='hidden'
@@ -751,11 +905,12 @@ export function PostDetailClient({ post, replies, locale }: PostDetailClientProp
                                                 onEmojiSelect={handleEmojiSelect}
                                                 locale={locale}
                                             />
-                                            <div className={`text-xs ${
-                                                replyContent.length > MAX_REPLY_LENGTH * 0.9 
-                                                    ? 'text-destructive' 
-                                                    : 'text-muted-foreground'
-                                            }`}>
+                                            <div
+                                                className={`text-xs ${
+                                                    replyContent.length > MAX_REPLY_LENGTH * 0.9
+                                                        ? 'text-destructive'
+                                                        : 'text-muted-foreground'
+                                                }`}>
                                                 {replyContent.length}/{MAX_REPLY_LENGTH}
                                             </div>
                                         </div>
@@ -783,7 +938,11 @@ export function PostDetailClient({ post, replies, locale }: PostDetailClientProp
                                             <Button
                                                 size='sm'
                                                 onClick={submitReply}
-                                                disabled={isSubmitting || !replyContent.trim() || replyContent.length > MAX_REPLY_LENGTH}>
+                                                disabled={
+                                                    isSubmitting ||
+                                                    !replyContent.trim() ||
+                                                    replyContent.length > MAX_REPLY_LENGTH
+                                                }>
                                                 {isSubmitting ? (
                                                     <>
                                                         <Loader2 className='h-4 w-4 mr-2 animate-spin' />
@@ -828,13 +987,16 @@ export function PostDetailClient({ post, replies, locale }: PostDetailClientProp
                         </Card>
                     </motion.div>
                 )}
-            </AnimatePresence>            {/* 回复列表 */}
+            </AnimatePresence>{' '}            {/* 回复列表 */}{' '}
             <ReplyList
                 replies={localReplies}
                 locale={locale}
                 replyLikes={replyLikes}
                 onReplyLikeChange={handleReplyLikeChange}
+                postAuthorUid={post.authorUid} // 传递帖子作者uid
             />
+            {/* 分页控件 */}
+            <PaginationControls />
         </div>
     );
 }

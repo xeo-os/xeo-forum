@@ -2,7 +2,16 @@ import prisma from '@/app/api/_utils/prisma';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { CalendarDays, MapPin, Users, Clock, ChevronLeft, ChevronRight, FileText, MessageSquare } from 'lucide-react';
+import {
+    CalendarDays,
+    MapPin,
+    Users,
+    Clock,
+    ChevronLeft,
+    ChevronRight,
+    FileText,
+    MessageSquare,
+} from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { TimelineCard } from '@/components/timeline-card';
 import { Button } from '@/components/ui/button';
@@ -14,7 +23,7 @@ import EmojiBackground from '@/components/emoji-background';
 import '@/app/globals.css';
 
 type Props = {
-    params: Promise<{ locale: string; uid: string, page: string }>;
+    params: Promise<{ locale: string; uid: string; page: string }>;
 };
 
 type User = {
@@ -175,7 +184,7 @@ export async function generateMetadata({
     };
 }
 
-export default async function UserPage({ params,}: Props) {
+export default async function UserPage({ params }: Props) {
     const { page: pageParam, locale, uid } = await params;
     const page = Number(pageParam) || 1;
     const skip = (page - 1) * ITEMS_PER_PAGE;
@@ -226,7 +235,7 @@ export default async function UserPage({ params,}: Props) {
     // 获取用户活动时间线
     const [posts, replies, likes, totalCount] = await Promise.all([
         prisma.post.findMany({
-            where: { userUid: user.uid },
+            where: { userUid: user.uid, published: true },
             select: {
                 id: true,
                 title: true,
@@ -244,7 +253,7 @@ export default async function UserPage({ params,}: Props) {
                 titleKOKR: true,
                 titleDEDE: true,
                 titlePTBR: true,
-                _count: { select: { Reply: true, likes: true } },
+                _count: { select: { belongReplies: true, likes: true } },
             },
             orderBy: { updatedAt: 'desc' },
             skip,
@@ -268,9 +277,9 @@ export default async function UserPage({ params,}: Props) {
                 contentKOKR: true,
                 contentDEDE: true,
                 contentPTBR: true,
-                belongPost: { 
-                    select: { 
-                        id: true, 
+                belongPost: {
+                    select: {
+                        id: true,
                         title: true,
                         titleENUS: true,
                         titleZHCN: true,
@@ -283,7 +292,7 @@ export default async function UserPage({ params,}: Props) {
                         titleDEDE: true,
                         titlePTBR: true,
                         originLang: true,
-                    } 
+                    },
                 },
                 _count: { select: { likes: true } },
             },
@@ -296,9 +305,9 @@ export default async function UserPage({ params,}: Props) {
             select: {
                 uuid: true,
                 createdAt: true,
-                post: { 
-                    select: { 
-                        id: true, 
+                post: {
+                    select: {
+                        id: true,
                         title: true,
                         titleENUS: true,
                         titleZHCN: true,
@@ -311,11 +320,11 @@ export default async function UserPage({ params,}: Props) {
                         titleDEDE: true,
                         titlePTBR: true,
                         originLang: true,
-                    } 
+                    },
                 },
-                reply: { 
-                    select: { 
-                        id: true, 
+                reply: {
+                    select: {
+                        id: true,
                         content: true,
                         contentENUS: true,
                         contentZHCN: true,
@@ -328,7 +337,7 @@ export default async function UserPage({ params,}: Props) {
                         contentDEDE: true,
                         contentPTBR: true,
                         originLang: true,
-                    } 
+                    },
                 },
             },
             orderBy: { createdAt: 'desc' },
@@ -382,20 +391,20 @@ export default async function UserPage({ params,}: Props) {
                 ...reply,
                 originLang: reply.originLang || undefined,
                 post: reply.belongPost
-                    ? { 
-                        ...reply.belongPost, // 包含所有字段
-                        id: reply.belongPost.id.toString(), // 确保 id 是字符串类型
-                        originLang: reply.belongPost.originLang || undefined,
-                        titleENUS: reply.belongPost.titleENUS || undefined,
-                        titleZHCN: reply.belongPost.titleZHCN || undefined,
-                        titleZHTW: reply.belongPost.titleZHTW || undefined,
-                        titleESES: reply.belongPost.titleESES || undefined,
-                        titleFRFR: reply.belongPost.titleFRFR || undefined,
-                        titleRURU: reply.belongPost.titleRURU || undefined,
-                        titleJAJP: reply.belongPost.titleJAJP || undefined,
-                        titleKOKR: reply.belongPost.titleKOKR || undefined,
-                        titleDEDE: reply.belongPost.titleDEDE || undefined,
-                        titlePTBR: reply.belongPost.titlePTBR || undefined,
+                    ? {
+                          ...reply.belongPost, // 包含所有字段
+                          id: reply.belongPost.id.toString(), // 确保 id 是字符串类型
+                          originLang: reply.belongPost.originLang || undefined,
+                          titleENUS: reply.belongPost.titleENUS || undefined,
+                          titleZHCN: reply.belongPost.titleZHCN || undefined,
+                          titleZHTW: reply.belongPost.titleZHTW || undefined,
+                          titleESES: reply.belongPost.titleESES || undefined,
+                          titleFRFR: reply.belongPost.titleFRFR || undefined,
+                          titleRURU: reply.belongPost.titleRURU || undefined,
+                          titleJAJP: reply.belongPost.titleJAJP || undefined,
+                          titleKOKR: reply.belongPost.titleKOKR || undefined,
+                          titleDEDE: reply.belongPost.titleDEDE || undefined,
+                          titlePTBR: reply.belongPost.titlePTBR || undefined,
                       }
                     : undefined,
                 // 添加多语言内容字段
@@ -417,36 +426,38 @@ export default async function UserPage({ params,}: Props) {
             createdAt: like.createdAt,
             content: {
                 post: like.post
-                    ? { 
-                        ...like.post, // 包含所有字段
-                        id: like.post.id.toString(), // 确保 id 是字符串类型
-                        originLang: like.post.originLang || undefined,
-                        titleENUS: like.post.titleENUS || undefined,
-                        titleZHCN: like.post.titleZHCN || undefined,
-                        titleZHTW: like.post.titleZHTW || undefined,
-                        titleESES: like.post.titleESES || undefined,
-                        titleFRFR: like.post.titleFRFR || undefined,
-                        titleRURU: like.post.titleRURU || undefined,
-                        titleJAJP: like.post.titleJAJP || undefined,
-                        titleKOKR: like.post.titleKOKR || undefined,
-                        titleDEDE: like.post.titleDEDE || undefined,
-                        titlePTBR: like.post.titlePTBR || undefined,
+                    ? {
+                          ...like.post, // 包含所有字段
+                          id: like.post.id.toString(), // 确保 id 是字符串类型
+                          originLang: like.post.originLang || undefined,
+                          titleENUS: like.post.titleENUS || undefined,
+                          titleZHCN: like.post.titleZHCN || undefined,
+                          titleZHTW: like.post.titleZHTW || undefined,
+                          titleESES: like.post.titleESES || undefined,
+                          titleFRFR: like.post.titleFRFR || undefined,
+                          titleRURU: like.post.titleRURU || undefined,
+                          titleJAJP: like.post.titleJAJP || undefined,
+                          titleKOKR: like.post.titleKOKR || undefined,
+                          titleDEDE: like.post.titleDEDE || undefined,
+                          titlePTBR: like.post.titlePTBR || undefined,
                       }
                     : undefined,
-                reply: like.reply ? { 
-                    ...like.reply, // 包含所有字段
-                    originLang: like.reply.originLang || undefined,
-                    contentENUS: like.reply.contentENUS || undefined,
-                    contentZHCN: like.reply.contentZHCN || undefined,
-                    contentZHTW: like.reply.contentZHTW || undefined,
-                    contentESES: like.reply.contentESES || undefined,
-                    contentFRFR: like.reply.contentFRFR || undefined,
-                    contentRURU: like.reply.contentRURU || undefined,
-                    contentJAJP: like.reply.contentJAJP || undefined,
-                    contentKOKR: like.reply.contentKOKR || undefined,
-                    contentDEDE: like.reply.contentDEDE || undefined,
-                    contentPTBR: like.reply.contentPTBR || undefined,
-                  } : undefined,
+                reply: like.reply
+                    ? {
+                          ...like.reply, // 包含所有字段
+                          originLang: like.reply.originLang || undefined,
+                          contentENUS: like.reply.contentENUS || undefined,
+                          contentZHCN: like.reply.contentZHCN || undefined,
+                          contentZHTW: like.reply.contentZHTW || undefined,
+                          contentESES: like.reply.contentESES || undefined,
+                          contentFRFR: like.reply.contentFRFR || undefined,
+                          contentRURU: like.reply.contentRURU || undefined,
+                          contentJAJP: like.reply.contentJAJP || undefined,
+                          contentKOKR: like.reply.contentKOKR || undefined,
+                          contentDEDE: like.reply.contentDEDE || undefined,
+                          contentPTBR: like.reply.contentPTBR || undefined,
+                      }
+                    : undefined,
             },
         })),
     ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
@@ -691,8 +702,7 @@ export default async function UserPage({ params,}: Props) {
                                           ? 'secondary'
                                           : 'default'
                                 }
-                                className='bg-white/20 text-white border-white/30'
-                            >
+                                className='bg-white/20 text-white border-white/30'>
                                 {user.role}
                             </Badge>
                         </div>
@@ -769,18 +779,18 @@ export default async function UserPage({ params,}: Props) {
             {/* 活动时间线 */}
             <Card>
                 <CardHeader>
-                    <div className="flex items-center justify-between">
+                    <div className='flex items-center justify-between'>
                         <CardTitle>{texts.timeline}</CardTitle>
-                        <div className="flex gap-2">
-                            <Button variant="outline" size="sm" asChild>
+                        <div className='flex gap-2'>
+                            <Button variant='outline' size='sm' asChild>
                                 <Link href={`/${locale}/user/${uid}/post/page/1`}>
-                                    <FileText className="h-4 w-4 mr-1" />
+                                    <FileText className='h-4 w-4 mr-1' />
                                     {texts.postsOnly} ({user._count.post})
                                 </Link>
                             </Button>
-                            <Button variant="outline" size="sm" asChild>
+                            <Button variant='outline' size='sm' asChild>
                                 <Link href={`/${locale}/user/${uid}/reply/page/1`}>
-                                    <MessageSquare className="h-4 w-4 mr-1" />
+                                    <MessageSquare className='h-4 w-4 mr-1' />
                                     {texts.repliesOnly} ({user._count.reply})
                                 </Link>
                             </Button>
@@ -800,37 +810,38 @@ export default async function UserPage({ params,}: Props) {
 
                     {/* Pagination */}
                     {totalPages > 1 && (
-                        <div className="flex items-center justify-center gap-2 mt-6">
+                        <div className='flex items-center justify-center gap-2 mt-6'>
                             {page > 1 && (
-                                <Button variant="outline" size="sm" asChild>
+                                <Button variant='outline' size='sm' asChild>
                                     <Link
                                         href={
-                                            page == 2 ? `/${locale}/user/${uid}` : `/${locale}/user/${uid}/page/${page - 1}`
+                                            page == 2
+                                                ? `/${locale}/user/${uid}`
+                                                : `/${locale}/user/${uid}/page/${page - 1}`
                                         }
                                         title={`${texts.previous} - ${lang(
                                             {
-                                                "zh-CN": "第",
-                                                "en-US": "Page",
-                                                "zh-TW": "第",
-                                                "es-ES": "Página",
-                                                "fr-FR": "Page",
-                                                "ru-RU": "Страница",
-                                                "ja-JP": "ページ",
-                                                "de-DE": "Seite",
-                                                "pt-BR": "Página",
-                                                "ko-KR": "페이지",
+                                                'zh-CN': '第',
+                                                'en-US': 'Page',
+                                                'zh-TW': '第',
+                                                'es-ES': 'Página',
+                                                'fr-FR': 'Page',
+                                                'ru-RU': 'Страница',
+                                                'ja-JP': 'ページ',
+                                                'de-DE': 'Seite',
+                                                'pt-BR': 'Página',
+                                                'ko-KR': '페이지',
                                             },
                                             locale,
                                         )} ${page - 1}`}
-                                        rel="prev"
-                                    >
-                                        <ChevronLeft className="h-4 w-4 mr-1" />
+                                        rel='prev'>
+                                        <ChevronLeft className='h-4 w-4 mr-1' />
                                         {texts.previous}
                                     </Link>
                                 </Button>
                             )}
 
-                            <div className="flex items-center gap-1">
+                            <div className='flex items-center gap-1'>
                                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                                     let pageNum;
                                     if (totalPages <= 5) {
@@ -846,11 +857,10 @@ export default async function UserPage({ params,}: Props) {
                                     return (
                                         <Button
                                             key={pageNum}
-                                            variant={pageNum === page ? "default" : "outline"}
-                                            size="sm"
+                                            variant={pageNum === page ? 'default' : 'outline'}
+                                            size='sm'
                                             asChild
-                                            className="w-8 h-8 p-0"
-                                        >
+                                            className='w-8 h-8 p-0'>
                                             <Link
                                                 href={
                                                     pageNum == 1
@@ -859,22 +869,23 @@ export default async function UserPage({ params,}: Props) {
                                                 }
                                                 title={`${lang(
                                                     {
-                                                        "zh-CN": "第",
-                                                        "en-US": "Page",
-                                                        "zh-TW": "第",
-                                                        "es-ES": "Página",
-                                                        "fr-FR": "Page",
-                                                        "ru-RU": "Страница",
-                                                        "ja-JP": "ページ",
-                                                        "de-DE": "Seite",
-                                                        "pt-BR": "Página",
-                                                        "ko-KR": "페이지",
+                                                        'zh-CN': '第',
+                                                        'en-US': 'Page',
+                                                        'zh-TW': '第',
+                                                        'es-ES': 'Página',
+                                                        'fr-FR': 'Page',
+                                                        'ru-RU': 'Страница',
+                                                        'ja-JP': 'ページ',
+                                                        'de-DE': 'Seite',
+                                                        'pt-BR': 'Página',
+                                                        'ko-KR': '페이지',
                                                     },
                                                     locale,
                                                 )} ${pageNum}`}
-                                                rel={pageNum === page ? "canonical" : "noopener"}
-                                                aria-current={pageNum === page ? "page" : undefined}
-                                            >
+                                                rel={pageNum === page ? 'canonical' : 'noopener'}
+                                                aria-current={
+                                                    pageNum === page ? 'page' : undefined
+                                                }>
                                                 {pageNum}
                                             </Link>
                                         </Button>
@@ -883,28 +894,27 @@ export default async function UserPage({ params,}: Props) {
                             </div>
 
                             {page < totalPages && (
-                                <Button variant="outline" size="sm" asChild>
+                                <Button variant='outline' size='sm' asChild>
                                     <Link
                                         href={`/${locale}/user/${uid}/page/${page + 1}`}
                                         title={`${texts.next} - ${lang(
                                             {
-                                                "zh-CN": "第",
-                                                "en-US": "Page",
-                                                "zh-TW": "第",
-                                                "es-ES": "Página",
-                                                "fr-FR": "Page",
-                                                "ru-RU": "Страница",
-                                                "ja-JP": "ページ",
-                                                "de-DE": "Seite",
-                                                "pt-BR": "Página",
-                                                "ko-KR": "페이지",
+                                                'zh-CN': '第',
+                                                'en-US': 'Page',
+                                                'zh-TW': '第',
+                                                'es-ES': 'Página',
+                                                'fr-FR': 'Page',
+                                                'ru-RU': 'Страница',
+                                                'ja-JP': 'ページ',
+                                                'de-DE': 'Seite',
+                                                'pt-BR': 'Página',
+                                                'ko-KR': '페이지',
                                             },
                                             locale,
                                         )} ${page + 1}`}
-                                        rel="next"
-                                    >
+                                        rel='next'>
                                         {texts.next}
-                                        <ChevronRight className="h-4 w-4 ml-1" />
+                                        <ChevronRight className='h-4 w-4 ml-1' />
                                     </Link>
                                 </Button>
                             )}

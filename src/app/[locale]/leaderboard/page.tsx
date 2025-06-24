@@ -196,7 +196,7 @@ function UserCard({ user, index, locale, type }: { user: LeaderboardUser; index:
 function CompactPostItem({ post, index, locale }: { post: LeaderboardPost; index: number; locale: string }) {
     const userAvatar = post.user.avatar[0] || { emoji: '', background: '' };
       // 计算 score（如果 post 有 score 属性就使用，否则计算）
-    const score = 'score' in post ? (post as LeaderboardPost & { score: number }).score : (post._count.likes + post._count.Reply);
+    const score = 'score' in post ? (post as LeaderboardPost & { score: number }).score : (post._count.likes + post._count.belongReplies);
 
     return (
         <div className="flex items-center gap-4 p-3 hover:bg-muted/50 rounded-lg transition-colors">
@@ -258,7 +258,7 @@ function CompactPostItem({ post, index, locale }: { post: LeaderboardPost; index
                 </div>
                 <div className="flex items-center gap-1 text-muted-foreground">
                     <MessageSquare className="h-3 w-3" />
-                    <span>{post._count.Reply}</span>
+                    <span>{post._count.belongReplies}</span>
                 </div>
                 <div className="text-primary font-bold">
                     {formatCount(score)}

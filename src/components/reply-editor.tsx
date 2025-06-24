@@ -17,7 +17,13 @@ interface ReplyEditorProps {
   placeholder: string;
 }
 
-export function ReplyEditor({ postId, locale, onSuccess, onCancel, placeholder }: ReplyEditorProps) {
+export function ReplyEditor({ 
+  postId, 
+  locale, 
+  onSuccess, 
+  onCancel, 
+  placeholder,
+}: ReplyEditorProps) {
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [translationProgress, setTranslationProgress] = useState<{uuid: string; toastId: string} | null>(null);
@@ -201,9 +207,7 @@ export function ReplyEditor({ postId, locale, onSuccess, onCancel, placeholder }
     return () => {
       unregisterCallback(handleBroadcastMessage);
     };
-  }, [registerCallback, unregisterCallback, translationProgress, locale]);
-
-  // 提交回复
+  }, [registerCallback, unregisterCallback, translationProgress, locale]);  // 提交回复
   const submitReply = async () => {
     if (!content.trim()) return;
 
