@@ -418,40 +418,42 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
             if (result.ok) {
                 const postUuid = result.message;
                 
-                // 显示翻译进度 toast
-                const toastId = toast(
-                    <div className="flex items-center space-x-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>
-                            {lang(
-                                {
-                                    'zh-CN': '正在翻译帖子...',
-                                    'zh-TW': '正在翻譯帖子...',
-                                    'en-US': 'Translating post...',
-                                    'es-ES': 'Traduciendo publicación...',
-                                    'fr-FR': 'Traduction du message en cours...',
-                                    'ru-RU': 'Перевод поста...',
-                                    'ja-JP': '投稿を翻訳中...',
-                                    'de-DE': 'Beitrag wird übersetzt...',
-                                    'pt-BR': 'Traduzindo postagem...',
-                                    'ko-KR': '게시물 번역 중...'
-                                },
-                                locale,
-                            )}
-                        </span>
-                    </div>,
-                    {
-                        duration: Infinity,
-                        dismissible: false,
-                    }
-                );
+                // 只有发布帖子时才显示翻译进度 toast，草稿不需要翻译
+                if (!isDraft) {
+                    const toastId = toast(
+                        <div className="flex items-center space-x-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>
+                                {lang(
+                                    {
+                                        'zh-CN': '正在翻译帖子...',
+                                        'zh-TW': '正在翻譯帖子...',
+                                        'en-US': 'Translating post...',
+                                        'es-ES': 'Traduciendo publicación...',
+                                        'fr-FR': 'Traduction du message en cours...',
+                                        'ru-RU': 'Перевод поста...',
+                                        'ja-JP': '投稿を翻訳中...',
+                                        'de-DE': 'Beitrag wird übersetzt...',
+                                        'pt-BR': 'Traduzindo postagem...',
+                                        'ko-KR': '게시물 번역 중...'
+                                    },
+                                    locale,
+                                )}
+                            </span>
+                        </div>,
+                        {
+                            duration: Infinity,
+                            dismissible: false,
+                        }
+                    );
 
-                // 保存翻译进度状态
-                setTranslationProgress({
-                    uuid: postUuid,
-                    progress: 10,
-                    toastId: toastId as string,
-                });
+                    // 保存翻译进度状态
+                    setTranslationProgress({
+                        uuid: postUuid,
+                        progress: 10,
+                        toastId: toastId as string,
+                    });
+                }
 
                 toast.success(
                     lang(
