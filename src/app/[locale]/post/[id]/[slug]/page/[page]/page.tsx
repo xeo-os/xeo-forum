@@ -71,6 +71,14 @@ type PostForMetadata = {
     contentDEDE: string | null;
     contentPTBR: string | null;
     contentKOKR: string | null;
+    User: {
+        nickname: string;
+        avatar: {
+            emoji: string;
+            background: string;
+        }[];
+    } | null;
+    topics: Topic[];
 };
 
 type User = {
@@ -159,6 +167,34 @@ const getPostForMetadata = cache(async (postId: number): Promise<PostForMetadata
             contentDEDE: true,
             contentPTBR: true,
             contentKOKR: true,
+            User: {
+                select: {
+                    nickname: true,
+                    avatar: {
+                        select: {
+                            emoji: true,
+                            background: true,
+                        },
+                        take: 1,
+                    },
+                },
+            },
+            topics: {
+                select: {
+                    nameDEDE: true,
+                    nameENUS: true,
+                    nameESES: true,
+                    nameFRFR: true,
+                    nameJAJP: true,
+                    nameKOKR: true,
+                    namePTBR: true,
+                    nameRURU: true,
+                    nameZHCN: true,
+                    nameZHTW: true,
+                    emoji: true,
+                    name: true,
+                }
+            }
         },
     });
 });
@@ -620,9 +656,37 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const title = getLocalizedTitle(post, locale);
     const content = getLocalizedContent(post, locale);
 
+    // Convert markdown to plain text for description
+    const truncatedContent = content.length > 160 ? content.substring(0, 160) + '...' : content;
+    const htmlContent = await markdownToHtml(truncatedContent);
+    const plainTextDescription = htmlContent
+        .replace(/<p[^>]*>/gi, '\n')
+        .replace(/<\/p>/gi, '\n')
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<div[^>]*>/gi, '\n')
+        .replace(/<\/div>/gi, '\n')
+        .replace(/<h[1-6][^>]*>/gi, '\n')
+        .replace(/<\/h[1-6]>/gi, '\n')
+        .replace(/<li[^>]*>/gi, '\n• ')
+        .replace(/<\/li>/gi, '\n')
+        .replace(/<[^>]*>/g, '')
+        .replace(/\n\s*\n/g, '\n')
+        .trim();
+
     return {
         title: `${title} | XEO OS`,
-        description: content.substring(0, 160) + '...',
+        description: plainTextDescription,
+        keywords: [
+            post.topics[0].emoji+' ' + getLocalizedTopicName(post.topics[0], locale),
+        ],
+        authors: [
+            {
+                name: post.User?.nickname || 'Anonymous',
+                url: `/api/dynamicImage/emoji?emoji=${post.User?.avatar[0].emoji}&background=${encodeURIComponent(
+                    post.User?.avatar[0]?.background?.replaceAll('%', '%25') || '',
+                )}`,
+            },
+        ],
     };
 }
 
@@ -952,7 +1016,8 @@ export default async function PostDetailPage({ params }: Props) {
                                 locale={locale}
                             />
                         </CardContent>
-                    </Card>{' '}                    <PostDetailClient
+                    </Card>{' '}
+                    <PostDetailClient
                         post={{
                             id: post.id,
                             title,

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Share2, Copy, Check, QrCode, ExternalLink, Twitter, Facebook, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import lang from '@/lib/lang';
@@ -21,10 +22,11 @@ export function ShareButton({ postId, slug, title, locale }: ShareButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+  const [ogImageLoaded, setOgImageLoaded] = useState(false);
 
   // 生成永久链接
   const permanentUrl = `https://xeoos.net/post/${postId}/${slug}`;
-  const ogImageUrl = `https://xeoos.net/api/dynamicImage/og?url=/${locale}/post/${postId}/${slug}`;
+  const ogImageUrl = `/api/dynamicImage/og?url=/${locale}/post/${postId}/${slug}`;
   // 生成 QR 码
   useEffect(() => {
     QRCode.toDataURL(permanentUrl, {
@@ -138,7 +140,7 @@ export function ShareButton({ postId, slug, title, locale }: ShareButtonProps) {
           'ko-KR': '공유',
         }, locale)}
       </Button>      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-lg md:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {lang({
@@ -156,7 +158,7 @@ export function ShareButton({ postId, slug, title, locale }: ShareButtonProps) {
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-6">
+          <div className="space-y-4 md:space-y-6">
             {/* 永久链接 - 单独一行 */}
             <div>
               <label className="text-sm font-medium mb-2 block">
@@ -189,95 +191,103 @@ export function ShareButton({ postId, slug, title, locale }: ShareButtonProps) {
                   {copied ? (
                     <>
                       <Check className="h-4 w-4" />
-                      {lang({
-                        'zh-CN': '已复制',
-                        'en-US': 'Copied',
-                        'zh-TW': '已複製',
-                        'es-ES': 'Copiado',
-                        'fr-FR': 'Copié',
-                        'ru-RU': 'Скопировано',
-                        'ja-JP': 'コピー済み',
-                        'de-DE': 'Kopiert',
-                        'pt-BR': 'Copiado',
-                        'ko-KR': '복사됨',
-                      }, locale)}
+                      <span className="hidden sm:inline">
+                        {lang({
+                          'zh-CN': '已复制',
+                          'en-US': 'Copied',
+                          'zh-TW': '已複製',
+                          'es-ES': 'Copiado',
+                          'fr-FR': 'Copié',
+                          'ru-RU': 'Скопировано',
+                          'ja-JP': 'コピー済み',
+                          'de-DE': 'Kopiert',
+                          'pt-BR': 'Copiado',
+                          'ko-KR': '복사됨',
+                        }, locale)}
+                      </span>
                     </>
                   ) : (
                     <>
                       <Copy className="h-4 w-4" />
-                      {lang({
-                        'zh-CN': '复制',
-                        'en-US': 'Copy',
-                        'zh-TW': '複製',
-                        'es-ES': 'Copiar',
-                        'fr-FR': 'Copier',
-                        'ru-RU': 'Копировать',
-                        'ja-JP': 'コピー',
-                        'de-DE': 'Kopieren',
-                        'pt-BR': 'Copiar',
-                        'ko-KR': '복사',
-                      }, locale)}
+                      <span className="hidden sm:inline">
+                        {lang({
+                          'zh-CN': '复制',
+                          'en-US': 'Copy',
+                          'zh-TW': '複製',
+                          'es-ES': 'Copiar',
+                          'fr-FR': 'Copier',
+                          'ru-RU': 'Копировать',
+                          'ja-JP': 'コピー',
+                          'de-DE': 'Kopieren',
+                          'pt-BR': 'Copiar',
+                          'ko-KR': '복사',
+                        }, locale)}
+                      </span>
                     </>
                   )}
                 </Button>
               </div>
             </div>
 
-            {/* 图片和二维码并排显示 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* OG图片预览 */}
-              <div>
-                <label className="text-sm font-medium mb-2 block">
-                  {lang({
-                    'zh-CN': '预览图片',
-                    'en-US': 'Preview Image',
-                    'zh-TW': '預覽圖片',
-                    'es-ES': 'Imagen de vista previa',
-                    'fr-FR': 'Image d\'aperçu',
-                    'ru-RU': 'Изображение предварительного просмотра',
-                    'ja-JP': 'プレビュー画像',
-                    'de-DE': 'Vorschaubild',
-                    'pt-BR': 'Imagem de visualização',
-                    'ko-KR': '미리보기 이미지',
-                  }, locale)}
-                </label>
-                <div className="border rounded-lg overflow-hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={ogImageUrl}
-                    alt="Post preview"
-                    className="w-full h-32 object-cover"
-                  />
-                </div>
+            {/* OG图片预览 - 单独一行 */}
+            <div>
+              <label className="text-sm font-medium mb-2 block">
+                {lang({
+                  'zh-CN': '预览图片',
+                  'en-US': 'Preview Image',
+                  'zh-TW': '預覽圖片',
+                  'es-ES': 'Imagen de vista previa',
+                  'fr-FR': 'Image d\'aperçu',
+                  'ru-RU': 'Изображение предварительного просмотра',
+                  'ja-JP': 'プレビュー画像',
+                  'de-DE': 'Vorschaubild',
+                  'pt-BR': 'Imagem de visualização',
+                  'ko-KR': '미리보기 이미지',
+                }, locale)}
+              </label>
+              <div className="border rounded-lg overflow-hidden bg-muted">
+                {!ogImageLoaded && (
+                  <Skeleton className="w-full aspect-[1200/630]" />
+                )}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={ogImageUrl}
+                  alt="Post preview"
+                  className={`w-full aspect-[1200/630] object-cover transition-opacity duration-300 ${
+                    ogImageLoaded ? 'opacity-100' : 'opacity-0 absolute'
+                  }`}
+                  onLoad={() => setOgImageLoaded(true)}
+                  onError={() => setOgImageLoaded(true)}
+                />
               </div>
+            </div>
 
-              {/* 二维码 */}
-              <div>
-                <label className="text-sm font-medium mb-2 flex items-center gap-2">
-                  <QrCode className="h-4 w-4" />
-                  {lang({
-                    'zh-CN': '二维码',
-                    'en-US': 'QR Code',
-                    'zh-TW': '二維碼',
-                    'es-ES': 'Código QR',
-                    'fr-FR': 'Code QR',
-                    'ru-RU': 'QR-код',
-                    'ja-JP': 'QRコード',
-                    'de-DE': 'QR-Code',
-                    'pt-BR': 'Código QR',
-                    'ko-KR': 'QR 코드',
-                  }, locale)}
-                </label>
-                <div className="flex justify-center">
-                  {qrCodeUrl && (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
-                      src={qrCodeUrl}
-                      alt="QR Code"
-                      className="border rounded-lg"
-                    />
-                  )}
-                </div>
+            {/* 二维码 - 仅在桌面端显示 */}
+            <div className="hidden md:block">
+              <label className="text-sm font-medium mb-2 flex items-center gap-2">
+                <QrCode className="h-4 w-4" />
+                {lang({
+                  'zh-CN': '二维码',
+                  'en-US': 'QR Code',
+                  'zh-TW': '二維碼',
+                  'es-ES': 'Código QR',
+                  'fr-FR': 'Code QR',
+                  'ru-RU': 'QR-код',
+                  'ja-JP': 'QRコード',
+                  'de-DE': 'QR-Code',
+                  'pt-BR': 'Código QR',
+                  'ko-KR': 'QR 코드',
+                }, locale)}
+              </label>
+              <div className="flex justify-center">
+                {qrCodeUrl && (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={qrCodeUrl}
+                    alt="QR Code"
+                    className="border rounded-lg"
+                  />
+                )}
               </div>
             </div>
 
@@ -298,77 +308,78 @@ export function ShareButton({ postId, slug, title, locale }: ShareButtonProps) {
                   'pt-BR': 'Compartilhar nas redes sociais',
                   'ko-KR': '소셜 미디어에 공유',
                 }, locale)}
-              </label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              </label>              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => shareToSocial('twitter')}
-                  className="flex items-center gap-2 justify-start"
+                  className="flex items-center gap-1 md:gap-2 justify-start text-xs md:text-sm"
                 >
                   <Twitter className="h-4 w-4" />
-                  Twitter
+                  <span className="truncate">Twitter</span>
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => shareToSocial('facebook')}
-                  className="flex items-center gap-2 justify-start"
+                  className="flex items-center gap-1 md:gap-2 justify-start text-xs md:text-sm"
                 >
                   <Facebook className="h-4 w-4" />
-                  Facebook
+                  <span className="truncate">Facebook</span>
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => shareToSocial('telegram')}
-                  className="flex items-center gap-2 justify-start"
+                  className="flex items-center gap-1 md:gap-2 justify-start text-xs md:text-sm"
                 >
                   <MessageCircle className="h-4 w-4" />
-                  Telegram
+                  <span className="truncate">Telegram</span>
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => shareToSocial('whatsapp')}
-                  className="flex items-center gap-2 justify-start"
+                  className="flex items-center gap-1 md:gap-2 justify-start text-xs md:text-sm"
                 >
                   <MessageCircle className="h-4 w-4" />
-                  WhatsApp
+                  <span className="truncate">WhatsApp</span>
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => shareToSocial('weibo')}
-                  className="flex items-center gap-2 justify-start"
+                  className="flex items-center gap-1 md:gap-2 justify-start text-xs md:text-sm"
                 >
                   <ExternalLink className="h-4 w-4" />
-                  {lang({
-                    'zh-CN': '微博',
-                    'en-US': 'Weibo',
-                    'zh-TW': '微博',
-                    'es-ES': 'Weibo',
-                    'fr-FR': 'Weibo',
-                    'ru-RU': 'Weibo',
-                    'ja-JP': 'Weibo',
-                    'de-DE': 'Weibo',
-                    'pt-BR': 'Weibo',
-                    'ko-KR': 'Weibo',
-                  }, locale)}
+                  <span className="truncate">
+                    {lang({
+                      'zh-CN': '微博',
+                      'en-US': 'Weibo',
+                      'zh-TW': '微博',
+                      'es-ES': 'Weibo',
+                      'fr-FR': 'Weibo',
+                      'ru-RU': 'Weibo',
+                      'ja-JP': 'Weibo',
+                      'de-DE': 'Weibo',
+                      'pt-BR': 'Weibo',
+                      'ko-KR': 'Weibo',
+                    }, locale)}
+                  </span>
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => shareToSocial('line')}
-                  className="flex items-center gap-2 justify-start"
+                  className="flex items-center gap-1 md:gap-2 justify-start text-xs md:text-sm"
                 >
                   <MessageCircle className="h-4 w-4" />
-                  LINE
+                  <span className="truncate">LINE</span>
                 </Button>
               </div>
             </div>
 
-            <div className="text-sm text-muted-foreground text-center mt-4">
+            <div className="text-xs md:text-sm text-muted-foreground text-center mt-4">
               {lang({
                 'zh-CN': '扫描二维码或复制链接分享给朋友',
                 'en-US': 'Scan the QR code or copy the link to share with friends',
