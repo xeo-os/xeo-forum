@@ -52,9 +52,7 @@ export async function POST(request: Request) {
                     locale,
                 ),
             });
-        }
-
-        if (!action || (!postId && !replyId)) {
+        }        if (action === undefined || action === null || (!postId && !replyId)) {
             return response(400, {
                 error: 'missing_id',
                 message: langs(
