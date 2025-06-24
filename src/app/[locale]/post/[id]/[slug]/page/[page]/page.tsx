@@ -874,7 +874,7 @@ export default async function PostDetailPage({ params }: Props) {
                                         <AvatarImage
                                             src={
                                                 post.User?.avatar[0]?.id
-                                                    ? `/api/dynamicImage/emoji/?emoji=${post.User.avatar[0].emoji}&background=${encodeURIComponent(
+                                                    ? `/api/dynamicImage/emoji?emoji=${post.User.avatar[0].emoji}&background=${encodeURIComponent(
                                                           post.User.avatar[0].background.replaceAll(
                                                               '%',
                                                               '%25',

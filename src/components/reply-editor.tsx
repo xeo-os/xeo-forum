@@ -315,7 +315,7 @@ export function ReplyEditor({
           <AvatarImage
             src={
               token.getObject()?.avatar
-                ? `/api/dynamicImage/emoji/?emoji=${token.getObject()?.avatar.emoji}&background=${encodeURIComponent(
+                ? `/api/dynamicImage/emoji?emoji=${token.getObject()?.avatar.emoji}&background=${encodeURIComponent(
                     token.getObject()?.avatar?.background?.replaceAll('%', '%25') || ''
                   )}`
                 : undefined

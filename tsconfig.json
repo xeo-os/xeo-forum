@@ -27,7 +27,6 @@
         "**/*.ts",
         "**/*.tsx",
         ".next/types/**/*.ts",
-        "src/app/api/dymaicImage/emoji/large/route.js"
     ],
     "exclude": ["node_modules"]
 }

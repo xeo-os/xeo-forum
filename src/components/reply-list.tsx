@@ -770,7 +770,7 @@ function SingleReply({
                             <AvatarImage
                                 src={
                                     reply.user.avatar[0]?.id
-                                        ? `/api/dynamicImage/emoji/?emoji=${reply.user.avatar[0].emoji}&background=${encodeURIComponent(
+                                        ? `/api/dynamicImage/emoji?emoji=${reply.user.avatar[0].emoji}&background=${encodeURIComponent(
                                               reply.user.avatar[0].background.replaceAll(
                                                   '%',
                                                   '%25',
@@ -1268,7 +1268,7 @@ function SingleReply({
                                         <AvatarImage
                                             src={
                                                 token.getObject()?.avatar
-                                                    ? `/api/dynamicImage/emoji/?emoji=${token.getObject()?.avatar.emoji}&background=${encodeURIComponent(
+                                                    ? `/api/dynamicImage/emoji?emoji=${token.getObject()?.avatar.emoji}&background=${encodeURIComponent(
                                                           token
                                                               .getObject()
                                                               ?.avatar?.background?.replaceAll(
