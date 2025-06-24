@@ -275,7 +275,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export async function generateStaticParams() {
     const pages = Array.from({ length: 1 }, (_, i) => ({
         page: (i + 1).toString(),
-    }));    return pages;
+    }));
+    return pages;
 }
 export const revalidate = 31536000; // 365 days in seconds
 
@@ -436,12 +437,12 @@ export default async function Topic({ params }: Props) {
     // 计算交互颜色的函数 - 返回primary的透明度
     const getInteractionOpacity = (likes: number, replies: number) => {
         const totalInteractions = likes + replies;
-        
+
         // 如果没有任何互动，返回0透明度（完全显示底层muted色）
         if (totalInteractions === 0) return 0;
-        
+
         let percentage: number;
-        
+
         // 如果页面上没有其他帖子或最大值为0，根据绝对数值创建渐变
         if (maxInteractionsOnPage === 0 || maxInteractionsOnPage === totalInteractions) {
             // 使用对数缩放来处理绝对数值，创建更合理的渐变
@@ -449,10 +450,10 @@ export default async function Topic({ params }: Props) {
         } else {
             percentage = totalInteractions / maxInteractionsOnPage;
         }
-        
+
         // 使用平方根函数让低值变化更明显
         const opacity = Math.sqrt(percentage);
-        
+
         // 扩大透明度范围，让变化更明显：最低30%，最高95%
         return Math.max(0.2, Math.min(0.95, 0.1 + opacity * 0.85));
     };
@@ -844,10 +845,12 @@ export default async function Topic({ params }: Props) {
                                             <div className='flex-1 min-w-0'>
                                                 <div className='flex items-center gap-2'>
                                                     <Link
-                                                        href={`/${locale}/post/${post.id}/${post.titleENUS
-                                                            ?.toLowerCase()
-                                                            .replaceAll(' ', '-')
-                                                            .replace(/[^a-z-]/g, '')}`}
+                                                        href={`/${locale}/post/${post.id}/${
+                                                            (post.titleENUS || post.title)
+                                                                ?.toLowerCase()
+                                                                .replaceAll(' ', '-')
+                                                                .replace(/[^a-z-]/g, '') || ''
+                                                        }`}
                                                         className='font-medium hover:text-primary transition-colors text-sm leading-tight break-words'
                                                         title={getLocalizedTitle(post, locale)}
                                                         rel='noopener'>
@@ -862,7 +865,7 @@ export default async function Topic({ params }: Props) {
                                                     <div className='flex items-center gap-1 flex-1 min-w-0'>
                                                         <Link
                                                             key={topicObject.name}
-                                                            href={`/${locale}/topic/${topicObject.name.replaceAll("_","-")}`}
+                                                            href={`/${locale}/topic/${topicObject.name.replaceAll('_', '-')}`}
                                                             className='hover:opacity-80 transition-opacity'
                                                             title={`${lang(
                                                                 {
@@ -934,12 +937,14 @@ export default async function Topic({ params }: Props) {
                                                         <span>{post._count.likes}</span>
                                                     </div>
                                                     {/* 上层 primary 颜色，使用动态透明度 */}
-                                                    <div 
+                                                    <div
                                                         className='relative text-primary flex items-center gap-1'
-                                                        style={{ 
-                                                            opacity: getInteractionOpacity(post._count.likes, post._count.belongReplies) 
-                                                        }}
-                                                    >
+                                                        style={{
+                                                            opacity: getInteractionOpacity(
+                                                                post._count.likes,
+                                                                post._count.belongReplies,
+                                                            ),
+                                                        }}>
                                                         <Heart className='h-3 w-3' />
                                                         <span>{post._count.likes}</span>
                                                     </div>
@@ -951,12 +956,14 @@ export default async function Topic({ params }: Props) {
                                                         <span>{post._count.belongReplies}</span>
                                                     </div>
                                                     {/* 上层 primary 颜色，使用动态透明度 */}
-                                                    <div 
+                                                    <div
                                                         className='relative text-primary flex items-center gap-1'
-                                                        style={{ 
-                                                            opacity: getInteractionOpacity(post._count.likes, post._count.belongReplies) 
-                                                        }}
-                                                    >
+                                                        style={{
+                                                            opacity: getInteractionOpacity(
+                                                                post._count.likes,
+                                                                post._count.belongReplies,
+                                                            ),
+                                                        }}>
                                                         <MessageCircle className='h-3 w-3' />
                                                         <span>{post._count.belongReplies}</span>
                                                     </div>
@@ -1365,10 +1372,12 @@ export default async function Topic({ params }: Props) {
                                         key={post.id}
                                         className='flex items-center justify-between'>
                                         <Link
-                                            href={`/${locale}/post/${post.id}/${post.titleENUS
-                                                ?.toLowerCase()
-                                                .replaceAll(' ', '-')
-                                                .replace(/[^a-z-]/g, '')}`}
+                                            href={`/${locale}/post/${post.id}/${
+                                                (post.titleENUS || post.title)
+                                                    ?.toLowerCase()
+                                                    .replaceAll(' ', '-')
+                                                    .replace(/[^a-z-]/g, '') || ''
+                                            }`}
                                             className='text-xs hover:text-primary transition-colors truncate flex-1 mr-2'
                                             title={`${lang(
                                                 {
@@ -1427,10 +1436,12 @@ export default async function Topic({ params }: Props) {
                                         key={post.id}
                                         className='flex items-center justify-between'>
                                         <Link
-                                            href={`/${locale}/post/${post.id}/${post.titleENUS
-                                                ?.toLowerCase()
-                                                .replaceAll(' ', '-')
-                                                .replace(/[^a-z-]/g, '')}`}
+                                            href={`/${locale}/post/${post.id}/${
+                                                (post.titleENUS || post.title)
+                                                    ?.toLowerCase()
+                                                    .replaceAll(' ', '-')
+                                                    .replace(/[^a-z-]/g, '') || ''
+                                            }`}
                                             className='text-xs hover:text-primary transition-colors truncate flex-1 mr-2'
                                             title={`${lang(
                                                 {

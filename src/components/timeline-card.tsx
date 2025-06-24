@@ -10,6 +10,7 @@ type TimelineItem = {
     content: any;
     originLang?: string;
     // 多语言标题字段
+    title: string;
     titleENUS?: string;
     titleZHCN?: string;
     titleZHTW?: string;
@@ -144,7 +145,7 @@ export function TimelineCard({ item, locale }: Props) {
                     <div className='flex justify-between items-start gap-4'>
                         <div className='flex-1 min-w-0'>
                             <Link
-                                href={`/${locale}/post/${item.content.id}/${item.titleENUS
+                                href={`/${locale}/post/${item.content.id}/${(item.titleENUS || item.title)
                                     ?.toLowerCase()
                                     .replaceAll(' ', '-')
                                     .replace(/[^a-z-]/g, '')}`}

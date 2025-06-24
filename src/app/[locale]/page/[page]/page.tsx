@@ -1063,10 +1063,7 @@ export default async function HomePage({ params }: Props) {
                                             <div className='flex-1 min-w-0'>
                                                 <div className='flex items-center gap-2'>
                                                     <Link
-                                                        href={`/${locale}/post/${post.id}/${post.titleENUS
-                                                            ?.toLowerCase()
-                                                            .replaceAll(' ', '-')
-                                                            .replace(/[^a-z-]/g, '')}`}
+                                                       href={`/${locale}/post/${post.id}/${(post.titleENUS || post.title)?.toLowerCase().replaceAll(" ", "-").replace(/[^a-z-]/g, '') || ''}`}
                                                         className='font-medium hover:text-primary transition-colors text-sm leading-tight break-words'
                                                         title={getLocalizedTitle(post, locale)}
                                                         rel='noopener'>
@@ -1676,10 +1673,7 @@ export default async function HomePage({ params }: Props) {
                                         key={post.id}
                                         className='flex items-center justify-between'>
                                         <Link
-                                            href={`/${locale}/post/${post.id}/${post.titleENUS
-                                                ?.toLowerCase()
-                                                .replaceAll(' ', '-')
-                                                .replace(/[^a-z-]/g, '')}`}
+                                           href={`/${locale}/post/${post.id}/${(post.titleENUS || post.title)?.toLowerCase().replaceAll(" ", "-").replace(/[^a-z-]/g, '') || ''}`}
                                             className='text-xs hover:text-primary transition-colors truncate flex-1 mr-2'
                                             title={`${lang(
                                                 {
@@ -1738,10 +1732,7 @@ export default async function HomePage({ params }: Props) {
                                         key={post.id}
                                         className='flex items-center justify-between'>
                                         <Link
-                                            href={`/${locale}/post/${post.id}/${post.titleENUS
-                                                ?.toLowerCase()
-                                                .replaceAll(' ', '-')
-                                                .replace(/[^a-z-]/g, '')}`}
+                                            href={`/${locale}/post/${post.id}/${(post.titleENUS || post.title)?.toLowerCase().replaceAll(" ", "-").replace(/[^a-z-]/g, '') || ''}`}
                                             className='text-xs hover:text-primary transition-colors truncate flex-1 mr-2'
                                             title={`${lang(
                                                 {

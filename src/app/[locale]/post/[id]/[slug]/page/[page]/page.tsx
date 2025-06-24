@@ -952,14 +952,14 @@ export default async function PostDetailPage({ params }: Props) {
                                 locale={locale}
                             />
                         </CardContent>
-                    </Card>{' '}
-                    <PostDetailClient
+                    </Card>{' '}                    <PostDetailClient
                         post={{
                             id: post.id,
                             title,
                             likes: post._count.likes,
                             replies: post._count.belongReplies,
                             isTranslated: post.originLang !== locale,
+                            authorUid: post.User?.uid, // 添加帖子作者uid
                         }}
                         replies={finalReplies}
                         locale={locale}

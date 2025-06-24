@@ -52,6 +52,7 @@ type TimelineItem = {
             likes?: number;
         };
     };
+    title: string;
     titleENUS?: string;
     titleZHCN?: string;
     titleZHTW?: string;
@@ -169,6 +170,7 @@ export default async function UserPostsPage({ params }: Props) {
             id: post.id.toString(),
             originLang: post.originLang || undefined,
         },
+        title: post.title || '',
         titleENUS: post.titleENUS || undefined,
         titleZHCN: post.titleZHCN || undefined,
         titleZHTW: post.titleZHTW || undefined,
@@ -420,7 +422,7 @@ export default async function UserPostsPage({ params }: Props) {
                                         <div className='flex-1 min-w-0'>
                                             <div className='mb-2'>
                                                 <Link
-                                                    href={`/${locale}/post/${item.content.id}/${item.titleENUS
+                                                    href={`/${locale}/post/${item.content.id}/${(item.titleENUS || item.title)
                                                         ?.toLowerCase()
                                                         .replaceAll(' ', '-')
                                                         .replace(/[^a-z-]/g, '')}`}

@@ -210,7 +210,7 @@ function CompactPostItem({ post, index, locale }: { post: LeaderboardPost; index
             
             <div className="flex-1 min-w-0">
                 <Link
-                    href={`/${locale}/post/${post.id}/${post.titleENUS?.toLowerCase().replaceAll(" ","-").replace(/[^a-z-]/g, '')}`}
+                    href={`/${locale}/post/${post.id}/${(post.titleENUS || post.title)?.toLowerCase().replaceAll(" ", "-").replace(/[^a-z-]/g, '') || ''}`}
                     className="font-medium hover:text-primary transition-colors line-clamp-1"
                     title={getLocalizedTitle(post, locale)}
                     rel="noopener"
