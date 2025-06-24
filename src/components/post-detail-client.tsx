@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -59,7 +59,7 @@ export function PostDetailClient({
         toastId: string;
     } | null>(null);
 
-    const { registerCallback, unregisterCallback } = useBroadcast(); // 原文相关状态 - 只用于按钮显示
+    const { registerCallback, unregisterCallback, broadcast } = useBroadcast(); // 原文相关状态 - 只用于按钮显示
     const [showOriginal, setShowOriginal] = useState(false);
     const [isLoadingOriginal, setIsLoadingOriginal] = useState(false);
     const [hasOriginalContent, setHasOriginalContent] = useState(false);
@@ -467,16 +467,16 @@ export function PostDetailClient({
     useEffect(() => {
         console.log('PostDetailClient - replyLikes updated:', replyLikes);
         console.log('PostDetailClient - likeStatusLoaded:', likeStatusLoaded);
-    }, [replyLikes, likeStatusLoaded]);
-
-    // 处理回复点赞状态变化
-    const handleReplyLikeChange = (replyId: string, isLiked: boolean) => {
+    }, [replyLikes, likeStatusLoaded]);    // 处理回复点赞状态变化 - 使用 useCallback 优化
+    const handleReplyLikeChange = useCallback((replyId: string, isLiked: boolean) => {
         setReplyLikes((prev) => ({
             ...prev,
             [replyId]: isLiked,
         }));
-        console.log('Updated reply like status:', replyId, isLiked);
-    };
+        console.log('Updated reply like status:', replyId, isLiked);    }, []);
+
+    // 使用 useMemo 优化 replyLikes 传递，避免不必要的重新渲染
+    const optimizedReplyLikes = useMemo(() => replyLikes, [replyLikes]);
 
     // 获取用户点赞状态
     useEffect(() => {
@@ -686,12 +686,22 @@ export function PostDetailClient({
                         duration: Infinity,
                         dismissible: false,
                     },
-                );
-
-                // 保存翻译进度状态
+                );                // 保存翻译进度状态
                 setTranslationProgress({
                     uuid: replyUuid,
                     toastId: toastId as string,
+                });
+
+                // 广播用户发出的回复taskId，供NewRepliesBanner过滤使用
+                broadcast({
+                    action: 'broadcast',
+                    type: 'task',
+                    data: {
+                        uuid: replyUuid,
+                        status: 'PENDING',
+                        type: 'reply',
+                        postId: post.id.toString(),
+                    },
                 });
 
                 toast.success(
@@ -1059,12 +1069,11 @@ export function PostDetailClient({
                 totalPages={totalPages}
                 postSlug={slug}
             />
-            
-            {/* 回复列表 */}
+              {/* 回复列表 */}
             <ReplyList
                 replies={localReplies}
                 locale={locale}
-                replyLikes={replyLikes}
+                replyLikes={optimizedReplyLikes}
                 onReplyLikeChange={handleReplyLikeChange}
                 postAuthorUid={post.authorUid} // 传递帖子作者uid
             />

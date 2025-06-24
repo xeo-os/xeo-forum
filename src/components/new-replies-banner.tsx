@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useBroadcast } from '@/store/useBroadcast';
 import Link from 'next/link';
@@ -23,9 +23,60 @@ export function NewRepliesBanner({
 }: NewRepliesBannerProps) {
     const [newRepliesCount, setNewRepliesCount] = useState(0);
     const [isExiting, setIsExiting] = useState(false);
+    const [userTaskIds, setUserTaskIds] = useState<Set<string>>(new Set());
+    const processedTaskIdsRef = useRef<Set<string>>(new Set()); // 使用ref避免竞态条件
     const { registerCallback, unregisterCallback } = useBroadcast();
 
-    // 监听广播消息
+    // 从sessionStorage加载用户taskId列表
+    useEffect(() => {
+        const stored = sessionStorage.getItem(`userReplyTasks_${postId}`);
+        if (stored) {
+            try {
+                const taskIds = JSON.parse(stored);
+                setUserTaskIds(new Set(taskIds));
+            } catch (e) {
+                console.error('Error loading user task IDs:', e);
+            }
+        }
+    }, [postId]);    // 保存用户taskId列表到sessionStorage
+    const saveUserTaskIds = useCallback((newTaskIds: Set<string>) => {
+        setUserTaskIds(newTaskIds);
+        sessionStorage.setItem(`userReplyTasks_${postId}`, JSON.stringify([...newTaskIds]));
+    }, [postId]);    // 监听用户自己发出的回复，记录taskId（仅PENDING状态）
+    useEffect(() => {
+        const handleUserReply = (message: unknown) => {
+            const typedMessage = message as {
+                action: string;
+                data?: {
+                    uuid?: string;
+                    status?: string;
+                    type?: string;
+                    postId?: string;
+                };
+                type?: string;
+            };
+
+            // 当用户发送回复时，只记录PENDING状态的taskId
+            if (
+                typedMessage.action === 'broadcast' &&
+                typedMessage.type === 'task' &&
+                typedMessage.data?.type === 'reply' &&
+                typedMessage.data?.postId === postId &&
+                typedMessage.data?.status === 'PENDING'
+            ) {
+                const taskId = typedMessage.data.uuid;
+                if (taskId) {
+                    const newTaskIds = new Set([...userTaskIds, taskId]);
+                    saveUserTaskIds(newTaskIds);
+                }
+            }
+        };
+
+        registerCallback(handleUserReply);
+        return () => {
+            unregisterCallback(handleUserReply);
+        };
+    }, [registerCallback, unregisterCallback, postId, userTaskIds, saveUserTaskIds]);// 监听广播消息，过滤新回复并清理用户taskId
     useEffect(() => {
         const handleMessage = (message: unknown) => {
             const typedMessage = message as {
@@ -39,28 +90,63 @@ export function NewRepliesBanner({
                             postId: string;
                         };
                     };
+                    uuid?: string;
+                    status?: string;
+                    type?: string;
+                    postId?: string;
                 };
                 type?: string;
-            };
+            };            let messageTaskId: string | undefined;
+            let isValidReply = false;
 
-            // 检查是否是新回复消息且属于当前帖子
+            // 检查message.create格式（新格式）
             if (
                 typedMessage.action === 'message.create' &&
                 typedMessage.data?.message?.content?.type === 'reply' &&
                 typedMessage.data?.message?.content?.status === 'DONE' &&
                 typedMessage.data?.message?.content?.postId === postId
             ) {
-                setNewRepliesCount((prev) => prev + 1);
+                messageTaskId = typedMessage.data.message.content.uuid;
+                isValidReply = true;
             }
-        };
+            
+            // 检查broadcast格式（旧格式）
+            else if (
+                typedMessage.action === 'broadcast' &&
+                typedMessage.type === 'task' &&
+                typedMessage.data?.type === 'reply' &&
+                typedMessage.data?.status === 'DONE' &&
+                typedMessage.data?.postId === postId
+            ) {
+                messageTaskId = typedMessage.data.uuid;
+                isValidReply = true;
+            }
 
-        registerCallback(handleMessage);
+            // 如果是有效的回复且有taskId
+            if (isValidReply && messageTaskId) {
+                // 检查是否已经处理过这个taskId
+                if (processedTaskIdsRef.current.has(messageTaskId)) {
+                    return;
+                }
+
+                // 立即标记为已处理（使用ref避免竞态条件）
+                processedTaskIdsRef.current.add(messageTaskId);
+
+                // 如果是用户自己的回复完成，从列表中移除taskId
+                if (userTaskIds.has(messageTaskId)) {
+                    const newTaskIds = new Set(userTaskIds);
+                    newTaskIds.delete(messageTaskId);
+                    saveUserTaskIds(newTaskIds);
+                } else {
+                    // 如果不是用户自己的回复，显示横幅
+                    setNewRepliesCount((prev) => prev + 1);
+                }
+            }
+        };        registerCallback(handleMessage);
         return () => {
             unregisterCallback(handleMessage);
         };
-    }, [registerCallback, unregisterCallback, postId]);
-
-    const handleClick = () => {
+    }, [registerCallback, unregisterCallback, postId, userTaskIds, saveUserTaskIds]);    const handleClick = () => {
         setIsExiting(true);
         // 延迟清除计数，让退出动画完成
         setTimeout(() => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -1613,7 +1613,7 @@ interface ReplyListProps {
     postAuthorUid?: number; // 新增：帖子作者uid
 }
 
-export function ReplyList({
+function ReplyListComponent({
     replies,
     locale,
     onRepliesUpdate,
@@ -1621,7 +1621,7 @@ export function ReplyList({
     onReplyLikeChange,
     postAuthorUid, // 新增参数
 }: ReplyListProps) {
-    console.log('ReplyList received replyLikes:', replyLikes); // 调试日志
+    // console.log('ReplyList received replyLikes:', replyLikes); // 调试日志 - 暂时注释掉以减少日志噪音
     const [localReplies, setLocalReplies] = useState(replies);
     const [hoveredReplyPath, setHoveredReplyPath] = useState<string[] | null>(null);
     const [focusedReplyId, setFocusedReplyId] = useState<string | null>(null);
@@ -2000,7 +2000,9 @@ export function ReplyList({
                         </motion.div>
                     </CardContent>
                 </Card>
-            </motion.div>
-        </AnimatePresence>
+            </motion.div>        </AnimatePresence>
     );
 }
+
+// 使用 React.memo 包装组件以提高性能
+export const ReplyList = React.memo(ReplyListComponent);
