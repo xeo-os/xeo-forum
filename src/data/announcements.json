@@ -1,0 +1,122 @@
+[
+    {
+        "pinned": true,
+        "expired": false,
+        "type": "info",
+        "publishedAt": "2025-06-10T00:00:00Z",
+        "title": {
+            "zh-CN": "🎉 欢迎来到 XEO OS！",
+            "en-US": "🎉 Welcome to XEO OS!",
+            "zh-TW": "🎉 歡迎來到 XEO OS！",
+            "es-ES": "🎉 ¡Bienvenido a XEO OS!",
+            "fr-FR": "🎉 Bienvenue sur XEO OS !",
+            "ru-RU": "🎉 Добро пожаловать в XEO OS!",
+            "ja-JP": "🎉 XEO OS へようこそ！",
+            "de-DE": "🎉 Willkommen bei XEO OS!",
+            "pt-BR": "🎉 Bem-vindo ao XEO OS!",
+            "ko-KR": "🎉 XEO OS에 오신 것을 환영합니다!"
+        },
+        "content": {
+            "zh-CN": "感谢您加入 XEO OS 社区！这里是一个 AI 驱动的全球性综合论坛平台。我们的使命是通过先进的人工智能翻译技术，打破语言障碍，让世界各地的人们都能用母语自由地表达观点、分享想法。\n\n在 XEO OS，每一个帖子和回复都会被自动翻译成其他用户的语言，确保每个人都能用最熟悉的语言阅读和理解来自全球的内容。\n\n开始探索吧！",
+            "en-US": "Thank you for joining the XEO OS community! This is an AI-driven global comprehensive forum platform. Our mission is to break down language barriers through advanced artificial intelligence translation technology, allowing people from all over the world to freely express their opinions and share ideas in their native language.\n\nOn XEO OS, every post and reply is automatically translated into other users' languages, ensuring that everyone can read and understand content from around the world in their most familiar language.\n\nStart exploring!",
+            "zh-TW": "感謝您加入 XEO OS 社群！這裡是一個 AI 驅動的全球性綜合論壇平台。我們的使命是透過先進的人工智慧翻譯技術，打破語言障礙，讓世界各地的人們都能用母語自由地表達觀點、分享想法。\n\n在 XEO OS，每一個貼文和回覆都會被自動翻譯成其他使用者的語言，確保每個人都能用最熟悉的語言閱讀和理解來自全球的內容。\n\n開始探索吧！",
+            "es-ES": "¡Gracias por unirte a la comunidad XEO OS! Esta es una plataforma de foro integral global impulsada por IA. Nuestra misión es derribar las barreras del idioma a través de tecnología avanzada de traducción de inteligencia artificial, permitiendo que personas de todo el mundo expresen libremente sus opiniones y compartan ideas en su idioma nativo.\n\nEn XEO OS, cada publicación y respuesta se traduce automáticamente a los idiomas de otros usuarios, asegurando que todos puedan leer y entender el contenido de todo el mundo en su idioma más familiar.\n\n¡Comienza a explorar!",
+            "fr-FR": "Merci de rejoindre la communauté XEO OS ! Il s'agit d'une plateforme de forum global complète alimentée par l'IA. Notre mission est de briser les barrières linguistiques grâce à une technologie de traduction d'intelligence artificielle avancée, permettant aux gens du monde entier d'exprimer librement leurs opinions et de partager leurs idées dans leur langue maternelle.\n\nSur XEO OS, chaque publication et réponse est automatiquement traduite dans les langues des autres utilisateurs, garantissant que chacun puisse lire et comprendre le contenu du monde entier dans sa langue la plus familière.\n\nCommencez à explorer !",
+            "ru-RU": "Спасибо за присоединение к сообществу XEO OS! Это глобальная комплексная форумная платформа, управляемая ИИ. Наша миссия — разрушить языковые барьеры с помощью передовых технологий перевода искусственного интеллекта, позволяя людям со всего мира свободно выражать свои мнения и делиться идеями на родном языке.\n\nВ XEO OS каждое сообщение и ответ автоматически переводятся на языки других пользователей, гарантируя, что каждый может читать и понимать контент со всего мира на наиболее знакомом языке.\n\nНачните исследовать!",
+            "ja-JP": "XEO OS コミュニティへのご参加ありがとうございます！ここは AI 駆動のグローバル総合フォーラムプラットフォームです。私たちの使命は、先進的な人工知能翻訳技術により言語の壁を打ち破り、世界中の人々が母国語で自由に意見を表現し、アイデアを共有できるようにすることです。\n\nXEO OS では、すべての投稿と返信が他のユーザーの言語に自動翻訳され、誰もが最も馴染みのある言語で世界中のコンテンツを読み、理解できるようになっています。\n\n探索を始めましょう！",
+            "de-DE": "Vielen Dank, dass Sie der XEO OS-Community beigetreten sind! Dies ist eine KI-gesteuerte globale umfassende Forumplattform. Unsere Mission ist es, Sprachbarrieren durch fortschrittliche KI-Übersetzungstechnologie zu durchbrechen und Menschen aus aller Welt zu ermöglichen, ihre Meinungen frei zu äußern und Ideen in ihrer Muttersprache zu teilen.\n\nAuf XEO OS wird jeder Beitrag und jede Antwort automatisch in die Sprachen anderer Benutzer übersetzt, um sicherzustellen, dass jeder Inhalte aus der ganzen Welt in seiner vertrautesten Sprache lesen und verstehen kann.\n\nBeginnen Sie zu erkunden!",
+            "pt-BR": "Obrigado por se juntar à comunidade XEO OS! Esta é uma plataforma de fórum abrangente global impulsionada por IA. Nossa missão é quebrar as barreiras linguísticas através de tecnologia avançada de tradução de inteligência artificial, permitindo que pessoas de todo o mundo expressem livremente suas opiniões e compartilhem ideias em sua língua nativa.\n\nNo XEO OS, cada postagem e resposta é automaticamente traduzida para os idiomas de outros usuários, garantindo que todos possam ler e entender conteúdo de todo o mundo em seu idioma mais familiar.\n\nComece a explorar!",
+            "ko-KR": "XEO OS 커뮤니티에 참여해 주셔서 감사합니다! 이곳은 AI 기반의 글로벌 종합 포럼 플랫폼입니다. 우리의 사명은 첨단 인공지능 번역 기술을 통해 언어 장벽을 허물고, 전 세계 사람들이 모국어로 자유롭게 의견을 표현하고 아이디어를 공유할 수 있도록 하는 것입니다.\n\nXEO OS에서는 모든 게시물과 댓글이 다른 사용자의 언어로 자동 번역되어, 누구나 가장 친숙한 언어로 전 세계의 콘텐츠를 읽고 이해할 수 있도록 보장합니다.\n\n탐색을 시작해보세요!"
+        }
+    },
+    {
+        "pinned": false,
+        "expired": false,
+        "type": "important",
+        "publishedAt": "2025-07-01T00:00:00Z",
+        "title": {
+            "zh-CN": "公测开始",
+            "en-US": "Public Beta Launch",
+            "zh-TW": "公測開始",
+            "es-ES": "Lanzamiento de Beta Pública",
+            "fr-FR": "Lancement de la Bêta Publique",
+            "ru-RU": "Запуск Публичной Беты",
+            "ja-JP": "パブリックベータ開始",
+            "de-DE": "Öffentlicher Beta-Start",
+            "pt-BR": "Lançamento da Beta Pública",
+            "ko-KR": "공개 베타 시작"
+        },
+        "content": {
+            "zh-CN": "我们于2025年7月正式开始公开运行。如遇问题，请反馈给我们！",
+            "en-US": "We officially started public operation in July 2025. If you encounter any issues, please provide feedback to us!",
+            "zh-TW": "我們於2025年7月正式開始公開運行。如遇問題，請反饋給我們！",
+            "es-ES": "Comenzamos oficialmente las operaciones públicas en julio de 2025. ¡Si encuentras algún problema, por favor proporciónanos tu comentario!",
+            "fr-FR": "Nous avons officiellement commencé les opérations publiques en juillet 2025. Si vous rencontrez des problèmes, veuillez nous faire part de vos commentaires !",
+            "ru-RU": "Мы официально начали публичную работу в июле 2025 года. Если вы столкнетесь с проблемами, пожалуйста, сообщите нам об этом!",
+            "ja-JP": "2025年7月に正式に公開運用を開始しました。問題が発生した場合は、フィードバックをお寄せください！",
+            "de-DE": "Wir haben im Juli 2025 offiziell den öffentlichen Betrieb aufgenommen. Wenn Sie auf Probleme stoßen, geben Sie uns bitte Feedback!",
+            "pt-BR": "Começamos oficialmente as operações públicas em julho de 2025. Se você encontrar algum problema, por favor nos dê seu feedback!",
+            "ko-KR": "2025년 7월에 공식적으로 공개 운영을 시작했습니다. 문제가 발생하면 피드백을 주세요!"
+        }
+    },
+    {
+        "pinned": false,
+        "expired": false,
+        "type": "important",
+        "publishedAt": "2025-06-10T00:00:00Z",
+        "title": {
+            "zh-CN": "服务条款与隐私政策更新",
+            "en-US": "Terms of Service and Privacy Policy Update",
+            "zh-TW": "服務條款與隱私政策更新",
+            "es-ES": "Actualización de Términos de Servicio y Política de Privacidad",
+            "fr-FR": "Mise à jour des Conditions de Service et de la Politique de Confidentialité",
+            "ru-RU": "Обновление Условий Обслуживания и Политики Конфиденциальности",
+            "ja-JP": "利用規約とプライバシーポリシーの更新",
+            "de-DE": "Aktualisierung der Nutzungsbedingungen und Datenschutzrichtlinie",
+            "pt-BR": "Atualização dos Termos de Serviço e Política de Privacidade",
+            "ko-KR": "서비스 약관 및 개인정보 처리방침 업데이트"
+        },
+        "content": {
+            "zh-CN": "我们于2025年6月10日更新了我们的服务条款和隐私策略。",
+            "en-US": "We updated our Terms of Service and Privacy Policy on June 10, 2025.",
+            "zh-TW": "我們於2025年6月10日更新了我們的服務條款和隱私策略。",
+            "es-ES": "Actualizamos nuestros Términos de Servicio y Política de Privacidad el 10 de junio de 2025.",
+            "fr-FR": "Nous avons mis à jour nos Conditions de Service et notre Politique de Confidentialité le 10 juin 2025.",
+            "ru-RU": "Мы обновили наши Условия Обслуживания и Политику Конфиденциальности 10 июня 2025 года.",
+            "ja-JP": "2025年6月10日に利用規約とプライバシーポリシーを更新しました。",
+            "de-DE": "Wir haben unsere Nutzungsbedingungen und Datenschutzrichtlinie am 10. Juni 2025 aktualisiert.",
+            "pt-BR": "Atualizamos nossos Termos de Serviço e Política de Privacidade em 10 de junho de 2025.",
+            "ko-KR": "2025년 6월 10일에 서비스 약관과 개인정보 처리방침을 업데이트했습니다."
+        }
+    },
+    {
+        "pinned": false,
+        "expired": true,
+        "type": "info",
+        "publishedAt": "2025-06-17T00:00:00Z",
+        "title": {
+            "zh-CN": "内测开始",
+            "en-US": "Closed Beta Launch",
+            "zh-TW": "內測開始",
+            "es-ES": "Inicio de la Beta Cerrada",
+            "fr-FR": "Lancement de la Bêta Fermée",
+            "ru-RU": "Запуск Закрытого Бета-тестирования",
+            "ja-JP": "クローズドベータ開始",
+            "de-DE": "Start der geschlossenen Beta",
+            "pt-BR": "Início da Beta Fechada",
+            "ko-KR": "클로즈드 베타 시작"
+        },
+        "content": {
+            "zh-CN": "我们于2025年6月17日开始内测。感谢所有参与者的支持！如果发现问题，请与我们联系。\n\n 注意，内测数据不会保存。",
+            "en-US": "We started closed beta testing on June 17, 2025. Thank you to all participants for your support! If you find any issues, please contact us.\n\nNote: Beta data will not be saved.",
+            "zh-TW": "我們於2025年6月17日開始內測。感謝所有參與者的支持！如果發現問題，請與我們聯繫。\n\n注意，內測資料不會保存。",
+            "es-ES": "Comenzamos la beta cerrada el 17 de junio de 2025. ¡Gracias a todos los participantes por su apoyo! Si encuentras algún problema, por favor contáctanos.\n\nNota: Los datos de la beta no se guardarán.",
+            "fr-FR": "Nous avons commencé la bêta fermée le 17 juin 2025. Merci à tous les participants pour leur soutien ! Si vous rencontrez des problèmes, veuillez nous contacter.\n\nRemarque : Les données de la bêta ne seront pas conservées.",
+            "ru-RU": "Мы начали закрытое бета-тестирование 17 июня 2025 года. Спасибо всем участникам за поддержку! Если вы обнаружите проблемы, пожалуйста, свяжитесь с нами.\n\nВнимание: данные бета-тестирования не будут сохранены.",
+            "ja-JP": "2025年6月17日にクローズドベータを開始しました。ご参加いただいた皆様、ありがとうございます！問題があればご連絡ください。\n\n注意：ベータのデータは保存されません。",
+            "de-DE": "Wir haben am 17. Juni 2025 mit der geschlossenen Beta begonnen. Vielen Dank an alle Teilnehmer für ihre Unterstützung! Wenn Sie Probleme feststellen, kontaktieren Sie uns bitte.\n\nHinweis: Beta-Daten werden nicht gespeichert.",
+            "pt-BR": "Iniciamos o beta fechado em 17 de junho de 2025. Obrigado a todos os participantes pelo apoio! Se encontrar algum problema, entre em contato conosco.\n\nAtenção: Os dados do beta não serão salvos.",
+            "ko-KR": "2025년 6월 17일에 클로즈드 베타를 시작했습니다. 모든 참가자분들의 지원에 감사드립니다! 문제가 있으면 저희에게 연락해 주세요.\n\n참고: 베타 데이터는 저장되지 않습니다."
+        }
+    }
+]
