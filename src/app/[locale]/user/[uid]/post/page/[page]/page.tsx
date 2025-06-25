@@ -19,21 +19,66 @@ import lang from '@/lib/lang';
 
 import '@/app/globals.css';
 
+// 优化的数据获取函数 - 使用关联查询一次性获取用户信息和帖子
+async function getUserWithPosts(uid: number, page: number, itemsPerPage: number) {
+    const skip = (page - 1) * itemsPerPage;
+    
+    // 使用单个查询通过关联获取用户和帖子信息
+    const user = await prisma.user.findUnique({
+        where: { uid },
+        select: {
+            uid: true,
+            username: true,
+            nickname: true,
+            avatar: {
+                select: {
+                    emoji: true,
+                    background: true,
+                },
+            },
+            _count: {
+                select: {
+                    post: true,
+                },
+            },
+            post: {
+                select: {
+                    id: true,
+                    title: true,
+                    origin: true,
+                    createdAt: true,
+                    originLang: true,
+                    titleENUS: true,
+                    titleZHCN: true,
+                    titleZHTW: true,
+                    titleESES: true,
+                    titleFRFR: true,
+                    titleRURU: true,
+                    titleJAJP: true,
+                    titleKOKR: true,
+                    titleDEDE: true,
+                    titlePTBR: true,
+                    _count: { select: { belongReplies: true, likes: true } },
+                },
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take: itemsPerPage,
+            }
+        },
+    });
+
+    if (!user) {
+        return { user: null, posts: [] };
+    }
+
+    // 解构出帖子数据，其余作为用户信息
+    const { post: posts, ...userInfo } = user;
+    
+    return { user: userInfo, posts };
+}
+
 type Props = {
     params: Promise<{ locale: string; uid: string; page: string }>;
-};
-
-type User = {
-    uid: number;
-    username: string;
-    nickname: string;
-    avatar: {
-        emoji: string;
-        background: string;
-    }[];
-    _count: {
-        post: number;
-    };
 };
 
 type TimelineItem = {
@@ -74,6 +119,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
     const { locale, uid } = await params;
 
+    // 只查询metadata所需的最少信息
     const user = await prisma.user.findUnique({
         where: { uid: parseInt(uid) },
         select: { username: true, nickname: true },
@@ -108,27 +154,9 @@ export async function generateMetadata({
 export default async function UserPostsPage({ params }: Props) {
     const { page: pageParam, locale, uid } = await params;
     const page = Number(pageParam) || 1;
-    const skip = (page - 1) * ITEMS_PER_PAGE;
 
-    const user: User | null = await prisma.user.findUnique({
-        where: { uid: parseInt(uid) },
-        select: {
-            uid: true,
-            username: true,
-            nickname: true,
-            avatar: {
-                select: {
-                    emoji: true,
-                    background: true,
-                },
-            },
-            _count: {
-                select: {
-                    post: true,
-                },
-            },
-        },
-    });
+    // 使用优化的单次查询获取所有需要的数据
+    const { user, posts } = await getUserWithPosts(parseInt(uid), page, ITEMS_PER_PAGE);
 
     if (!user) {
         notFound();
@@ -136,30 +164,6 @@ export default async function UserPostsPage({ params }: Props) {
 
     const userAvatar = user.avatar[0] || { emoji: '', background: '' };
 
-    const posts = await prisma.post.findMany({
-        where: { userUid: user.uid },
-        select: {
-            id: true,
-            title: true,
-            origin: true,
-            createdAt: true,
-            originLang: true,
-            titleENUS: true,
-            titleZHCN: true,
-            titleZHTW: true,
-            titleESES: true,
-            titleFRFR: true,
-            titleRURU: true,
-            titleJAJP: true,
-            titleKOKR: true,
-            titleDEDE: true,
-            titlePTBR: true,
-            _count: { select: { belongReplies: true, likes: true } },
-        },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: ITEMS_PER_PAGE,
-    });
     const timelineItems: TimelineItem[] = posts.map((post) => ({
         id: `post-${post.id}`,
         type: 'post' as const,

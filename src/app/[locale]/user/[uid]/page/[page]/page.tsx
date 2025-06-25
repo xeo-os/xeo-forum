@@ -17,6 +17,7 @@ import { TimelineCard } from '@/components/timeline-card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Metadata } from 'next';
+import { cache } from 'react';
 import lang from '@/lib/lang';
 import EmojiBackground from '@/components/emoji-background';
 
@@ -26,37 +27,12 @@ type Props = {
     params: Promise<{ locale: string; uid: string; page: string }>;
 };
 
-type User = {
-    uid: number;
-    username: string;
-    nickname: string;
-    bio: string | null;
-    birth: string | null;
-    country: string | null;
-    role: string;
-    createdAt: Date;
-    lastUseAt: Date | null;
-    profileEmoji: string | null;
-    gender: string | null;
-    exp: number;
-    avatar: {
-        emoji: string;
-        background: string;
-    }[];
-    _count: {
-        post: number;
-        reply: number;
-        likes: number;
-        following: number;
-        followed: number;
-    };
-};
-
 type TimelineItem = {
     id: string;
     type: 'post' | 'reply' | 'like';
     createdAt: Date;
     originLang?: string;
+    title: string; // 添加 title 字段
     content: {
         id?: string;
         title?: string;
@@ -126,6 +102,181 @@ type TimelineItem = {
 
 const ITEMS_PER_PAGE = 10;
 
+// 轻量级用户查询，仅用于 metadata
+const getUserForMetadata = cache(async (uid: number) => {
+    return prisma.user.findUnique({
+        where: { uid },
+        select: { username: true, nickname: true },
+    });
+});
+
+// 主要的用户页面数据查询函数 - 将所有查询合并为一次并行查询
+const getUserPageData = cache(async (uid: number, skip: number, take: number) => {
+    return Promise.all([
+        // 用户完整信息
+        prisma.user.findUnique({
+            where: { uid },
+            select: {
+                uid: true,
+                username: true,
+                nickname: true,
+                bio: true,
+                birth: true,
+                country: true,
+                role: true,
+                createdAt: true,
+                lastUseAt: true,
+                profileEmoji: true,
+                gender: true,
+                exp: true,
+                avatar: {
+                    select: {
+                        emoji: true,
+                        background: true,
+                    },
+                },
+                _count: {
+                    select: {
+                        post: true,
+                        reply: true,
+                        likes: true,
+                        following: true,
+                        followed: true,
+                    },
+                },
+            },
+        }),
+        // 用户的帖子
+        prisma.post.findMany({
+            where: { userUid: uid, published: true },
+            select: {
+                id: true,
+                title: true,
+                origin: true,
+                createdAt: true,
+                originLang: true,
+                titleENUS: true,
+                titleZHCN: true,
+                titleZHTW: true,
+                titleESES: true,
+                titleFRFR: true,
+                titleRURU: true,
+                titleJAJP: true,
+                titleKOKR: true,
+                titleDEDE: true,
+                titlePTBR: true,
+                _count: { select: { belongReplies: true, likes: true } },
+            },
+            orderBy: { updatedAt: 'desc' },
+            skip,
+            take,
+        }),
+        // 用户的回复
+        prisma.reply.findMany({
+            where: { userUid: uid },
+            select: {
+                id: true,
+                content: true,
+                createdAt: true,
+                originLang: true,
+                contentENUS: true,
+                contentZHCN: true,
+                contentZHTW: true,
+                contentESES: true,
+                contentFRFR: true,
+                contentRURU: true,
+                contentJAJP: true,
+                contentKOKR: true,
+                contentDEDE: true,
+                contentPTBR: true,
+                belongPost: {
+                    select: {
+                        id: true,
+                        title: true,
+                        titleENUS: true,
+                        titleZHCN: true,
+                        titleZHTW: true,
+                        titleESES: true,
+                        titleFRFR: true,
+                        titleRURU: true,
+                        titleJAJP: true,
+                        titleKOKR: true,
+                        titleDEDE: true,
+                        titlePTBR: true,
+                        originLang: true,
+                    },
+                },
+                _count: { select: { likes: true } },
+            },
+            orderBy: { updatedAt: 'desc' },
+            skip,
+            take,
+        }),
+        // 用户的点赞
+        prisma.like.findMany({
+            where: { userUid: uid },
+            select: {
+                uuid: true,
+                createdAt: true,
+                post: {
+                    select: {
+                        id: true,
+                        title: true,
+                        titleENUS: true,
+                        titleZHCN: true,
+                        titleZHTW: true,
+                        titleESES: true,
+                        titleFRFR: true,
+                        titleRURU: true,
+                        titleJAJP: true,
+                        titleKOKR: true,
+                        titleDEDE: true,
+                        titlePTBR: true,
+                        originLang: true,
+                    },
+                },
+                reply: {
+                    select: {
+                        id: true,
+                        content: true,
+                        contentENUS: true,
+                        contentZHCN: true,
+                        contentZHTW: true,
+                        contentESES: true,
+                        contentFRFR: true,
+                        contentRURU: true,
+                        contentJAJP: true,
+                        contentKOKR: true,
+                        contentDEDE: true,
+                        contentPTBR: true,
+                        originLang: true,
+                    },
+                },
+            },
+            orderBy: { createdAt: 'desc' },
+            skip,
+            take,
+        }),
+        // 计算用户获得的总点赞数 (来自帖子和回复的点赞)
+        prisma.like.count({
+            where: {
+                OR: [
+                    {
+                        post: {
+                            userUid: uid
+                        }
+                    },
+                    {
+                        reply: {
+                            userUid: uid
+                        }
+                    }
+                ]
+            }
+        }),
+    ]);
+});
+
 export async function generateMetadata({
     params,
 }: {
@@ -133,11 +284,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
     const { locale, uid } = await params;
 
-    // 获取用户信息用于生成标题
-    const user = await prisma.user.findUnique({
-        where: { uid: parseInt(uid) },
-        select: { username: true, nickname: true },
-    });
+    // 使用轻量级查询获取用户信息用于生成标题
+    const user = await getUserForMetadata(parseInt(uid));
 
     if (!user) {
         return {
@@ -189,41 +337,12 @@ export default async function UserPage({ params }: Props) {
     const page = Number(pageParam) || 1;
     const skip = (page - 1) * ITEMS_PER_PAGE;
 
-    // 获取用户信息
-    const user: User | null = await prisma.user.findUnique({
-        where: {
-            uid: parseInt(uid),
-        },
-        select: {
-            uid: true,
-            username: true,
-            nickname: true,
-            bio: true,
-            birth: true,
-            country: true,
-            role: true,
-            createdAt: true,
-            lastUseAt: true,
-            profileEmoji: true,
-            gender: true,
-            exp: true,
-            avatar: {
-                select: {
-                    emoji: true,
-                    background: true,
-                },
-            },
-            _count: {
-                select: {
-                    post: true,
-                    reply: true,
-                    likes: true,
-                    following: true,
-                    followed: true,
-                },
-            },
-        },
-    });
+    // 使用合并的查询函数获取所有数据
+    const [user, posts, replies, likes, totalLikesReceived] = await getUserPageData(
+        parseInt(uid),
+        skip,
+        ITEMS_PER_PAGE
+    );
 
     if (!user) {
         notFound();
@@ -232,132 +351,6 @@ export default async function UserPage({ params }: Props) {
     // 获取用户的第一个头像或使用默认值
     const userAvatar = user.avatar[0] || { emoji: '', background: '' };
 
-    // 获取用户活动时间线
-    const [posts, replies, likes, totalCount] = await Promise.all([
-        prisma.post.findMany({
-            where: { userUid: user.uid, published: true },
-            select: {
-                id: true,
-                title: true,
-                origin: true,
-                createdAt: true,
-                originLang: true,
-                // 添加所有多语言标题字段
-                titleENUS: true,
-                titleZHCN: true,
-                titleZHTW: true,
-                titleESES: true,
-                titleFRFR: true,
-                titleRURU: true,
-                titleJAJP: true,
-                titleKOKR: true,
-                titleDEDE: true,
-                titlePTBR: true,
-                _count: { select: { belongReplies: true, likes: true } },
-            },
-            orderBy: { updatedAt: 'desc' },
-            skip,
-            take: ITEMS_PER_PAGE,
-        }),
-        prisma.reply.findMany({
-            where: { userUid: user.uid },
-            select: {
-                id: true,
-                content: true,
-                createdAt: true,
-                originLang: true,
-                // 添加所有多语言内容字段
-                contentENUS: true,
-                contentZHCN: true,
-                contentZHTW: true,
-                contentESES: true,
-                contentFRFR: true,
-                contentRURU: true,
-                contentJAJP: true,
-                contentKOKR: true,
-                contentDEDE: true,
-                contentPTBR: true,
-                belongPost: {
-                    select: {
-                        id: true,
-                        title: true,
-                        titleENUS: true,
-                        titleZHCN: true,
-                        titleZHTW: true,
-                        titleESES: true,
-                        titleFRFR: true,
-                        titleRURU: true,
-                        titleJAJP: true,
-                        titleKOKR: true,
-                        titleDEDE: true,
-                        titlePTBR: true,
-                        originLang: true,
-                    },
-                },
-                _count: { select: { likes: true } },
-            },
-            orderBy: { updatedAt: 'desc' },
-            skip,
-            take: ITEMS_PER_PAGE,
-        }),
-        prisma.like.findMany({
-            where: { userUid: user.uid },
-            select: {
-                uuid: true,
-                createdAt: true,
-                post: {
-                    select: {
-                        id: true,
-                        title: true,
-                        titleENUS: true,
-                        titleZHCN: true,
-                        titleZHTW: true,
-                        titleESES: true,
-                        titleFRFR: true,
-                        titleRURU: true,
-                        titleJAJP: true,
-                        titleKOKR: true,
-                        titleDEDE: true,
-                        titlePTBR: true,
-                        originLang: true,
-                    },
-                },
-                reply: {
-                    select: {
-                        id: true,
-                        content: true,
-                        contentENUS: true,
-                        contentZHCN: true,
-                        contentZHTW: true,
-                        contentESES: true,
-                        contentFRFR: true,
-                        contentRURU: true,
-                        contentJAJP: true,
-                        contentKOKR: true,
-                        contentDEDE: true,
-                        contentPTBR: true,
-                        originLang: true,
-                    },
-                },
-            },
-            orderBy: { createdAt: 'desc' },
-            skip,
-            take: ITEMS_PER_PAGE,
-        }),
-        prisma.user.findUnique({
-            where: { uid: user.uid },
-            select: {
-                _count: {
-                    select: {
-                        post: true,
-                        reply: true,
-                        likes: true,
-                    },
-                },
-            },
-        }),
-    ]);
-
     // 合并并排序时间线项目
     const timelineItems: TimelineItem[] = [
         ...posts.map((post) => ({
@@ -365,6 +358,7 @@ export default async function UserPage({ params }: Props) {
             type: 'post' as const,
             createdAt: post.createdAt,
             originLang: post.originLang || undefined,
+            title: post.title, // 添加 title 字段
             content: {
                 ...post,
                 id: post.id.toString(),
@@ -387,6 +381,7 @@ export default async function UserPage({ params }: Props) {
             type: 'reply' as const,
             createdAt: reply.createdAt,
             originLang: reply.originLang || undefined,
+            title: reply.belongPost?.title || '', // 使用帖子标题作为 title
             content: {
                 ...reply,
                 originLang: reply.originLang || undefined,
@@ -419,11 +414,23 @@ export default async function UserPage({ params }: Props) {
                 contentDEDE: reply.contentDEDE || undefined,
                 contentPTBR: reply.contentPTBR || undefined,
             },
+            // 为回复添加多语言标题字段（来自帖子）
+            titleENUS: reply.belongPost?.titleENUS || undefined,
+            titleZHCN: reply.belongPost?.titleZHCN || undefined,
+            titleZHTW: reply.belongPost?.titleZHTW || undefined,
+            titleESES: reply.belongPost?.titleESES || undefined,
+            titleFRFR: reply.belongPost?.titleFRFR || undefined,
+            titleRURU: reply.belongPost?.titleRURU || undefined,
+            titleJAJP: reply.belongPost?.titleJAJP || undefined,
+            titleKOKR: reply.belongPost?.titleKOKR || undefined,
+            titleDEDE: reply.belongPost?.titleDEDE || undefined,
+            titlePTBR: reply.belongPost?.titlePTBR || undefined,
         })),
         ...likes.map((like) => ({
             id: `like-${like.uuid}`,
             type: 'like' as const,
             createdAt: like.createdAt,
+            title: like.post?.title || like.reply?.content || '', // 使用帖子标题或回复内容作为 title
             content: {
                 post: like.post
                     ? {
@@ -459,13 +466,24 @@ export default async function UserPage({ params }: Props) {
                       }
                     : undefined,
             },
+            // 为点赞添加多语言标题字段（来自帖子）
+            titleENUS: like.post?.titleENUS || undefined,
+            titleZHCN: like.post?.titleZHCN || undefined,
+            titleZHTW: like.post?.titleZHTW || undefined,
+            titleESES: like.post?.titleESES || undefined,
+            titleFRFR: like.post?.titleFRFR || undefined,
+            titleRURU: like.post?.titleRURU || undefined,
+            titleJAJP: like.post?.titleJAJP || undefined,
+            titleKOKR: like.post?.titleKOKR || undefined,
+            titleDEDE: like.post?.titleDEDE || undefined,
+            titlePTBR: like.post?.titlePTBR || undefined,
         })),
     ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
     const totalItems =
-        (totalCount?._count.post || 0) +
-        (totalCount?._count.reply || 0) +
-        (totalCount?._count.likes || 0);
+        (user._count.post || 0) +
+        (user._count.reply || 0) +
+        (user._count.likes || 0);
     const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
 
     // 多语言文本
@@ -497,6 +515,21 @@ export default async function UserPage({ params }: Props) {
                 'pt-BR': 'Respostas',
                 'ru-RU': 'Ответы',
                 'zh-TW': '回復',
+            },
+            locale,
+        ),
+        likes: lang(
+            {
+                'zh-CN': '获赞',
+                'en-US': 'Likes',
+                'ja-JP': 'いいね',
+                'ko-KR': '좋아요',
+                'fr-FR': 'J\'aime',
+                'es-ES': 'Me gusta',
+                'de-DE': 'Gefällt mir',
+                'pt-BR': 'Curtidas',
+                'ru-RU': 'Лайки',
+                'zh-TW': '獲讚',
             },
             locale,
         ),
@@ -713,7 +746,7 @@ export default async function UserPage({ params }: Props) {
                         <p className='text-base mb-4 text-white drop-shadow-sm'>{user.bio}</p>
                     )}
 
-                    <div className='grid grid-cols-2 md:grid-cols-4 gap-4 mb-4'>
+                    <div className='grid grid-cols-2 md:grid-cols-5 gap-4 mb-4'>
                         <div className='text-center text-white'>
                             <div className='text-2xl font-bold drop-shadow-lg'>
                                 {user._count.post}
@@ -728,6 +761,14 @@ export default async function UserPage({ params }: Props) {
                             </div>
                             <div className='text-sm text-white/80 drop-shadow-sm'>
                                 {texts.replies}
+                            </div>
+                        </div>
+                        <div className='text-center text-white'>
+                            <div className='text-2xl font-bold drop-shadow-lg'>
+                                {totalLikesReceived}
+                            </div>
+                            <div className='text-sm text-white/80 drop-shadow-sm'>
+                                {texts.likes}
                             </div>
                         </div>
                         <div className='text-center text-white'>

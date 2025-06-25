@@ -11,21 +11,82 @@ import lang from '@/lib/lang';
 
 import '@/app/globals.css';
 
+// 优化的数据获取函数 - 使用关联查询一次性获取用户信息和回复
+async function getUserWithReplies(uid: number, page: number, itemsPerPage: number) {
+    const skip = (page - 1) * itemsPerPage;
+    
+    // 使用单个查询通过关联获取用户和回复信息
+    const user = await prisma.user.findUnique({
+        where: { uid },
+        select: {
+            uid: true,
+            username: true,
+            nickname: true,
+            avatar: {
+                select: {
+                    emoji: true,
+                    background: true,
+                },
+            },
+            _count: {
+                select: {
+                    reply: true,
+                },
+            },
+            reply: {
+                select: {
+                    id: true,
+                    content: true,
+                    createdAt: true,
+                    originLang: true,
+                    contentENUS: true,
+                    contentZHCN: true,
+                    contentZHTW: true,
+                    contentESES: true,
+                    contentFRFR: true,
+                    contentRURU: true,
+                    contentJAJP: true,
+                    contentKOKR: true,
+                    contentDEDE: true,
+                    contentPTBR: true,
+                    belongPost: {
+                        select: {
+                            id: true,
+                            title: true,
+                            titleENUS: true,
+                            titleZHCN: true,
+                            titleZHTW: true,
+                            titleESES: true,
+                            titleFRFR: true,
+                            titleRURU: true,
+                            titleJAJP: true,
+                            titleKOKR: true,
+                            titleDEDE: true,
+                            titlePTBR: true,
+                            originLang: true,
+                        }
+                    },
+                    _count: { select: { likes: true } },
+                },
+                orderBy: { updatedAt: 'desc' },
+                skip,
+                take: itemsPerPage,
+            }
+        },
+    });
+
+    if (!user) {
+        return { user: null, replies: [] };
+    }
+
+    // 解构出回复数据，其余作为用户信息
+    const { reply: replies, ...userInfo } = user;
+    
+    return { user: userInfo, replies };
+}
+
 type Props = {
     params: Promise<{ locale: string; uid: string; page: string }>;
-};
-
-type User = {
-    uid: number;
-    username: string;
-    nickname: string;
-    avatar: {
-        emoji: string;
-        background: string;
-    }[];
-    _count: {
-        reply: number;
-    };
 };
 
 type TimelineItem = {
@@ -111,27 +172,9 @@ export async function generateMetadata({    params,
 export default async function UserRepliesPage({ params }: Props) {
     const { page: pageParam, locale, uid } = await params;
     const page = Number(pageParam) || 1;
-    const skip = (page - 1) * ITEMS_PER_PAGE;
 
-    const user: User | null = await prisma.user.findUnique({
-        where: { uid: parseInt(uid) },
-        select: {
-            uid: true,
-            username: true,
-            nickname: true,
-            avatar: {
-                select: {
-                    emoji: true,
-                    background: true,
-                },
-            },
-            _count: {
-                select: {
-                    reply: true,
-                },
-            },
-        },
-    });
+    // 使用优化的单次查询获取所有需要的数据
+    const { user, replies } = await getUserWithReplies(parseInt(uid), page, ITEMS_PER_PAGE);
 
     if (!user) {
         notFound();
@@ -139,45 +182,7 @@ export default async function UserRepliesPage({ params }: Props) {
 
     const userAvatar = user.avatar[0] || { emoji: '', background: '' };
 
-    const replies = await prisma.reply.findMany({
-        where: { userUid: user.uid },
-        select: {
-            id: true,
-            content: true,
-            createdAt: true,
-            originLang: true,
-            contentENUS: true,
-            contentZHCN: true,
-            contentZHTW: true,
-            contentESES: true,
-            contentFRFR: true,
-            contentRURU: true,
-            contentJAJP: true,                contentKOKR: true,
-                contentDEDE: true,
-                contentPTBR: true,
-                belongPost: {
-                select: {
-                    id: true,
-                    title: true,
-                    titleENUS: true,
-                    titleZHCN: true,
-                    titleZHTW: true,
-                    titleESES: true,
-                    titleFRFR: true,
-                    titleRURU: true,
-                    titleJAJP: true,
-                    titleKOKR: true,
-                    titleDEDE: true,
-                    titlePTBR: true,
-                    originLang: true,
-                }
-            },
-            _count: { select: { likes: true } },
-        },
-        orderBy: { updatedAt: 'desc' },
-        skip,
-        take: ITEMS_PER_PAGE,
-    });    const timelineItems: TimelineItem[] = replies.map((reply) => ({
+    const timelineItems: TimelineItem[] = replies.map((reply) => ({
         id: `reply-${reply.id}`,
         type: 'reply' as const,
         createdAt: reply.createdAt,
@@ -204,7 +209,8 @@ export default async function UserRepliesPage({ params }: Props) {
                 : undefined,
             contentENUS: reply.contentENUS || undefined,
             contentZHCN: reply.contentZHCN || undefined,
-            contentZHTW: reply.contentZHTW || undefined,            contentESES: reply.contentESES || undefined,
+            contentZHTW: reply.contentZHTW || undefined,
+            contentESES: reply.contentESES || undefined,
             contentFRFR: reply.contentFRFR || undefined,
             contentRURU: reply.contentRURU || undefined,
             contentJAJP: reply.contentJAJP || undefined,

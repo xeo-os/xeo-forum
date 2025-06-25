@@ -110,6 +110,7 @@ type ReplyData = {
     belongPostid: number | null;
     commentUid: string | null;
     originLang: string | null;
+    belongReply: number | null;
     user: User;
     _count: {
         likes: number;
@@ -140,7 +141,163 @@ type ContentWithLocalization = {
     origin?: string;
 };
 
-// 缓存获取帖子基本信息的函数（用于生成 metadata）
+// 合并所有数据获取的单一函数
+const getPostWithReplies = cache(async (postId: number, page: number) => {
+    // 计算当前页的 belongReply 范围
+    const startBelongReply = (page - 1) * REPLIES_PER_PAGE + 1;
+    const endBelongReply = page * REPLIES_PER_PAGE;
+
+    // 使用 Promise.all 并行执行所有查询
+    const [post, replies, topLevelRepliesCount] = await Promise.all([
+        // 获取帖子完整信息
+        prisma.post.findUnique({
+            where: {
+                id: postId,
+                published: true,
+            },
+            include: {
+                User: {
+                    select: {
+                        uid: true,
+                        nickname: true,
+                        username: true,
+                        profileEmoji: true,
+                        bio: true,
+                        avatar: {
+                            select: {
+                                id: true,
+                                emoji: true,
+                                background: true,
+                            },
+                            take: 1,
+                        },
+                    },
+                },
+                _count: {
+                    select: {
+                        likes: true,
+                        belongReplies: true,
+                    },
+                },
+                topics: {
+                    select: {
+                        name: true,
+                        emoji: true,
+                        nameZHCN: true,
+                        nameENUS: true,
+                        nameZHTW: true,
+                        nameESES: true,
+                        nameFRFR: true,
+                        nameRURU: true,
+                        nameJAJP: true,
+                        nameDEDE: true,
+                        namePTBR: true,
+                        nameKOKR: true,
+                    },
+                },
+                likes: {
+                    select: {
+                        user: {
+                            select: {
+                                uid: true,
+                                nickname: true,
+                                avatar: {
+                                    select: {
+                                        emoji: true,
+                                        background: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                belongReplies: {
+                    select: {
+                        user: {
+                            select: {
+                                uid: true,
+                                nickname: true,
+                                avatar: {
+                                    select: {
+                                        emoji: true,
+                                        background: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        }),
+        
+        // 获取当前页的回复
+        prisma.reply.findMany({
+            where: {
+                belongPostid: postId,
+                belongReply: {
+                    gte: startBelongReply,
+                    lte: endBelongReply,
+                },
+                NOT: {
+                    originLang: null,
+                },
+            },
+            include: {
+                user: {
+                    select: {
+                        uid: true,
+                        nickname: true,
+                        username: true,
+                        profileEmoji: true,
+                        avatar: {
+                            select: {
+                                id: true,
+                                emoji: true,
+                                background: true,
+                            },
+                            take: 1,
+                        },
+                    },
+                },
+                _count: {
+                    select: {
+                        likes: true,
+                        replies: true,
+                    },
+                },
+            },
+            orderBy: [
+                {
+                    belongReply: 'asc',
+                },
+                {
+                    createdAt: 'asc',
+                },
+            ],
+        }),
+        
+        // 获取总回复数用于分页
+        prisma.reply.count({
+            where: {
+                belongPostid: postId,
+                belongReply: {
+                    gte: 1, // belongReply >= 1 表示是顶级回复
+                },
+                NOT: {
+                    originLang: null,
+                },
+            },
+        }),
+    ]);
+
+    return {
+        post,
+        replies,
+        totalPages: Math.ceil(topLevelRepliesCount / REPLIES_PER_PAGE),
+    };
+});
+
+// 用于 metadata 的轻量化查询
 const getPostForMetadata = cache(async (postId: number): Promise<PostForMetadata | null> => {
     return await prisma.post.findUnique({
         where: { id: postId },
@@ -197,247 +354,6 @@ const getPostForMetadata = cache(async (postId: number): Promise<PostForMetadata
             }
         },
     });
-});
-
-// 缓存获取帖子基本信息的函数
-const getPost = cache(async (postId: number) => {
-    return await prisma.post.findUnique({
-        where: {
-            id: postId,
-            published: true,
-        },
-        include: {
-            User: {
-                select: {
-                    uid: true,
-                    nickname: true,
-                    username: true,
-                    profileEmoji: true,
-                    bio: true,
-                    avatar: {
-                        select: {
-                            id: true,
-                            emoji: true,
-                            background: true,
-                        },
-                        take: 1,
-                    },
-                },
-            },
-            _count: {
-                select: {
-                    likes: true,
-                    belongReplies: true,
-                },
-            },
-            topics: {
-                select: {
-                    name: true,
-                    emoji: true,
-                    nameZHCN: true,
-                    nameENUS: true,
-                    nameZHTW: true,
-                    nameESES: true,
-                    nameFRFR: true,
-                    nameRURU: true,
-                    nameJAJP: true,
-                    nameDEDE: true,
-                    namePTBR: true,
-                    nameKOKR: true,
-                },
-            },
-            likes: {
-                select: {
-                    user: {
-                        select: {
-                            uid: true,
-                            nickname: true,
-                            avatar: {
-                                select: {
-                                    emoji: true,
-                                    background: true,
-                                },
-                            },
-                        },
-                    },
-                },
-            },
-            belongReplies: {
-                select: {
-                    user: {
-                        select: {
-                            uid: true,
-                            nickname: true,
-                            avatar: {
-                                select: {
-                                    emoji: true,
-                                    background: true,
-                                },
-                            },
-                        },
-                    },
-                },
-            },
-        },
-    });
-});
-
-// 缓存获取分页回复的函数
-const getPaginatedReplies = cache(async (postId: number, page: number) => {
-    // 首先获取顶级回复的总数来计算分页
-    const topLevelRepliesCount = await prisma.reply.count({
-        where: {
-            belongPostid: postId,
-            commentUid: null, // 只计算顶级回复
-            NOT: {
-                originLang: null,
-            },
-        },
-    });
-
-    // 计算分页参数
-    const skip = (page - 1) * REPLIES_PER_PAGE;
-
-    // 获取当前页的顶级回复
-    const topLevelReplies = await prisma.reply.findMany({
-        where: {
-            belongPostid: postId,
-            commentUid: null, // 只获取顶级回复
-            NOT: {
-                originLang: null,
-            },
-        },
-        include: {
-            user: {
-                select: {
-                    uid: true,
-                    nickname: true,
-                    username: true,
-                    profileEmoji: true,
-                    avatar: {
-                        select: {
-                            id: true,
-                            emoji: true,
-                            background: true,
-                        },
-                        take: 1,
-                    },
-                },
-            },
-            _count: {
-                select: {
-                    likes: true,
-                    replies: true,
-                },
-            },
-        },
-        orderBy: {
-            createdAt: 'asc',
-        },
-        skip,
-        take: REPLIES_PER_PAGE,
-    });
-
-    // 获取这些顶级回复的所有子回复
-    const topLevelReplyIds = topLevelReplies.map((reply) => reply.id);
-    const childReplies =
-        topLevelReplyIds.length > 0
-            ? await prisma.reply.findMany({
-                  where: {
-                      belongPostid: postId,
-                      commentUid: {
-                          in: topLevelReplyIds,
-                      },
-                      NOT: {
-                          originLang: null,
-                      },
-                  },
-                  include: {
-                      user: {
-                          select: {
-                              uid: true,
-                              nickname: true,
-                              username: true,
-                              profileEmoji: true,
-                              avatar: {
-                                  select: {
-                                      id: true,
-                                      emoji: true,
-                                      background: true,
-                                  },
-                                  take: 1,
-                              },
-                          },
-                      },
-                      _count: {
-                          select: {
-                              likes: true,
-                              replies: true,
-                          },
-                      },
-                  },
-                  orderBy: {
-                      createdAt: 'asc',
-                  },
-              })
-            : [];
-
-    // 递归获取更深层的子回复
-    const getAllNestedReplies = async (parentIds: string[]): Promise<ReplyData[]> => {
-        if (parentIds.length === 0) return [];
-
-        const replies = await prisma.reply.findMany({
-            where: {
-                belongPostid: postId,
-                commentUid: {
-                    in: parentIds,
-                },
-                NOT: {
-                    originLang: null,
-                },
-            },
-            include: {
-                user: {
-                    select: {
-                        uid: true,
-                        nickname: true,
-                        username: true,
-                        profileEmoji: true,
-                        avatar: {
-                            select: {
-                                id: true,
-                                emoji: true,
-                                background: true,
-                            },
-                            take: 1,
-                        },
-                    },
-                },
-                _count: {
-                    select: {
-                        likes: true,
-                        replies: true,
-                    },
-                },
-            },
-            orderBy: {
-                createdAt: 'asc',
-            },
-        });
-
-        if (replies.length === 0) return [];
-
-        const nestedReplies = await getAllNestedReplies(replies.map((r) => r.id));
-        return [...replies, ...nestedReplies];
-    };
-
-    const nestedReplies = await getAllNestedReplies(childReplies.map((r) => r.id));
-    const allReplies = [...topLevelReplies, ...childReplies, ...nestedReplies];
-
-    return {
-        replies: allReplies,
-        totalPages: Math.ceil(topLevelRepliesCount / REPLIES_PER_PAGE),
-    };
 });
 
 // 获取本地化标题
@@ -697,13 +613,8 @@ export default async function PostDetailPage({ params }: Props) {
 
     if (isNaN(postId)) {
         notFound();
-    }
-
-    // 获取帖子详情和分页回复
-    const [post, paginatedData] = await Promise.all([
-        getPost(postId),
-        getPaginatedReplies(postId, page),
-    ]);
+    }    // 获取帖子详情和分页回复
+    const { post, replies, totalPages } = await getPostWithReplies(postId, page);
 
     if (!post) {
         notFound();
@@ -717,10 +628,8 @@ export default async function PostDetailPage({ params }: Props) {
     const content = await markdownToHtml(contentMarkdown);
 
     // 格式化时间函数需要传入locale参数
-    const formatTime = (date: Date) => formatRelativeTime(date, locale);
-
-    // 重新组织回复的层级关系，并设置belongReply编号
-    const organizeReplies = (replies: ReplyData[], page: number): ProcessedReply[] => {
+    const formatTime = (date: Date) => formatRelativeTime(date, locale);    // 重新组织回复的层级关系，基于 belongReply 和 commentUid
+    const organizeReplies = (replies: ReplyData[]): ProcessedReply[] => {
         const replyMap = new Map<string, ProcessedReply>();
         const rootReplies: ProcessedReply[] = [];
 
@@ -733,12 +642,12 @@ export default async function PostDetailPage({ params }: Props) {
                 replies: [],
                 level: 0, // 初始设为0，后面会更新
                 isCollapsed: false, // 初始设为false，后面会根据层级更新
-                belongReply: 0, // 初始设为0，后面会更新
+                belongReply: reply.belongReply || 0, // 使用数据库中的 belongReply 值
             };
             replyMap.set(reply.id, processedReply);
         });
 
-        // 然后建立父子关系
+        // 建立父子关系
         replies.forEach((reply) => {
             const processedReply = replyMap.get(reply.id);
             if (processedReply && reply.commentUid && replyMap.has(reply.commentUid)) {
@@ -747,32 +656,21 @@ export default async function PostDetailPage({ params }: Props) {
                 if (parentReply) {
                     parentReply.replies.push(processedReply);
                 }
-            } else if (processedReply) {
-                // 这是一个顶级回复
+            } else if (processedReply && !reply.commentUid) {
+                // 这是一个顶级回复（没有 commentUid）
                 rootReplies.push(processedReply);
             }
         });
 
-        // 为当前页的顶级回复分配 belongReply 编号
-        rootReplies.forEach((reply, index) => {
-            reply.belongReply = (page - 1) * REPLIES_PER_PAGE + index + 1;
-        });
+        // 按 belongReply 排序顶级回复
+        rootReplies.sort((a, b) => (a.belongReply || 0) - (b.belongReply || 0));
 
-        // 递归设置层级、折叠状态和 belongReply
-        const setLevelsAndCollapse = (
-            replies: ProcessedReply[],
-            currentLevel: number,
-            parentBelongReply?: number,
-        ) => {
+        // 递归设置层级和折叠状态
+        const setLevelsAndCollapse = (replies: ProcessedReply[], currentLevel: number) => {
             replies.forEach((reply) => {
                 reply.level = currentLevel;
                 // 8层以后的回复默认折叠
                 reply.isCollapsed = currentLevel >= 8;
-
-                // 设置子回复的 belongReply，继承父回复的 belongReply
-                if (currentLevel > 0 && parentBelongReply !== undefined) {
-                    reply.belongReply = parentBelongReply;
-                }
 
                 // 调试日志
                 if (currentLevel >= 8) {
@@ -780,7 +678,9 @@ export default async function PostDetailPage({ params }: Props) {
                 }
 
                 if (reply.replies.length > 0) {
-                    setLevelsAndCollapse(reply.replies, currentLevel + 1, reply.belongReply);
+                    // 按创建时间排序子回复
+                    reply.replies.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+                    setLevelsAndCollapse(reply.replies, currentLevel + 1);
                 }
             });
         };
@@ -789,7 +689,7 @@ export default async function PostDetailPage({ params }: Props) {
         return rootReplies;
     };
 
-    const processedReplies = organizeReplies(paginatedData.replies, page);
+    const processedReplies = organizeReplies(replies);
 
     // 递归处理所有子回复的时间格式化
     const processRepliesRecursively = (replies: ProcessedReply[]): ProcessedReply[] => {
@@ -818,13 +718,11 @@ export default async function PostDetailPage({ params }: Props) {
         : [];
 
     // 计算回复参与人数
-    const replyParticipants = uniqueRepliers.length;
-
-    // 计算回复数趋势 (时间分布)
+    const replyParticipants = uniqueRepliers.length;    // 计算回复数趋势 (时间分布)
     const replyTimeDistribution = (() => {
-        if (paginatedData.replies.length === 0) return [];
+        if (replies.length === 0) return [];
 
-        const times = paginatedData.replies.map((reply) => new Date(reply.createdAt).getTime());
+        const times = replies.map((reply) => new Date(reply.createdAt).getTime());
         const minTime = Math.min(...times);
         const maxTime = Math.max(...times);
 
@@ -833,7 +731,7 @@ export default async function PostDetailPage({ params }: Props) {
                 {
                     startTime: minTime,
                     endTime: maxTime,
-                    count: paginatedData.replies.length,
+                    count: replies.length,
                 },
             ];
         }
@@ -842,7 +740,7 @@ export default async function PostDetailPage({ params }: Props) {
         const bucketSize = timeRange / 10;
         const buckets = Array(10).fill(0);
 
-        paginatedData.replies.forEach((reply) => {
+        replies.forEach((reply) => {
             const time = new Date(reply.createdAt).getTime();
             const bucketIndex = Math.min(9, Math.floor((time - minTime) / bucketSize));
             buckets[bucketIndex]++;
@@ -1029,7 +927,7 @@ export default async function PostDetailPage({ params }: Props) {
                         replies={finalReplies}
                         locale={locale}
                         currentPage={page}
-                        totalPages={paginatedData.totalPages}
+                        totalPages={totalPages}
                         slug={slug}
                         initialLikeStatus={likeStatus}
                     />

@@ -57,6 +57,103 @@ export interface LeaderboardPost {
 // 缓存时间：1小时
 const CACHE_DURATION = 3600;
 
+// 通用的帖子查询函数 - 一次性获取所有需要的帖子数据（带缓存）
+const getAllPostsWithStats = unstable_cache(
+    async (dateFrom?: Date): Promise<LeaderboardPost[]> => {
+    const whereClause = {
+        published: true,
+        originLang: { not: null },
+        ...(dateFrom && { createdAt: { gte: dateFrom } }),
+    };
+
+    const posts = await prisma.post.findMany({
+        where: whereClause,
+        select: {
+            id: true,
+            title: true,
+            titleENUS: true,
+            titleZHCN: true,
+            titleZHTW: true,
+            titleESES: true,
+            titleFRFR: true,
+            titleRURU: true,
+            titleJAJP: true,
+            titleDEDE: true,
+            titlePTBR: true,
+            titleKOKR: true,
+            originLang: true,
+            createdAt: true,
+            User: {
+                select: {
+                    uid: true,
+                    nickname: true,
+                    username: true,
+                    avatar: {
+                        select: {
+                            emoji: true,
+                            background: true,
+                        },
+                        take: 1,
+                    },
+                },
+            },
+            _count: {
+                select: {
+                    likes: true,
+                    belongReplies: true,
+                },
+            },
+        },        });
+
+        return posts
+            .filter((post) => post.User !== null)
+            .map((post) => ({
+                ...post,
+                user: post.User!,
+            }));
+    },
+    ['all-posts-with-stats'],
+    {
+        revalidate: CACHE_DURATION,
+        tags: ['posts-data'],
+    },
+);
+
+// 通用的用户查询函数（带缓存）
+const getAllUsersWithStats = unstable_cache(
+    async (): Promise<LeaderboardUser[]> => {
+        return await prisma.user.findMany({
+            select: {
+                uid: true,
+                nickname: true,
+                username: true,
+                profileEmoji: true,
+                avatar: {
+                    select: {
+                        emoji: true,
+                        background: true,
+                    },
+                    take: 1,
+                },
+                _count: {
+                    select: {
+                        post: true,
+                        reply: true,
+                        likes: true,
+                        following: true,
+                        followed: true,
+                    },
+                },
+            },
+        });
+    },
+    ['all-users-with-stats'],
+    {
+        revalidate: CACHE_DURATION,
+        tags: ['users-data'],
+    },
+);
+
 // 获取时间范围的开始时间
 function getDateRange(period: 'today' | 'week' | 'year' | 'all'): Date | null {
     const now = new Date();
@@ -80,69 +177,20 @@ function getDateRange(period: 'today' | 'week' | 'year' | 'all'): Date | null {
     }
 }
 
-// 带缓存的帖子排行榜函数
+// 带缓存的帖子排行榜函数 - 使用优化的查询
 export const getTopPostsByScore = unstable_cache(
     async (
         period: 'today' | 'week' | 'year' | 'all',
         limit: number = 10,
-    ): Promise<LeaderboardPost[]> => {
-        const dateFrom = getDateRange(period);
+    ): Promise<LeaderboardPost[]> => {        const dateFrom = getDateRange(period);
+        const posts = await getAllPostsWithStats(dateFrom || undefined);
 
-        const whereClause = {
-            published: true,
-            originLang: { not: null },
-            ...(dateFrom && { createdAt: { gte: dateFrom } }),
-        };
+        // 计算综合得分并排序
+        const postsWithScore = posts.map((post) => ({
+            ...post,
+            score: post._count.likes + post._count.belongReplies,
+        }));
 
-        const posts = await prisma.post.findMany({
-            where: whereClause,
-            select: {
-                id: true,
-                title: true,
-                titleENUS: true,
-                titleZHCN: true,
-                titleZHTW: true,
-                titleESES: true,
-                titleFRFR: true,
-                titleRURU: true,
-                titleJAJP: true,
-                titleDEDE: true,
-                titlePTBR: true,
-                titleKOKR: true,
-                originLang: true,
-                createdAt: true,
-                User: {
-                    select: {
-                        uid: true,
-                        nickname: true,
-                        username: true,
-                        avatar: {
-                            select: {
-                                emoji: true,
-                                background: true,
-                            },
-                            take: 1,
-                        },
-                    },
-                },
-                _count: {
-                    select: {
-                        likes: true,
-                        belongReplies: true,
-                    },
-                },
-            },
-            take: limit * 3, // 取更多数据以便排序
-        }); // 计算综合得分 (回复数 + 点赞数) 并过滤掉没有用户的帖子
-        const postsWithScore = posts
-            .filter((post) => post.User !== null) // 过滤掉没有用户的帖子
-            .map((post) => ({
-                ...post,
-                user: post.User!,
-                score: post._count.likes + post._count.belongReplies,
-            }));
-
-        // 按得分排序并取前N个
         return postsWithScore.sort((a, b) => b.score - a.score).slice(0, limit);
     },
     [`posts-leaderboard`],
@@ -152,41 +200,11 @@ export const getTopPostsByScore = unstable_cache(
     },
 );
 
-// 带缓存的用户排行榜函数
+// 带缓存的用户排行榜函数 - 使用优化的查询
 export const getTopUsersByPosts = unstable_cache(
     async (limit: number = 10): Promise<LeaderboardUser[]> => {
-        const users = await prisma.user.findMany({
-            select: {
-                uid: true,
-                nickname: true,
-                username: true,
-                profileEmoji: true,
-                avatar: {
-                    select: {
-                        emoji: true,
-                        background: true,
-                    },
-                    take: 1,
-                },
-                _count: {
-                    select: {
-                        post: true,
-                        reply: true,
-                        likes: true,
-                        following: true,
-                        followed: true,
-                    },
-                },
-            },
-            orderBy: {
-                post: {
-                    _count: 'desc',
-                },
-            },
-            take: limit,
-        });
-
-        return users;
+        const users = await getAllUsersWithStats();
+        return users.sort((a, b) => b._count.post - a._count.post).slice(0, limit);
     },
     [`users-posts-leaderboard`],
     {
@@ -197,38 +215,8 @@ export const getTopUsersByPosts = unstable_cache(
 
 export const getTopUsersByReplies = unstable_cache(
     async (limit: number = 10): Promise<LeaderboardUser[]> => {
-        const users = await prisma.user.findMany({
-            select: {
-                uid: true,
-                nickname: true,
-                username: true,
-                profileEmoji: true,
-                avatar: {
-                    select: {
-                        emoji: true,
-                        background: true,
-                    },
-                    take: 1,
-                },
-                _count: {
-                    select: {
-                        post: true,
-                        reply: true,
-                        likes: true,
-                        following: true,
-                        followed: true,
-                    },
-                },
-            },
-            orderBy: {
-                reply: {
-                    _count: 'desc',
-                },
-            },
-            take: limit,
-        });
-
-        return users;
+        const users = await getAllUsersWithStats();
+        return users.sort((a, b) => b._count.reply - a._count.reply).slice(0, limit);
     },
     [`users-replies-leaderboard`],
     {
@@ -237,21 +225,42 @@ export const getTopUsersByReplies = unstable_cache(
     },
 );
 
-// 获取排行榜统计数据用于图表展示
+// 获取排行榜统计数据用于图表展示 - 优化版本，减少重复查询
 export const getLeaderboardStats = unstable_cache(
     async () => {
-        const [todayPosts, weekPosts, yearPosts, allPosts] = await Promise.all([
-            getTopPostsByScore('today', 5),
-            getTopPostsByScore('week', 5),
-            getTopPostsByScore('year', 5),
-            getTopPostsByScore('all', 5),
-        ]);
+        // 一次性获取所有帖子数据，然后在内存中按不同时间段过滤和排序
+        const allPosts = await getAllPostsWithStats();
+        
+        const now = new Date();
+        const today = new Date(now);
+        today.setHours(0, 0, 0, 0);
+        
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - 7);
+        
+        const yearStart = new Date(now);
+        yearStart.setFullYear(now.getFullYear() - 1);        // 在内存中过滤和排序，避免多次数据库查询
+        // 这种方法对于中等规模的数据集(< 10万条)更高效
+        // 因为避免了4次独立的数据库查询和网络往返
+        const getTopByPeriod = (posts: LeaderboardPost[], dateFrom?: Date) => {
+            const filtered = dateFrom 
+                ? posts.filter(post => post.createdAt >= dateFrom)
+                : posts;
+            
+            return filtered
+                .map(post => ({
+                    ...post,
+                    score: post._count.likes + post._count.belongReplies,
+                }))
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 5);
+        };
 
         return {
-            today: todayPosts,
-            week: weekPosts,
-            year: yearPosts,
-            all: allPosts,
+            today: getTopByPeriod(allPosts, today),
+            week: getTopByPeriod(allPosts, weekStart),
+            year: getTopByPeriod(allPosts, yearStart),
+            all: getTopByPeriod(allPosts),
         };
     },
     [`leaderboard-stats`],
@@ -274,118 +283,17 @@ export async function getGlobalStats(): Promise<GlobalStats> {
 }
 
 export async function getTopPostsByLikes(limit: number = 10): Promise<LeaderboardPost[]> {
-    const posts = await prisma.post.findMany({
-        where: {
-            published: true,
-            originLang: { not: null },
-        },
-        select: {
-            id: true,
-            title: true,
-            titleENUS: true,
-            titleZHCN: true,
-            titleZHTW: true,
-            titleESES: true,
-            titleFRFR: true,
-            titleRURU: true,
-            titleJAJP: true,
-            titleDEDE: true,
-            titlePTBR: true,
-            titleKOKR: true,
-            originLang: true,
-            createdAt: true,
-            User: {
-                select: {
-                    uid: true,
-                    nickname: true,
-                    username: true,
-                    avatar: {
-                        select: {
-                            emoji: true,
-                            background: true,
-                        },
-                        take: 1,
-                    },
-                },
-            },
-            _count: {
-                select: {
-                    likes: true,
-                    belongReplies: true,
-                },
-            },
-        },
-        orderBy: {
-            likes: {
-                _count: 'desc',
-            },
-        },
-        take: limit,
-    });
-
+    const posts = await getAllPostsWithStats();
     return posts
-        .filter((post) => post.User !== null) // 过滤掉没有用户的帖子
-        .map((post) => ({
-            ...post,
-            user: post.User!,
-        }));
+        .sort((a, b) => b._count.likes - a._count.likes)
+        .slice(0, limit);
 }
 
 export async function getTopPostsByReplies(limit: number = 10): Promise<LeaderboardPost[]> {
-    const posts = await prisma.post.findMany({
-        where: {
-            published: true,
-            originLang: { not: null },
-        },
-        select: {
-            id: true,
-            title: true,
-            titleENUS: true,
-            titleZHCN: true,
-            titleZHTW: true,
-            titleESES: true,
-            titleFRFR: true,
-            titleRURU: true,
-            titleJAJP: true,
-            titleDEDE: true,
-            titlePTBR: true,
-            titleKOKR: true,
-            originLang: true,
-            createdAt: true,
-            User: {
-                select: {
-                    uid: true,
-                    nickname: true,
-                    username: true,
-                    avatar: {
-                        select: {
-                            emoji: true,
-                            background: true,
-                        },
-                        take: 1,
-                    },
-                },
-            },
-            _count: {
-                select: {
-                    likes: true,
-                    belongReplies: true,
-                },
-            },
-        },
-        orderBy: {
-            belongReplies: {
-                _count: 'desc',
-            },
-        },
-        take: limit,
-    });
+    const posts = await getAllPostsWithStats();
     return posts
-        .filter((post) => post.User !== null) // 过滤掉没有用户的帖子
-        .map((post) => ({
-            ...post,
-            user: post.User!,
-        }));
+        .sort((a, b) => b._count.belongReplies - a._count.belongReplies)
+        .slice(0, limit);
 }
 
 export function formatCount(count: number): string {

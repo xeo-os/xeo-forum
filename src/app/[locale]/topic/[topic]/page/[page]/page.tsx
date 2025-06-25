@@ -68,19 +68,20 @@ type Post = {
 
 const POSTS_PER_PAGE = 50;
 
-// 缓存数据库查询函数
-const getTopicData = cache(async (topicName: string) => {
-    return await prisma.topic.findUnique({
-        where: {
-            name: topicName.replaceAll('-', '_'),
-        },
-    });
-});
-
-const getPageData = cache(async (topic: string, page: number) => {
+// 合并所有数据获取的单一函数
+const getTopicPageData = cache(async (topic: string, page: number) => {
     const skip = (page - 1) * POSTS_PER_PAGE;
 
-    return await Promise.all([
+    // 使用 Promise.all 并行执行所有查询
+    const [topicObject, posts, totalPosts, topicStatsResult] = await Promise.all([
+        // 获取主题信息
+        prisma.topic.findUnique({
+            where: {
+                name: topic.replaceAll('-', '_'),
+            },
+        }),
+        
+        // 获取帖子列表
         prisma.post.findMany({
             where: {
                 published: true,
@@ -154,6 +155,8 @@ const getPageData = cache(async (topic: string, page: number) => {
             skip,
             take: POSTS_PER_PAGE,
         }),
+        
+        // 获取帖子总数
         prisma.post.count({
             where: {
                 published: true,
@@ -167,6 +170,8 @@ const getPageData = cache(async (topic: string, page: number) => {
                 },
             },
         }),
+        
+        // 获取主题统计数据
         prisma.$queryRaw`
       SELECT 
         (SELECT COUNT(DISTINCT "Post"."userUid") FROM "Post" 
@@ -192,17 +197,29 @@ const getPageData = cache(async (topic: string, page: number) => {
          AND "Post"."originLang" IS NOT NULL) as "topicLikes"
     ` as Promise<[{ topicUsers: bigint; topicReplies: bigint; topicLikes: bigint }]>,
     ]);
+
+    return {
+        topicObject,
+        posts,
+        totalPosts,
+        topicStatsResult,
+    };
+});
+
+// 用于 metadata 的轻量化查询
+const getTopicForMetadata = cache(async (topicName: string) => {
+    return await prisma.topic.findUnique({
+        where: {
+            name: topicName.replaceAll('-', '_'),
+        },
+    });
 });
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     // read route params
     const { page, locale, topic } = await params;
 
-    const topicObject: Topic | null = await prisma.topic.findUnique({
-        where: {
-            name: topic.replaceAll('-', '_'),
-        },
-    });
+    const topicObject: Topic | null = await getTopicForMetadata(topic);
 
     if (!page || page == 1) {
         // 首页
@@ -322,7 +339,7 @@ export default async function Topic({ params }: Props) {
     const { locale, page: pageParam = 1, topic } = await params;
     const page = Number(pageParam);
 
-    const [posts, totalPosts, topicStatsResult] = await getPageData(topic, page);
+    const { topicObject, posts, totalPosts, topicStatsResult } = await getTopicPageData(topic, page);
 
     // 转换 BigInt 为 number
     const { topicUsers, topicReplies, topicLikes } = {
@@ -331,7 +348,6 @@ export default async function Topic({ params }: Props) {
         topicLikes: Number(topicStatsResult[0].topicLikes),
     };
 
-    const topicObject = await getTopicData(topic);
     const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE);
 
     if (topicObject === null) {

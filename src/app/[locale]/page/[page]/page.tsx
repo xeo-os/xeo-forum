@@ -214,91 +214,91 @@ function getLocalizedTopicName(topic: Post['topics'][0], locale: string): string
 export default async function HomePage({ params }: Props) {
     const { locale, page: pageParam = 1 } = await params;
     const page = Number(pageParam);
-    const skip = (page - 1) * POSTS_PER_PAGE;
+    const skip = (page - 1) * POSTS_PER_PAGE;    // 优化：使用单个事务查询减少数据库往返次数
+    const postWhereCondition = {
+        published: true,
+        originLang: {
+            not: null,
+        },
+    };
 
-    // 优化：合并统计查询为一次聚合查询
-    const [posts, totalPosts, globalStatsResult]: [
-        Post[],
-        number,
+    const [postsWithTotal, globalStatsResult]: [
+        { posts: Post[]; totalCount: number },
         [{ totalUsers: bigint; totalReplies: bigint; totalLikes: bigint }],
     ] = await Promise.all([
-        prisma.post.findMany({
-            where: {
-                published: true,
-                originLang: {
-                    not: null,
-                },
-            },
-            select: {
-                id: true,
-                title: true,
-                createdAt: true,
-                published: true,
-                pin: true,
-                originLang: true,
-                titleDEDE: true,
-                titleENUS: true,
-                titleESES: true,
-                titleFRFR: true,
-                titleJAJP: true,
-                titleKOKR: true,
-                titlePTBR: true,
-                titleRURU: true,
-                titleZHCN: true,
-                titleZHTW: true,
-                User: {
+        // 使用事务一次性获取帖子列表和总数
+        prisma.$transaction(async (tx) => {
+            const [posts, totalCount] = await Promise.all([
+                tx.post.findMany({
+                    where: postWhereCondition,
                     select: {
-                        uid: true,
-                        nickname: true,
-                        username: true,
-                        profileEmoji: true,
-                        avatar: {
+                        id: true,
+                        title: true,
+                        createdAt: true,
+                        published: true,
+                        pin: true,
+                        originLang: true,
+                        titleDEDE: true,
+                        titleENUS: true,
+                        titleESES: true,
+                        titleFRFR: true,
+                        titleJAJP: true,
+                        titleKOKR: true,
+                        titlePTBR: true,
+                        titleRURU: true,
+                        titleZHCN: true,
+                        titleZHTW: true,
+                        User: {
                             select: {
-                                id: true,
-                                emoji: true,
-                                background: true,
+                                uid: true,
+                                nickname: true,
+                                username: true,
+                                profileEmoji: true,
+                                avatar: {
+                                    select: {
+                                        id: true,
+                                        emoji: true,
+                                        background: true,
+                                    },
+                                    take: 1,
+                                },
                             },
-                            take: 1,
+                        },
+                        _count: {
+                            select: {
+                                likes: true,
+                                belongReplies: true,
+                            },
+                        },
+                        topics: {
+                            select: {
+                                name: true,
+                                emoji: true,
+                                nameZHCN: true,
+                                nameENUS: true,
+                                nameZHTW: true,
+                                nameESES: true,
+                                nameFRFR: true,
+                                nameRURU: true,
+                                nameJAJP: true,
+                                nameDEDE: true,
+                                namePTBR: true,
+                                nameKOKR: true,
+                            },
+                            take: 3,
                         },
                     },
-                },
-                _count: {
-                    select: {
-                        likes: true,
-                        belongReplies: true,
-                    },
-                },
-                topics: {
-                    select: {
-                        name: true,
-                        emoji: true,
-                        nameZHCN: true,
-                        nameENUS: true,
-                        nameZHTW: true,
-                        nameESES: true,
-                        nameFRFR: true,
-                        nameRURU: true,
-                        nameJAJP: true,
-                        nameDEDE: true,
-                        namePTBR: true,
-                        nameKOKR: true,
-                    },
-                    take: 3,
-                },
-            },
-            orderBy: [{ pin: 'desc' }, { updatedAt: 'desc' }],
-            skip,
-            take: POSTS_PER_PAGE,
+                    orderBy: [{ pin: 'desc' }, { updatedAt: 'desc' }],
+                    skip,
+                    take: POSTS_PER_PAGE,
+                }),
+                tx.post.count({
+                    where: postWhereCondition,
+                }),
+            ]);
+            return { posts, totalCount };
         }),
-        prisma.post.count({
-            where: {
-                published: true,
-                originLang: {
-                    not: null,
-                },
-            },
-        }),
-        // 合并多个统计查询为一次原生查询
+        // 优化：合并多个统计查询为一次原生查询
         prisma.$queryRaw`
       SELECT 
         (SELECT COUNT(*) FROM "User") as "totalUsers",
@@ -306,6 +306,9 @@ export default async function HomePage({ params }: Props) {
         (SELECT COUNT(*) FROM "Like") as "totalLikes"
     ` as Promise<[{ totalUsers: bigint; totalReplies: bigint; totalLikes: bigint }]>,
     ]);
+
+    const posts = postsWithTotal.posts;
+    const totalPosts = postsWithTotal.totalCount;
 
     // 转换 BigInt 为 number
     const { totalUsers, totalReplies, totalLikes } = {
