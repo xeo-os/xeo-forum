@@ -53,6 +53,13 @@ export async function generateMetadata(): Promise<Metadata> {
                 'application/rss+xml': [{ url: 'feed.xml', title: 'RSS' }],
             },
         },
+        viewport: {
+            width: 'device-width',
+            initialScale: 1,
+            maximumScale: 1,
+            viewportFit: 'cover',
+            userScalable: false,
+        },
         openGraph: {
             title: {
                 template: '%s',
