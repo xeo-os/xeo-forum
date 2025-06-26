@@ -20,7 +20,11 @@ import { formatDistanceToNow } from 'date-fns';
 import { zhCN, enUS } from 'date-fns/locale';
 import { FileText, MessageSquare, Clock, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
 import { useBroadcast } from '@/store/useBroadcast';
-import { SheetLoading, SheetContentTransition, SheetListItemTransition } from '@/components/sheet-loading';
+import {
+    SheetLoading,
+    SheetContentTransition,
+    SheetListItemTransition,
+} from '@/components/sheet-loading';
 import lang from '@/lib/lang';
 
 interface Task {
@@ -43,7 +47,11 @@ interface TaskListSheetProps {
     onOpenChange?: (open: boolean) => void;
 }
 
-export default function TaskListSheet({ children, open: externalOpen, onOpenChange }: TaskListSheetProps) {
+export default function TaskListSheet({
+    children,
+    open: externalOpen,
+    onOpenChange,
+}: TaskListSheetProps) {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
@@ -60,7 +68,12 @@ export default function TaskListSheet({ children, open: externalOpen, onOpenChan
     useEffect(() => {
         const handleBroadcastMessage = (message: unknown) => {
             if (typeof message === 'object' && message !== null && 'action' in message) {
-                const msg = message as { action: string; query?: string; type?: string; data?: { type: string } };
+                const msg = message as {
+                    action: string;
+                    query?: string;
+                    type?: string;
+                    data?: { type: string };
+                };
                 if (msg.action === 'broadcast') {
                     const messageData = msg.data;
                     if (!messageData) return;
@@ -69,8 +82,15 @@ export default function TaskListSheet({ children, open: externalOpen, onOpenChan
                         console.log('Task status updated:', messageData);
 
                         // 检查消息数据是否包含uuid和status
-                        if (typeof messageData === 'object' && 'uuid' in messageData && 'status' in messageData) {
-                            const { uuid, status } = messageData as { uuid: string; status: string };
+                        if (
+                            typeof messageData === 'object' &&
+                            'uuid' in messageData &&
+                            'status' in messageData
+                        ) {
+                            const { uuid, status } = messageData as {
+                                uuid: string;
+                                status: string;
+                            };
 
                             // 更新对应任务的状态
                             setTasks((prevTasks) =>
@@ -78,7 +98,10 @@ export default function TaskListSheet({ children, open: externalOpen, onOpenChan
                                     task.id === uuid
                                         ? {
                                               ...task,
-                                              status: status.toUpperCase() as 'PENDING' | 'DONE' | 'FAIL',
+                                              status: status.toUpperCase() as
+                                                  | 'PENDING'
+                                                  | 'DONE'
+                                                  | 'FAIL',
                                           }
                                         : task,
                                 ),
@@ -264,7 +287,8 @@ export default function TaskListSheet({ children, open: externalOpen, onOpenChan
         };
 
         // 延迟检查，等待DOM更新
-        const timer = setTimeout(checkInitialLoad, 100);        return () => {
+        const timer = setTimeout(checkInitialLoad, 100);
+        return () => {
             viewport.removeEventListener('scroll', handleScroll);
             clearTimeout(timer);
         };
@@ -439,7 +463,8 @@ export default function TaskListSheet({ children, open: externalOpen, onOpenChan
         const date = new Date(dateString);
         const locale = navigator.language.startsWith('zh') ? zhCN : enUS;
         return formatDistanceToNow(date, { addSuffix: true, locale });
-    };    const handleOpenChange = (newOpen: boolean) => {
+    };
+    const handleOpenChange = (newOpen: boolean) => {
         // 如果有外部的 onOpenChange，使用它
         if (onOpenChange) {
             onOpenChange(newOpen);
@@ -456,12 +481,13 @@ export default function TaskListSheet({ children, open: externalOpen, onOpenChan
         } else {
             document.body.removeAttribute('data-scroll-locked');
         }
-    };    // 组件卸载时清理滚动锁定状态
+    }; // 组件卸载时清理滚动锁定状态
     useEffect(() => {
         return () => {
             document.body.removeAttribute('data-scroll-locked');
         };
-    }, []);        return (
+    }, []);
+    return (
         <Sheet open={isOpen} onOpenChange={handleOpenChange}>
             <SheetTrigger asChild>{children}</SheetTrigger>
             <SheetContent side='right' className='w-[400px] sm:w-[540px]'>
@@ -494,202 +520,215 @@ export default function TaskListSheet({ children, open: externalOpen, onOpenChan
                             'zh-TW': '查看您的所有任務狀態和進度',
                         })}
                     </SheetDescription>
-                </SheetHeader>                <div className='mt-6'>
+                </SheetHeader>{' '}
+                <div className='mt-6'>
                     {loading ? (
-                        <SheetLoading type="tasks" />
+                        <SheetLoading />
                     ) : (
                         <SheetContentTransition isLoading={loading}>
                             <ScrollArea ref={scrollAreaRef} className='h-[calc(100vh-200px)]'>
-                            {tasks.length === 0 ? (
-                                <div className='text-center text-muted-foreground py-12'>
-                                    <FileText className='h-12 w-12 mx-auto mb-4 opacity-50' />
-                                    <p>
-                                        {lang({
-                                            'zh-CN': '暂无任务',
-                                            'en-US': 'No tasks',
-                                            'de-DE': 'Keine Aufgaben',
-                                            'es-ES': 'Sin tareas',
-                                            'fr-FR': 'Aucune tâche',
-                                            'ja-JP': 'タスクなし',
-                                            'ko-KR': '작업 없음',
-                                            'pt-BR': 'Nenhuma tarefa',
-                                            'ru-RU': 'Нет задач',
-                                            'zh-TW': '暫無任務',
-                                        })}
-                                    </p>
-                                </div>
-                            ) : (                                <div className='divide-y divide-border'>
-                                    {tasks.map((task, index) => (
-                                        <SheetListItemTransition key={task.id} index={index}>
-                                            <div
-                                                className='py-4 px-4 hover:bg-muted/50 transition-colors'>
-                                            {/* 任务类型和标题行 */}
-                                            <div className='flex items-center gap-3 mb-3'>
-                                                {task.post ? (
-                                                    <FileText className='h-4 w-4 text-blue-500 flex-shrink-0' />
-                                                ) : (
-                                                    <MessageSquare className='h-4 w-4 text-green-500 flex-shrink-0' />
-                                                )}
-                                                <Badge
-                                                    variant={task.post ? 'default' : 'secondary'}
-                                                    className='text-xs'>
-                                                    {task.post
-                                                        ? lang({
-                                                              'zh-CN': '帖子',
-                                                              'en-US': 'Post',
-                                                              'de-DE': 'Beitrag',
-                                                              'es-ES': 'Publicación',
-                                                              'fr-FR': 'Publication',
-                                                              'ja-JP': '投稿',
-                                                              'ko-KR': '게시물',
-                                                              'pt-BR': 'Postagem',
-                                                              'ru-RU': 'Пост',
-                                                              'zh-TW': '帖子',
-                                                          })
-                                                        : lang({
-                                                              'zh-CN': '回复',
-                                                              'en-US': 'Reply',
-                                                              'de-DE': 'Antwort',
-                                                              'es-ES': 'Respuesta',
-                                                              'fr-FR': 'Réponse',
-                                                              'ja-JP': '返信',
-                                                              'ko-KR': '답글',
-                                                              'pt-BR': 'Resposta',
-                                                              'ru-RU': 'Ответ',
-                                                              'zh-TW': '回覆',
-                                                          })}
-                                                </Badge>
-                                                {getStatusIcon(task.status)}
-                                                <span className='text-xs text-muted-foreground'>
-                                                    {formatTime(task.createdAt)}
-                                                </span>
-                                                {task.status === 'FAIL' && (
-                                                    <Button
-                                                        size='sm'
-                                                        variant='outline'
-                                                        className='h-6 px-2 text-xs ml-auto'
-                                                        onClick={() => retryTask(task.id)}
-                                                        disabled={retrying === task.id}>
-                                                        <RotateCcw className='h-3 w-3 mr-1' />
-                                                        {retrying === task.id
-                                                            ? lang({
-                                                                  'zh-CN': '重试中...',
-                                                                  'en-US': 'Retrying...',
-                                                                  'de-DE': 'Wiederholung...',
-                                                                  'es-ES': 'Reintentando...',
-                                                                  'fr-FR': 'Nouvelle tentative...',
-                                                                  'ja-JP': '再試行中...',
-                                                                  'ko-KR': '재시도 중...',
-                                                                  'pt-BR': 'Tentando novamente...',
-                                                                  'ru-RU': 'Повтор...',
-                                                                  'zh-TW': '重試中...',
-                                                              })
-                                                            : lang({
-                                                                  'zh-CN': '重试',
-                                                                  'en-US': 'Retry',
-                                                                  'de-DE': 'Wiederholen',
-                                                                  'es-ES': 'Reintentar',
-                                                                  'fr-FR': 'Réessayer',
-                                                                  'ja-JP': '再試行',
-                                                                  'ko-KR': '재시도',
-                                                                  'pt-BR': 'Tentar novamente',
-                                                                  'ru-RU': 'Повторить',
-                                                                  'zh-TW': '重試',
-                                                              })}
-                                                    </Button>
-                                                )}
-                                            </div>
-
-                                            {/* 任务内容 */}
-                                            <div className='ml-7 mb-3 pr-2'>
-                                                {task.post ? (
-                                                    <h4 className='font-medium text-sm leading-relaxed'>
-                                                        {task.post.title}
-                                                    </h4>
-                                                ) : (
-                                                    <p className='text-sm text-muted-foreground leading-relaxed line-clamp-2'>
-                                                        {task.reply?.content ||
-                                                            lang({
-                                                                'zh-CN': '回复内容',
-                                                                'en-US': 'Reply content',
-                                                                'de-DE': 'Antwortinhalt',
-                                                                'es-ES': 'Contenido de respuesta',
-                                                                'fr-FR': 'Contenu de la réponse',
-                                                                'ja-JP': '返信内容',
-                                                                'ko-KR': '답글 내용',
-                                                                'pt-BR': 'Conteúdo da resposta',
-                                                                'ru-RU': 'Содержание ответа',
-                                                                'zh-TW': '回覆內容',
-                                                            })}
-                                                    </p>
-                                                )}
-                                            </div>
-
-                                            {/* 状态和进度 */}
-                                            <div className='ml-7 mr-2 space-y-2'>
-                                                <div className='flex items-center justify-between'>
-                                                    <span className='text-xs font-medium'>
-                                                        {getStatusText(task.status)}
-                                                    </span>
-                                                    <span className='text-xs text-muted-foreground'>
-                                                        {getProgressValue(task.status)}%
-                                                    </span>
-                                                </div>
-                                                <Progress
-                                                    value={getProgressValue(task.status)}
-                                                    className={cn(
-                                                        'h-1.5',
-                                                        getProgressClassName(task.status),
-                                                    )}
-                                                />                                            </div>
-                                        </div>
-                                        </SheetListItemTransition>
-                                    ))}
-
-                                    {/* 加载更多指示器 */}
-                                    {loadingMore && (
-                                        <div className='flex items-center justify-center py-4'>
-                                            <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-primary'></div>
-                                            <span className='ml-2 text-sm text-muted-foreground'>
-                                                {lang({
-                                                    'zh-CN': '加载更多...',
-                                                    'en-US': 'Loading more...',
-                                                    'de-DE': 'Mehr laden...',
-                                                    'es-ES': 'Cargando más...',
-                                                    'fr-FR': 'Chargement...',
-                                                    'ja-JP': 'さらに読み込み中...',
-                                                    'ko-KR': '더 불러오는 중...',
-                                                    'pt-BR': 'Carregando mais...',
-                                                    'ru-RU': 'Загрузка...',
-                                                    'zh-TW': '載入更多...',
-                                                })}
-                                            </span>
-                                        </div>
-                                    )}
-
-                                    {/* 没有更多数据提示 */}
-                                    {!hasMore && tasks.length > 0 && (
-                                        <div className='text-center py-4 text-sm text-muted-foreground'>
+                                {tasks.length === 0 ? (
+                                    <div className='text-center text-muted-foreground py-12'>
+                                        <FileText className='h-12 w-12 mx-auto mb-4 opacity-50' />
+                                        <p>
                                             {lang({
-                                                'zh-CN': '没有更多任务了',
-                                                'en-US': 'No more tasks',
-                                                'de-DE': 'Keine weiteren Aufgaben',
-                                                'es-ES': 'No hay más tareas',
-                                                'fr-FR': 'Aucune autre tâche',
-                                                'ja-JP': 'これ以上のタスクはありません',
-                                                'ko-KR': '더 이상 작업이 없습니다',
-                                                'pt-BR': 'Não há mais tarefas',
-                                                'ru-RU': 'Больше задач нет',
-                                                'zh-TW': '沒有更多任務了',
+                                                'zh-CN': '暂无任务',
+                                                'en-US': 'No tasks',
+                                                'de-DE': 'Keine Aufgaben',
+                                                'es-ES': 'Sin tareas',
+                                                'fr-FR': 'Aucune tâche',
+                                                'ja-JP': 'タスクなし',
+                                                'ko-KR': '작업 없음',
+                                                'pt-BR': 'Nenhuma tarefa',
+                                                'ru-RU': 'Нет задач',
+                                                'zh-TW': '暫無任務',
                                             })}
-                                        </div>
-                                    )}
-                                </div>                            )}
-                        </ScrollArea>
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className='divide-y divide-border'>
+                                        {tasks.map((task, index) => (
+                                            <SheetListItemTransition key={task.id} index={index}>
+                                                <div className='py-4 px-4 hover:bg-muted/50 transition-colors'>
+                                                    {/* 任务类型和标题行 */}
+                                                    <div className='flex items-center gap-3 mb-3'>
+                                                        {task.post ? (
+                                                            <FileText className='h-4 w-4 text-blue-500 flex-shrink-0' />
+                                                        ) : (
+                                                            <MessageSquare className='h-4 w-4 text-green-500 flex-shrink-0' />
+                                                        )}
+                                                        <Badge
+                                                            variant={
+                                                                task.post ? 'default' : 'secondary'
+                                                            }
+                                                            className='text-xs'>
+                                                            {task.post
+                                                                ? lang({
+                                                                      'zh-CN': '帖子',
+                                                                      'en-US': 'Post',
+                                                                      'de-DE': 'Beitrag',
+                                                                      'es-ES': 'Publicación',
+                                                                      'fr-FR': 'Publication',
+                                                                      'ja-JP': '投稿',
+                                                                      'ko-KR': '게시물',
+                                                                      'pt-BR': 'Postagem',
+                                                                      'ru-RU': 'Пост',
+                                                                      'zh-TW': '帖子',
+                                                                  })
+                                                                : lang({
+                                                                      'zh-CN': '回复',
+                                                                      'en-US': 'Reply',
+                                                                      'de-DE': 'Antwort',
+                                                                      'es-ES': 'Respuesta',
+                                                                      'fr-FR': 'Réponse',
+                                                                      'ja-JP': '返信',
+                                                                      'ko-KR': '답글',
+                                                                      'pt-BR': 'Resposta',
+                                                                      'ru-RU': 'Ответ',
+                                                                      'zh-TW': '回覆',
+                                                                  })}
+                                                        </Badge>
+                                                        {getStatusIcon(task.status)}
+                                                        <span className='text-xs text-muted-foreground'>
+                                                            {formatTime(task.createdAt)}
+                                                        </span>
+                                                        {task.status === 'FAIL' && (
+                                                            <Button
+                                                                size='sm'
+                                                                variant='outline'
+                                                                className='h-6 px-2 text-xs ml-auto'
+                                                                onClick={() => retryTask(task.id)}
+                                                                disabled={retrying === task.id}>
+                                                                <RotateCcw className='h-3 w-3 mr-1' />
+                                                                {retrying === task.id
+                                                                    ? lang({
+                                                                          'zh-CN': '重试中...',
+                                                                          'en-US': 'Retrying...',
+                                                                          'de-DE':
+                                                                              'Wiederholung...',
+                                                                          'es-ES':
+                                                                              'Reintentando...',
+                                                                          'fr-FR':
+                                                                              'Nouvelle tentative...',
+                                                                          'ja-JP': '再試行中...',
+                                                                          'ko-KR': '재시도 중...',
+                                                                          'pt-BR':
+                                                                              'Tentando novamente...',
+                                                                          'ru-RU': 'Повтор...',
+                                                                          'zh-TW': '重試中...',
+                                                                      })
+                                                                    : lang({
+                                                                          'zh-CN': '重试',
+                                                                          'en-US': 'Retry',
+                                                                          'de-DE': 'Wiederholen',
+                                                                          'es-ES': 'Reintentar',
+                                                                          'fr-FR': 'Réessayer',
+                                                                          'ja-JP': '再試行',
+                                                                          'ko-KR': '재시도',
+                                                                          'pt-BR':
+                                                                              'Tentar novamente',
+                                                                          'ru-RU': 'Повторить',
+                                                                          'zh-TW': '重試',
+                                                                      })}
+                                                            </Button>
+                                                        )}
+                                                    </div>
+
+                                                    {/* 任务内容 */}
+                                                    <div className='ml-7 mb-3 pr-2'>
+                                                        {task.post ? (
+                                                            <h4 className='font-medium text-sm leading-relaxed'>
+                                                                {task.post.title}
+                                                            </h4>
+                                                        ) : (
+                                                            <p className='text-sm text-muted-foreground leading-relaxed line-clamp-2'>
+                                                                {task.reply?.content ||
+                                                                    lang({
+                                                                        'zh-CN': '回复内容',
+                                                                        'en-US': 'Reply content',
+                                                                        'de-DE': 'Antwortinhalt',
+                                                                        'es-ES':
+                                                                            'Contenido de respuesta',
+                                                                        'fr-FR':
+                                                                            'Contenu de la réponse',
+                                                                        'ja-JP': '返信内容',
+                                                                        'ko-KR': '답글 내용',
+                                                                        'pt-BR':
+                                                                            'Conteúdo da resposta',
+                                                                        'ru-RU':
+                                                                            'Содержание ответа',
+                                                                        'zh-TW': '回覆內容',
+                                                                    })}
+                                                            </p>
+                                                        )}
+                                                    </div>
+
+                                                    {/* 状态和进度 */}
+                                                    <div className='ml-7 mr-2 space-y-2'>
+                                                        <div className='flex items-center justify-between'>
+                                                            <span className='text-xs font-medium'>
+                                                                {getStatusText(task.status)}
+                                                            </span>
+                                                            <span className='text-xs text-muted-foreground'>
+                                                                {getProgressValue(task.status)}%
+                                                            </span>
+                                                        </div>
+                                                        <Progress
+                                                            value={getProgressValue(task.status)}
+                                                            className={cn(
+                                                                'h-1.5',
+                                                                getProgressClassName(task.status),
+                                                            )}
+                                                        />{' '}
+                                                    </div>
+                                                </div>
+                                            </SheetListItemTransition>
+                                        ))}
+
+                                        {/* 加载更多指示器 */}
+                                        {loadingMore && (
+                                            <div className='flex items-center justify-center py-4'>
+                                                <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-primary'></div>
+                                                <span className='ml-2 text-sm text-muted-foreground'>
+                                                    {lang({
+                                                        'zh-CN': '加载更多...',
+                                                        'en-US': 'Loading more...',
+                                                        'de-DE': 'Mehr laden...',
+                                                        'es-ES': 'Cargando más...',
+                                                        'fr-FR': 'Chargement...',
+                                                        'ja-JP': 'さらに読み込み中...',
+                                                        'ko-KR': '더 불러오는 중...',
+                                                        'pt-BR': 'Carregando mais...',
+                                                        'ru-RU': 'Загрузка...',
+                                                        'zh-TW': '載入更多...',
+                                                    })}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* 没有更多数据提示 */}
+                                        {!hasMore && tasks.length > 0 && (
+                                            <div className='text-center py-4 text-sm text-muted-foreground'>
+                                                {lang({
+                                                    'zh-CN': '没有更多任务了',
+                                                    'en-US': 'No more tasks',
+                                                    'de-DE': 'Keine weiteren Aufgaben',
+                                                    'es-ES': 'No hay más tareas',
+                                                    'fr-FR': 'Aucune autre tâche',
+                                                    'ja-JP': 'これ以上のタスクはありません',
+                                                    'ko-KR': '더 이상 작업이 없습니다',
+                                                    'pt-BR': 'Não há mais tarefas',
+                                                    'ru-RU': 'Больше задач нет',
+                                                    'zh-TW': '沒有更多任務了',
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </ScrollArea>
                         </SheetContentTransition>
                     )}
                 </div>
-
                 {/* 刷新按钮 */}
                 <div className='absolute bottom-6 right-6'>
                     <Button

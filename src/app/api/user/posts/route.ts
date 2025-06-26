@@ -85,7 +85,7 @@ export async function POST(request: Request) {
                 _count: {
                     select: {
                         likes: true,
-                        Reply: true,
+                        belongReplies: true,
                     },
                 },
                 topics: {

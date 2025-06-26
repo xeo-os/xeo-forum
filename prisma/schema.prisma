@@ -41,42 +41,42 @@ model User {
 }
 
 model Post {
-  id           Int      @id @default(autoincrement())
-  origin       String   @db.VarChar(200)
-  userUid      Int?
-  createdAt    DateTime @default(now())
-  lastReplyAt  DateTime @default(now())
-  originLang   String?  @db.VarChar(10)
-  published    Boolean  @default(false)
-  title        String   @db.VarChar(50)
-  updatedAt    DateTime @updatedAt
-  pin          Boolean  @default(false)
-  contentDEDE  String?
-  contentENUS  String?
-  contentESES  String?
-  contentFRFR  String?
-  contentJAJP  String?
-  contentKOKR  String?
-  contentPTBR  String?
-  contentRURU  String?
-  contentZHCN  String?
-  contentZHTW  String?
-  titleDEDE    String?
-  titleENUS    String?
-  titleESES    String?
-  titleFRFR    String?
-  titleJAJP    String?
-  titleKOKR    String?
-  titlePTBR    String?
-  titleRURU    String?
-  titleZHCN    String?
-  titleZHTW    String?
-  unsafeTags   Json?    @db.JsonB
-  likes        Like[]
-  User         User?    @relation(fields: [userUid], references: [uid])
-  belongReplies Reply[] @relation("BelongPost")
-  topics       Topic[]  @relation("PostTopics")
-  tasks        Task[]
+  id            Int      @id @default(autoincrement())
+  origin        String   @db.VarChar(200)
+  userUid       Int?
+  createdAt     DateTime @default(now())
+  lastReplyAt   DateTime @default(now())
+  originLang    String?  @db.VarChar(10)
+  published     Boolean  @default(false)
+  title         String   @db.VarChar(50)
+  updatedAt     DateTime @updatedAt
+  pin           Boolean  @default(false)
+  contentDEDE   String?
+  contentENUS   String?
+  contentESES   String?
+  contentFRFR   String?
+  contentJAJP   String?
+  contentKOKR   String?
+  contentPTBR   String?
+  contentRURU   String?
+  contentZHCN   String?
+  contentZHTW   String?
+  titleDEDE     String?
+  titleENUS     String?
+  titleESES     String?
+  titleFRFR     String?
+  titleJAJP     String?
+  titleKOKR     String?
+  titlePTBR     String?
+  titleRURU     String?
+  titleZHCN     String?
+  titleZHTW     String?
+  unsafeTags    Json?    @db.JsonB
+  likes         Like[]
+  User          User?    @relation(fields: [userUid], references: [uid])
+  belongReplies Reply[]  @relation("BelongPost")
+  topics        Topic[]  @relation("PostTopics")
+  tasks         Task[]
 }
 
 model Like {

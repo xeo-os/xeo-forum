@@ -47,6 +47,7 @@
         "keyv": "^5.3.4",
         "lucide-react": "^0.513.0",
         "marked": "^15.0.12",
+        "meilisearch": "^0.51.0",
         "motion": "^12.16.0",
         "next": "15.3.3",
         "next-seo": "^6.8.0",

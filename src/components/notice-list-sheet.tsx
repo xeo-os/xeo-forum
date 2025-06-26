@@ -18,7 +18,11 @@ import { formatDistanceToNow } from 'date-fns';
 import { zhCN, enUS } from 'date-fns/locale';
 import { Bell, Mail, MailOpen, ExternalLink } from 'lucide-react';
 import { useBroadcast } from '@/store/useBroadcast';
-import { SheetLoading, SheetContentTransition, SheetListItemTransition } from '@/components/sheet-loading';
+import {
+    SheetLoading,
+    SheetContentTransition,
+    SheetListItemTransition,
+} from '@/components/sheet-loading';
 import lang from '@/lib/lang';
 
 interface Notice {
@@ -37,18 +41,19 @@ interface NoticeListSheetProps {
     externalUnreadCount?: number;
 }
 
-export default function NoticeListSheet({ 
-    children, 
+export default function NoticeListSheet({
+    children,
     onUnreadCountChange,
     open: externalOpen,
     onOpenChange: externalOnOpenChange,
-    externalUnreadCount 
-}: NoticeListSheetProps) {const [notices, setNotices] = useState<Notice[]>([]);
+    externalUnreadCount,
+}: NoticeListSheetProps) {
+    const [notices, setNotices] = useState<Notice[]>([]);
     const [loading, setLoading] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
     const [markingAsRead, setMarkingAsRead] = useState<string | null>(null);
     const [markingAllAsRead, setMarkingAllAsRead] = useState(false);
-    
+
     // 使用外部传入的open状态，如果没有则使用内部状态
     const [internalOpen, setInternalOpen] = useState(false);
     const open = externalOpen !== undefined ? externalOpen : internalOpen;
@@ -124,7 +129,7 @@ export default function NoticeListSheet({
                 setNotices(data.messages || []);
             }
 
-            setHasMore(data.hasMore || false);            // 通知未读数量变化 - 直接使用服务器返回的未读数量
+            setHasMore(data.hasMore || false); // 通知未读数量变化 - 直接使用服务器返回的未读数量
             if (onUnreadCountChange && data.unreadCount !== undefined) {
                 onUnreadCountChange(data.unreadCount);
             }
@@ -287,7 +292,7 @@ export default function NoticeListSheet({
                 prevNotices.map((notice) =>
                     notice.id === noticeId ? { ...notice, isRead: true } : notice,
                 ),
-            );            // 通知未读数量变化 - 使用服务器API重新获取准确数量
+            ); // 通知未读数量变化 - 使用服务器API重新获取准确数量
             if (onUnreadCountChange) {
                 // 使用API重新获取准确的未读数量
                 try {
@@ -435,7 +440,8 @@ export default function NoticeListSheet({
         const date = new Date(dateString);
         const locale = navigator.language.startsWith('zh') ? zhCN : enUS;
         return formatDistanceToNow(date, { addSuffix: true, locale });
-    };    const handleOpenChange = (newOpen: boolean) => {
+    };
+    const handleOpenChange = (newOpen: boolean) => {
         setOpen(newOpen);
 
         if (newOpen) {
@@ -454,9 +460,10 @@ export default function NoticeListSheet({
         };
     }, []);
 
-    const unreadCount = externalUnreadCount !== undefined 
-        ? externalUnreadCount 
-        : notices.filter((notice) => !notice.isRead).length;
+    const unreadCount =
+        externalUnreadCount !== undefined
+            ? externalUnreadCount
+            : notices.filter((notice) => !notice.isRead).length;
 
     return (
         <Sheet open={open} onOpenChange={handleOpenChange}>
@@ -500,175 +507,187 @@ export default function NoticeListSheet({
                             'zh-TW': '查看您的所有消息通知和系統提醒',
                         })}
                     </SheetDescription>
-                </SheetHeader>                <div className='mt-6'>
+                </SheetHeader>{' '}
+                <div className='mt-6'>
                     {loading ? (
-                        <SheetLoading type="notifications" />
+                        <SheetLoading />
                     ) : (
                         <SheetContentTransition isLoading={loading}>
                             <ScrollArea ref={scrollAreaRef} className='h-[calc(100vh-200px)]'>
-                            {notices.length === 0 ? (
-                                <div className='text-center text-muted-foreground py-12'>
-                                    <Bell className='h-12 w-12 mx-auto mb-4 opacity-50' />
-                                    <p>
-                                        {lang({
-                                            'zh-CN': '暂无消息',
-                                            'en-US': 'No messages',
-                                            'de-DE': 'Keine Nachrichten',
-                                            'es-ES': 'Sin mensajes',
-                                            'fr-FR': 'Aucun message',
-                                            'ja-JP': 'メッセージなし',
-                                            'ko-KR': '메시지 없음',
-                                            'pt-BR': 'Nenhuma mensagem',
-                                            'ru-RU': 'Нет сообщений',
-                                            'zh-TW': '暫無消息',
-                                        })}
-                                    </p>
-                                </div>
-                            ) : (                                <div className='divide-y divide-border'>
-                                    {notices.map((notice, index) => (
-                                        <SheetListItemTransition key={notice.id} index={index}>
-                                            <div
-                                                className={`py-4 px-4 transition-colors cursor-pointer hover:bg-muted/50 ${
-                                                    !notice.isRead ? 'bg-muted/30' : ''
-                                                }`}
-                                                onClick={() => handleNoticeClick(notice)}>
-                                            {/* 消息状态和时间行 */}
-                                            <div className='flex items-center gap-3 mb-3'>
-                                                {notice.isRead ? (
-                                                    <MailOpen className='h-4 w-4 text-muted-foreground flex-shrink-0' />
-                                                ) : (
-                                                    <Mail className='h-4 w-4 text-blue-500 flex-shrink-0' />
-                                                )}
-                                                <Badge
-                                                    variant={
-                                                        !notice.isRead ? 'default' : 'secondary'
-                                                    }
-                                                    className='text-xs'>
-                                                    {!notice.isRead
-                                                        ? lang({
-                                                              'zh-CN': '未读',
-                                                              'en-US': 'Unread',
-                                                              'de-DE': 'Ungelesen',
-                                                              'es-ES': 'No leído',
-                                                              'fr-FR': 'Non lu',
-                                                              'ja-JP': '未読',
-                                                              'ko-KR': '읽지 않음',
-                                                              'pt-BR': 'Não lido',
-                                                              'ru-RU': 'Не прочитано',
-                                                              'zh-TW': '未讀',
-                                                          })
-                                                        : lang({
-                                                              'zh-CN': '已读',
-                                                              'en-US': 'Read',
-                                                              'de-DE': 'Gelesen',
-                                                              'es-ES': 'Leído',
-                                                              'fr-FR': 'Lu',
-                                                              'ja-JP': '既読',
-                                                              'ko-KR': '읽음',
-                                                              'pt-BR': 'Lido',
-                                                              'ru-RU': 'Прочитано',
-                                                              'zh-TW': '已讀',
-                                                          })}
-                                                </Badge>
-                                                <span className='text-xs text-muted-foreground'>
-                                                    {formatTime(notice.createdAt)}
-                                                </span>
-                                                {notice.link && (
-                                                    <ExternalLink className='h-3 w-3 text-muted-foreground ml-auto' />
-                                                )}
-                                            </div>
-
-                                            {/* 消息内容 */}
-                                            <div className='ml-7 mb-3 pr-2'>
-                                                <p className='text-sm leading-relaxed line-clamp-3'>
-                                                    {notice.content}
-                                                </p>
-                                            </div>
-
-                                            {/* 操作按钮 */}
-                                            {!notice.isRead && (
-                                                <div className='ml-7 mr-2'>
-                                                    <Button
-                                                        size='sm'
-                                                        variant='outline'
-                                                        className='h-6 px-2 text-xs'
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            markAsRead(notice.id);
-                                                        }}
-                                                        disabled={markingAsRead === notice.id}>
-                                                        {markingAsRead === notice.id
-                                                            ? lang({
-                                                                  'zh-CN': '标记中...',
-                                                                  'en-US': 'Marking...',
-                                                                  'de-DE': 'Markieren...',
-                                                                  'es-ES': 'Marcando...',
-                                                                  'fr-FR': 'Marquage...',
-                                                                  'ja-JP': 'マーク中...',
-                                                                  'ko-KR': '표시 중...',
-                                                                  'pt-BR': 'Marcando...',
-                                                                  'ru-RU': 'Отметка...',
-                                                                  'zh-TW': '標記中...',
-                                                              })
-                                                            : lang({
-                                                                  'zh-CN': '标记为已读',
-                                                                  'en-US': 'Mark as read',
-                                                                  'de-DE': 'Als gelesen markieren',
-                                                                  'es-ES': 'Marcar como leído',
-                                                                  'fr-FR': 'Marquer comme lu',
-                                                                  'ja-JP': '既読にする',
-                                                                  'ko-KR': '읽음으로 표시',
-                                                                  'pt-BR': 'Marcar como lido',
-                                                                  'ru-RU':
-                                                                      'Отметить как прочитанное',
-                                                                  'zh-TW': '標記為已讀',
-                                                              })}
-                                                    </Button>
-                                                </div>                                            )}
-                                        </div>
-                                        </SheetListItemTransition>
-                                    ))}
-
-                                    {/* 加载更多指示器 */}
-                                    {loadingMore && (
-                                        <div className='flex items-center justify-center py-4'>
-                                            <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-primary'></div>
-                                            <span className='ml-2 text-sm text-muted-foreground'>
-                                                {lang({
-                                                    'zh-CN': '加载更多...',
-                                                    'en-US': 'Loading more...',
-                                                    'de-DE': 'Mehr laden...',
-                                                    'es-ES': 'Cargando más...',
-                                                    'fr-FR': 'Chargement...',
-                                                    'ja-JP': 'さらに読み込み中...',
-                                                    'ko-KR': '더 불러오는 중...',
-                                                    'pt-BR': 'Carregando mais...',
-                                                    'ru-RU': 'Загрузка...',
-                                                    'zh-TW': '載入更多...',
-                                                })}
-                                            </span>
-                                        </div>
-                                    )}
-
-                                    {/* 没有更多数据提示 */}
-                                    {!hasMore && notices.length > 0 && (
-                                        <div className='text-center py-4 text-sm text-muted-foreground'>
+                                {notices.length === 0 ? (
+                                    <div className='text-center text-muted-foreground py-12'>
+                                        <Bell className='h-12 w-12 mx-auto mb-4 opacity-50' />
+                                        <p>
                                             {lang({
-                                                'zh-CN': '没有更多消息了',
-                                                'en-US': 'No more messages',
-                                                'de-DE': 'Keine weiteren Nachrichten',
-                                                'es-ES': 'No hay más mensajes',
-                                                'fr-FR': 'Aucun autre message',
-                                                'ja-JP': 'これ以上のメッセージはありません',
-                                                'ko-KR': '더 이상 메시지가 없습니다',
-                                                'pt-BR': 'Não há mais mensagens',
-                                                'ru-RU': 'Больше сообщений нет',
-                                                'zh-TW': '沒有更多消息了',
+                                                'zh-CN': '暂无消息',
+                                                'en-US': 'No messages',
+                                                'de-DE': 'Keine Nachrichten',
+                                                'es-ES': 'Sin mensajes',
+                                                'fr-FR': 'Aucun message',
+                                                'ja-JP': 'メッセージなし',
+                                                'ko-KR': '메시지 없음',
+                                                'pt-BR': 'Nenhuma mensagem',
+                                                'ru-RU': 'Нет сообщений',
+                                                'zh-TW': '暫無消息',
                                             })}
-                                        </div>
-                                    )}
-                                </div>                            )}
-                        </ScrollArea>
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className='divide-y divide-border'>
+                                        {notices.map((notice, index) => (
+                                            <SheetListItemTransition key={notice.id} index={index}>
+                                                <div
+                                                    className={`py-4 px-4 transition-colors cursor-pointer hover:bg-muted/50 ${
+                                                        !notice.isRead ? 'bg-muted/30' : ''
+                                                    }`}
+                                                    onClick={() => handleNoticeClick(notice)}>
+                                                    {/* 消息状态和时间行 */}
+                                                    <div className='flex items-center gap-3 mb-3'>
+                                                        {notice.isRead ? (
+                                                            <MailOpen className='h-4 w-4 text-muted-foreground flex-shrink-0' />
+                                                        ) : (
+                                                            <Mail className='h-4 w-4 text-blue-500 flex-shrink-0' />
+                                                        )}
+                                                        <Badge
+                                                            variant={
+                                                                !notice.isRead
+                                                                    ? 'default'
+                                                                    : 'secondary'
+                                                            }
+                                                            className='text-xs'>
+                                                            {!notice.isRead
+                                                                ? lang({
+                                                                      'zh-CN': '未读',
+                                                                      'en-US': 'Unread',
+                                                                      'de-DE': 'Ungelesen',
+                                                                      'es-ES': 'No leído',
+                                                                      'fr-FR': 'Non lu',
+                                                                      'ja-JP': '未読',
+                                                                      'ko-KR': '읽지 않음',
+                                                                      'pt-BR': 'Não lido',
+                                                                      'ru-RU': 'Не прочитано',
+                                                                      'zh-TW': '未讀',
+                                                                  })
+                                                                : lang({
+                                                                      'zh-CN': '已读',
+                                                                      'en-US': 'Read',
+                                                                      'de-DE': 'Gelesen',
+                                                                      'es-ES': 'Leído',
+                                                                      'fr-FR': 'Lu',
+                                                                      'ja-JP': '既読',
+                                                                      'ko-KR': '읽음',
+                                                                      'pt-BR': 'Lido',
+                                                                      'ru-RU': 'Прочитано',
+                                                                      'zh-TW': '已讀',
+                                                                  })}
+                                                        </Badge>
+                                                        <span className='text-xs text-muted-foreground'>
+                                                            {formatTime(notice.createdAt)}
+                                                        </span>
+                                                        {notice.link && (
+                                                            <ExternalLink className='h-3 w-3 text-muted-foreground ml-auto' />
+                                                        )}
+                                                    </div>
+
+                                                    {/* 消息内容 */}
+                                                    <div className='ml-7 mb-3 pr-2'>
+                                                        <p className='text-sm leading-relaxed line-clamp-3'>
+                                                            {notice.content}
+                                                        </p>
+                                                    </div>
+
+                                                    {/* 操作按钮 */}
+                                                    {!notice.isRead && (
+                                                        <div className='ml-7 mr-2'>
+                                                            <Button
+                                                                size='sm'
+                                                                variant='outline'
+                                                                className='h-6 px-2 text-xs'
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    markAsRead(notice.id);
+                                                                }}
+                                                                disabled={
+                                                                    markingAsRead === notice.id
+                                                                }>
+                                                                {markingAsRead === notice.id
+                                                                    ? lang({
+                                                                          'zh-CN': '标记中...',
+                                                                          'en-US': 'Marking...',
+                                                                          'de-DE': 'Markieren...',
+                                                                          'es-ES': 'Marcando...',
+                                                                          'fr-FR': 'Marquage...',
+                                                                          'ja-JP': 'マーク中...',
+                                                                          'ko-KR': '표시 중...',
+                                                                          'pt-BR': 'Marcando...',
+                                                                          'ru-RU': 'Отметка...',
+                                                                          'zh-TW': '標記中...',
+                                                                      })
+                                                                    : lang({
+                                                                          'zh-CN': '标记为已读',
+                                                                          'en-US': 'Mark as read',
+                                                                          'de-DE':
+                                                                              'Als gelesen markieren',
+                                                                          'es-ES':
+                                                                              'Marcar como leído',
+                                                                          'fr-FR':
+                                                                              'Marquer comme lu',
+                                                                          'ja-JP': '既読にする',
+                                                                          'ko-KR': '읽음으로 표시',
+                                                                          'pt-BR':
+                                                                              'Marcar como lido',
+                                                                          'ru-RU':
+                                                                              'Отметить как прочитанное',
+                                                                          'zh-TW': '標記為已讀',
+                                                                      })}
+                                                            </Button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </SheetListItemTransition>
+                                        ))}
+
+                                        {/* 加载更多指示器 */}
+                                        {loadingMore && (
+                                            <div className='flex items-center justify-center py-4'>
+                                                <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-primary'></div>
+                                                <span className='ml-2 text-sm text-muted-foreground'>
+                                                    {lang({
+                                                        'zh-CN': '加载更多...',
+                                                        'en-US': 'Loading more...',
+                                                        'de-DE': 'Mehr laden...',
+                                                        'es-ES': 'Cargando más...',
+                                                        'fr-FR': 'Chargement...',
+                                                        'ja-JP': 'さらに読み込み中...',
+                                                        'ko-KR': '더 불러오는 중...',
+                                                        'pt-BR': 'Carregando mais...',
+                                                        'ru-RU': 'Загрузка...',
+                                                        'zh-TW': '載入更多...',
+                                                    })}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* 没有更多数据提示 */}
+                                        {!hasMore && notices.length > 0 && (
+                                            <div className='text-center py-4 text-sm text-muted-foreground'>
+                                                {lang({
+                                                    'zh-CN': '没有更多消息了',
+                                                    'en-US': 'No more messages',
+                                                    'de-DE': 'Keine weiteren Nachrichten',
+                                                    'es-ES': 'No hay más mensajes',
+                                                    'fr-FR': 'Aucun autre message',
+                                                    'ja-JP': 'これ以上のメッセージはありません',
+                                                    'ko-KR': '더 이상 메시지가 없습니다',
+                                                    'pt-BR': 'Não há mais mensagens',
+                                                    'ru-RU': 'Больше сообщений нет',
+                                                    'zh-TW': '沒有更多消息了',
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </ScrollArea>
                         </SheetContentTransition>
                     )}
                 </div>{' '}

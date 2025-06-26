@@ -18,7 +18,17 @@ export interface Announcement {
  * 排序规则：置顶的在前，非过期的在前，然后按优先级排序，最后按发布时间排序
  */
 export function getSortedAnnouncements(): Announcement[] {
-    return (announcements as Announcement[])
+    return (announcements as unknown as Partial<Announcement>[])
+        .map((a, idx) => ({
+            id: typeof a.id === 'number' ? a.id : idx,
+            priority: typeof a.priority === 'number' ? a.priority : 0,
+            pinned: !!a.pinned,
+            expired: !!a.expired,
+            type: a.type as AnnouncementType,
+            publishedAt: typeof a.publishedAt === 'string' ? a.publishedAt : '',
+            title: a.title ?? {},
+            content: a.content ?? {},
+        }))
         .sort((a, b) => {
             // 先按置顶排序
             if (a.pinned && !b.pinned) return -1;
@@ -120,7 +130,16 @@ export function getAnnouncementStats(): {
     expired: number;
     total: number;
 } {
-    const allAnnouncements = announcements as Announcement[];
+    const allAnnouncements: Announcement[] = (announcements as unknown as Partial<Announcement>[]).map((a, idx) => ({
+        id: typeof a.id === 'number' ? a.id : idx,
+        priority: typeof a.priority === 'number' ? a.priority : 0,
+        pinned: !!a.pinned,
+        expired: !!a.expired,
+        type: a.type as AnnouncementType,
+        publishedAt: typeof a.publishedAt === 'string' ? a.publishedAt : '',
+        title: a.title ?? {},
+        content: a.content ?? {},
+    }));
     
     return {
         pinned: allAnnouncements.filter(a => a.pinned).length,
