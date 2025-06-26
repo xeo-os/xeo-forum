@@ -13,6 +13,7 @@ import { PageTransition } from '@/components/page-transition';
 import { ContextMenuProvider } from '@/components/context-menu-provider';
 import { NewPostButton } from '@/components/new-post-button';
 import { Toaster } from 'sonner';
+import { UmamiScript } from '@/components/umami-script';
 
 type Props = {
     children: React.ReactNode;
@@ -77,8 +78,7 @@ export default async function LocaleLayout({ children, params }: Props) {
         <html
             lang={locale}
             className={`${htmlClassName} scrollbar-gutter-stable`}
-            suppressHydrationWarning
-        >
+            suppressHydrationWarning>
             <body suppressHydrationWarning>
                 <Toaster
                     position='bottom-center'
@@ -93,6 +93,7 @@ export default async function LocaleLayout({ children, params }: Props) {
                         <NewPostButton locale={locale} topics={topics} />
                     </ClientLayout>
                 </ContextMenuProvider>
+                <UmamiScript />
             </body>
         </html>
     );
