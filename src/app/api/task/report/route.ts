@@ -4,6 +4,21 @@ import messager from '../../_utils/messager';
 import prisma from '../../_utils/prisma';
 import response from '../../_utils/response';
 
+import { MeiliSearch } from 'meilisearch';
+import { Post } from '@/generated/prisma';
+
+const client = new MeiliSearch({
+  host: process.env.MEILI_HOST || "",
+  apiKey: process.env.MEILI_API_KEY, 
+})
+
+const index = client.index('posts')
+
+async function addSingleDocument(post: Post) {
+  await index.addDocuments([post]) // 传入数组
+}
+
+
 // 添加字符串截断函数
 function truncateText(text: string, maxLength: number = 50): string {
     if (!text) return '';
@@ -70,14 +85,14 @@ export async function POST(request: Request) {
                         },
                     },
                     post: {
-                        select: {
+                        include: {
                             topics: {
                                 select: {
                                     name: true,
                                 },
                             },
-                        },
-                    },
+                        }
+                    }
                 },
             });
             if (!task) {
@@ -99,6 +114,8 @@ export async function POST(request: Request) {
 
             // post任务，不发messager通知，只broadcast
             if (!task.reply) {
+                console.log(task.post)
+                await addSingleDocument(JSON.parse(JSON.stringify(task.post)));
                 console.log('Post task completed, skipping messager notification');
                 await broadcast({
                     type: 'task',

@@ -42,6 +42,8 @@ export function ContextMenu({ children, locale = 'en-US' }: ContextMenuProps) {
     const [canGoForward, setCanGoForward] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [showShareDialog, setShowShareDialog] = useState(false);
+    const [url, setUrl] = useState('/');
+    const [title, setTitle] = useState('');
 
     const { broadcast } = useBroadcast();
 
@@ -95,6 +97,14 @@ export function ContextMenu({ children, locale = 'en-US' }: ContextMenuProps) {
             document.body.removeAttribute('data-scroll-locked');
         };
     }, [isMenuOpen]);
+
+    useEffect(() => {
+        // 只在客户端设置 url 和 title
+        if (typeof window !== 'undefined') {
+            setUrl(window.location.href || '/');
+            setTitle(document.title);
+        }
+    }, []);
 
     const handleCopy = async () => {
         try {
@@ -202,10 +212,6 @@ export function ContextMenu({ children, locale = 'en-US' }: ContextMenuProps) {
         // 使用广播触发新建帖子
         broadcast({ action: 'SHOW_NEW_POST' });
     };
-
-    // 获取当前页面信息
-    const url = window.location.href;
-    const title = document.title;
 
     const handleShareText = async () => {
         try {

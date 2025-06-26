@@ -47,7 +47,7 @@ export function ClientLayout({ children, locale, topics, savedTheme }: ClientLay
             )}
             <div className='[--header-height:calc(var(--spacing)*14)]'>
                 <SidebarProvider>
-                    <SiteHeader locale={locale} />
+                    <SiteHeader locale={locale} topics={topics}/>
                     <div className='flex flex-1' style={{ marginTop: 'var(--header-height)' }}>
                         <AppSidebar locale={locale} currentTheme={savedTheme} topics={topics} />
                         <SidebarInset>

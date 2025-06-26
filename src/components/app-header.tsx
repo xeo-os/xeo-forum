@@ -57,20 +57,32 @@ import token from '@/utils/userToken';
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useBroadcast } from '@/store/useBroadcast';
+import { usePathname } from 'next/navigation';
+import { motion, AnimatePresence } from 'motion/react';
 
 export function SiteHeader({
     locale,
+    topics,
     onExposeSearchHandlers,
+    pageTitle,
 }: {
     locale?: string;
+    topics: {
+        title: string;
+        icon: string;
+        name: string;
+        items?: { title: string; url: string; icon: string; name: string }[];
+    }[];
     onExposeSearchHandlers?: (handlers: {
         showSearchSheet: () => void;
         setSearchQuery: (query: string) => void;
     }) => void;
+    pageTitle?: Record<string, string>;
 }) {
     const { toggleSidebar } = useSidebar();
     const isMobile = useIsMobile();
     const isLoggedIn = token.get();
+    const [isClient, setIsClient] = useState(false);
     const [showLogoutDialog, setShowLogoutDialog] = useState(false);
     const [showSearchSheet, setShowSearchSheet] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -79,8 +91,10 @@ export function SiteHeader({
     const [isAvatarShaking, setIsAvatarShaking] = useState(false);
     const [noticeListOpen, setNoticeListOpen] = useState(false);
     const [taskListOpen, setTaskListOpen] = useState(false);
+    const [breadcrumbTitle, setBreadcrumbTitle] = useState('');
     const searchInputRef = useRef<HTMLInputElement>(null);
     const { registerCallback, unregisterCallback } = useBroadcast();
+    const pathname = usePathname();
 
     const userData = token.getObject() || {
         nickname: 'Guest',
@@ -298,49 +312,81 @@ export function SiteHeader({
         };
     }, [registerCallback, unregisterCallback, isLoggedIn]);
 
+    // 读取当前页面 title，只取 | 前主标题，失败时重试10次，每次间隔100ms
+    useEffect(() => {
+        let retry = 0;
+        let stopped = false;
+        function trySetTitle() {
+            const fullTitle = document.title || '';
+            const mainTitle = fullTitle.split('|')[0].trim();
+            if (mainTitle && mainTitle !== 'Forum') {
+                setBreadcrumbTitle(mainTitle);
+                stopped = true;
+            } else if (retry < 10) {
+                retry++;
+                setTimeout(trySetTitle, 100);
+            } else {
+                setBreadcrumbTitle('Forum');
+            }
+        }
+        trySetTitle();
+        return () => {
+            stopped = true;
+        };
+    }, [pathname]);
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
     return (
         <>
             {/* 消息通知组件 */}
             <MessageNotificationToast />
-
             <header className='bg-background border-b w-full fixed top-0 z-50'>
                 <div className='flex h-14 w-full items-center gap-2 px-4 relative'>
                     <Button className='h-8 w-8' variant='ghost' size='icon' onClick={toggleSidebar}>
                         <SidebarIcon />
                     </Button>
                     <Separator orientation='vertical' className='mr-2 h-4' />
-                    <Breadcrumb className='hidden sm:block'>
-                        <BreadcrumbList>
-                            <BreadcrumbItem>
-                                <BreadcrumbLink
-                                    href={`/${locale || '/en-US'}`}
-                                    className='font-bold text-primary hover:underline'>
-                                    XEO OS
-                                </BreadcrumbLink>
-                            </BreadcrumbItem>
-                            <BreadcrumbSeparator />
-                            <BreadcrumbItem>
-                                <BreadcrumbPage>
-                                    {lang(
-                                        {
-                                            'en-US': 'Forum',
-                                            'zh-CN': '论坛',
-                                            'zh-TW': '論壇',
-                                            'es-ES': 'Foro',
-                                            'fr-FR': 'Forum',
-                                            'ru-RU': 'Форум',
-                                            'ja-JP': 'フォーラム',
-                                            'de-DE': 'Forum',
-                                            'pt-BR': 'Fórum',
-                                            'ko-KR': '포럼',
-                                        },
-                                        locale,
-                                    )}
-                                </BreadcrumbPage>
-                            </BreadcrumbItem>
-                        </BreadcrumbList>
-                    </Breadcrumb>
-                    {isMobile ? (
+                    {isClient && (
+                        <Breadcrumb className='hidden sm:block'>
+                            <BreadcrumbList>
+                                <BreadcrumbItem>
+                                    <BreadcrumbLink
+                                        href={`/${locale || '/en-US'}`}
+                                        className='font-bold text-primary hover:underline hidden sm:inline'>
+                                        XEO OS
+                                    </BreadcrumbLink>
+                                </BreadcrumbItem>
+                                <BreadcrumbSeparator />
+                                <BreadcrumbItem>
+                                    <BreadcrumbPage>
+                                        <AnimatePresence mode='wait' initial={false}>
+                                            <motion.span
+                                                key={breadcrumbTitle}
+                                                initial={{ opacity: 0, y: 8 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -8 }}
+                                                transition={{ duration: 0.25 }}
+                                                style={{ display: 'inline-block' }}
+                                                className='max-w-[10vw] overflow-hidden text-ellipsis whitespace-nowrap align-bottom'>
+                                                {breadcrumbTitle || 'Forum'}
+                                            </motion.span>
+                                        </AnimatePresence>
+                                    </BreadcrumbPage>
+                                </BreadcrumbItem>
+                            </BreadcrumbList>
+                        </Breadcrumb>
+                    )}
+                    {isClient && (
+                        <div className='sm:hidden fixed top-0 left-1/2 -translate-x-1/2 h-14 flex items-center justify-center w-max pointer-events-none select-none z-50'>
+                            <span className='font-bold text-primary text-lg tracking-widest'>
+                                <Link href={'/'}>XEO OS</Link>
+                            </span>
+                        </div>
+                    )}
+                    {isClient && (isMobile ? (
                         <Button
                             variant='ghost'
                             size='icon'
@@ -366,7 +412,7 @@ export function SiteHeader({
                                 />
                             </div>
                         </div>
-                    )}
+                    ))}
                     <div className='ml-auto flex items-center gap-2'>
                         {!isLoggedIn && (
                             <>
@@ -424,7 +470,7 @@ export function SiteHeader({
 
                         <DropdownMenu modal={false}>
                             <DropdownMenuTrigger asChild>
-                                <div className='relative'>
+                                <div className='relative' suppressHydrationWarning>
                                     <Avatar
                                         className={`cursor-pointer hover:opacity-80 transition-opacity ${
                                             isAvatarShaking ? 'animate-shake-rotate' : ''
@@ -790,6 +836,7 @@ export function SiteHeader({
                 locale={locale}
                 initialQuery={searchQuery}
                 onQueryChange={setSearchQuery}
+                topics={topics}
             />
 
             <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
