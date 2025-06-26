@@ -52,6 +52,7 @@ export async function POST(request: Request) {
                     id: true,
                     user: {
                         select: {
+                            uid: true,
                             nickname: true,
                         },
                     },
@@ -119,12 +120,13 @@ export async function POST(request: Request) {
                 console.log('Post task completed, skipping messager notification');
                 await broadcast({
                     type: 'task',
-                    content: {
-                        uuid: taskUuid,
-                        status: status,
-                        type: 'post',
-                        topic: task.post?.topics?.map((t) => t.name).join(', ') || '',
-                    },
+                    content:
+                        {
+                            uuid: taskUuid,
+                            status: status,
+                            type: 'post',
+                            topic: task.post?.topics?.map((t) => t.name).join(', ') || '',
+                        },
                     title: '',
                     link: '',
                 });
@@ -136,7 +138,8 @@ export async function POST(request: Request) {
                 console.log(task);
                 const user = task?.reply?.belongPost?.User || task?.reply?.parentReply?.user;
 
-                if (user) {
+                // 防止自己回复自己的评论时发消息给自己
+                if (user && (!task.user || user.uid !== task.user.uid)) {
                     // 查询相应语言的详细信息
                     const langSuffix =
                         user.emailNoticeLang?.replace('-', '').toUpperCase() || 'ENUS';
