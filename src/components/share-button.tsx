@@ -16,17 +16,21 @@ interface ShareButtonProps {
   slug: string;
   title: string;
   locale: string;
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  url?: string; // 新增
 }
 
-export function ShareButton({ postId, slug, title, locale }: ShareButtonProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function ShareButton({ postId, slug, title, locale, isOpen: externalOpen, onOpenChange, url }: ShareButtonProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isOpen = externalOpen !== undefined ? externalOpen : internalOpen;
   const [copied, setCopied] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
   const [ogImageLoaded, setOgImageLoaded] = useState(false);
 
   // 生成永久链接
-  const permanentUrl = `https://xeoos.net/post/${postId}/${slug}`;
-  const ogImageUrl = `/api/dynamicImage/og?url=/${locale}/post/${postId}/${slug}`;
+  const permanentUrl = url || `https://xeoos.net/post/${postId}/${slug}`;
+  const ogImageUrl = url ? `/api/dynamicImage/og?url=${new URL(url).pathname}` : `/api/dynamicImage/og?url=/${locale}/post/${postId}/${slug}`;
   // 生成 QR 码
   useEffect(() => {
     QRCode.toDataURL(permanentUrl, {
@@ -82,8 +86,11 @@ export function ShareButton({ postId, slug, title, locale }: ShareButtonProps) {
   const handleShare = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // 直接打开自定义分享对话框
-    setIsOpen(true);
+    if (onOpenChange) {
+      onOpenChange(true);
+    } else {
+      setInternalOpen(true);
+    }
   };
 
   const shareToSocial = (platform: string) => {
@@ -139,21 +146,29 @@ export function ShareButton({ postId, slug, title, locale }: ShareButtonProps) {
           'pt-BR': 'Compartilhar',
           'ko-KR': '공유',
         }, locale)}
-      </Button>      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      </Button>
+      <Dialog open={isOpen} onOpenChange={open => {
+        if (onOpenChange) {
+          onOpenChange(open);
+        } else {
+          setInternalOpen(open);
+        }
+      }}>
         <DialogContent className="max-w-lg md:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {lang({
-                'zh-CN': '分享帖子',
-                'en-US': 'Share Post',
-                'zh-TW': '分享貼文',
-                'es-ES': 'Compartir publicación',
-                'fr-FR': 'Partager le message',
-                'ru-RU': 'Поделиться сообщением',
-                'ja-JP': '投稿を共有',
-                'de-DE': 'Beitrag teilen',
-                'pt-BR': 'Compartilhar postagem',
-                'ko-KR': '게시물 공유',
+                'zh-CN': '分享',
+                'en-US': 'Share',
+                'zh-TW': '分享',
+                'es-ES': 'Compartir',
+                'fr-FR': 'Partager',
+                'ru-RU': 'Поделиться',
+                'ja-JP': '共有',
+                'de-DE': 'Teilen',
+                'pt-BR': 'Compartilhar',
+                'ko-KR': '공유',
+
               }, locale)}
             </DialogTitle>
           </DialogHeader>
