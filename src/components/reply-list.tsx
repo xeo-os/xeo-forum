@@ -314,7 +314,7 @@ function SingleReply({
         };
     }, [registerCallback, unregisterCallback, translationProgress, locale]);
     const isTranslated = reply.originLang !== locale;
-    const maxLevel = 99; // 增加最大回复层级深度
+    const maxLevel = 30;
     // 确保 parentPath 是数组
     const safeParentPath = Array.isArray(parentPath) ? parentPath : [];
     const currentPath = [...safeParentPath, reply.id]; // Git tree 风格的连接线渲染 - 保留但简化
@@ -1158,7 +1158,7 @@ function SingleReply({
                                     },
                                 }}
                                 style={{ overflow: 'hidden' }}
-                                className='mt-2 p-2 bg-muted/20 rounded border'>
+                                className='mt-2 p-2'>
                                 <div className='flex flex-wrap gap-2'>
                                     {' '}
                                     {isTranslated && (

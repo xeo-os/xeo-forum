@@ -38,6 +38,9 @@ model User {
   post            Post[]
   reply           Reply[]
   tasks           Task[]
+
+  @@index([uid])
+  @@index([email])
 }
 
 model Post {
@@ -73,10 +76,13 @@ model Post {
   titleZHTW     String?
   unsafeTags    Json?    @db.JsonB
   likes         Like[]
-  User          User?    @relation(fields: [userUid], references: [uid])
+  User          User?    @relation(fields: [userUid], references: [uid], onDelete: Cascade)
   belongReplies Reply[]  @relation("BelongPost")
   topics        Topic[]  @relation("PostTopics")
   tasks         Task[]
+  @@index([published,updatedAt])
+  @@index([userUid,published])
+  @@index([published, originLang, lastReplyAt])
 }
 
 model Like {
@@ -87,7 +93,13 @@ model Like {
   createdAt DateTime @default(now())
   post      Post?    @relation(fields: [postId], references: [id])
   reply     Reply?   @relation(fields: [replyId], references: [id])
-  user      User     @relation(fields: [userUid], references: [uid])
+  user      User     @relation(fields: [userUid], references: [uid], onDelete: Cascade)
+  @@unique([userUid, postId])
+  @@unique([userUid, replyId])
+  @@index([userUid])
+  @@index([postId])
+  @@index([replyId])
+
 }
 
 model Topic {
@@ -154,23 +166,28 @@ model Reply {
   contentZHTW  String?
   unsafeTags   Json?    @db.JsonB
   likes        Like[]
-  parentReply  Reply?   @relation("CommentReplies", fields: [commentUid], references: [id])
+  parentReply  Reply?   @relation("CommentReplies", fields: [commentUid], references: [id], onDelete: Cascade)
   replies      Reply[]  @relation("CommentReplies")
-  user         User     @relation(fields: [userUid], references: [uid])
+  user         User     @relation(fields: [userUid], references: [uid], onDelete: Cascade)
   tasks        Task[]
+
+  @@index([belongPostid, belongReply, originLang, createdAt])
+  @@index([userUid, createdAt])
 }
 
 model Task {
   id        String    @id @default(uuid())
   status    String    @default("PENDING") @db.VarChar(20)
-  user      User?     @relation(fields: [userUid], references: [uid])
+  user      User?     @relation(fields: [userUid], references: [uid], onDelete: Cascade)
   userUid   Int?
-  post      Post?     @relation(fields: [postId], references: [id])
+  post      Post?     @relation(fields: [postId], references: [id], onDelete: Cascade)
   postId    Int?
-  reply     Reply?    @relation(fields: [replyId], references: [id])
+  reply     Reply?    @relation(fields: [replyId], references: [id], onDelete: Cascade)
   replyId   String?
   createdAt DateTime  @default(now())
   updatedAt DateTime? @updatedAt
+
+  @@index([userUid, status])
 }
 
 model Avatar {
@@ -178,7 +195,9 @@ model Avatar {
   userUid    Int
   emoji      String @db.VarChar(10)
   background String @db.VarChar(100)
-  user       User   @relation(fields: [userUid], references: [uid])
+  user       User   @relation(fields: [userUid], references: [uid], onDelete: Cascade)
+
+  @@index([userUid])
 }
 
 model FriendShip {
@@ -197,7 +216,9 @@ model Notice {
   content   String   @db.VarChar(255)
   link      String?  @db.VarChar(100)
   createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [uid])
+  user      User     @relation(fields: [userId], references: [uid], onDelete: Cascade)
+
+  @@index([userId, isRead])
 }
 
 enum Role {

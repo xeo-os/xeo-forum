@@ -167,7 +167,7 @@ const getUserPageData = cache(async (uid: number, skip: number, take: number) =>
                 titlePTBR: true,
                 _count: { select: { belongReplies: true, likes: true } },
             },
-            orderBy: { updatedAt: 'desc' },
+            orderBy: { id: 'desc' },
             skip,
             take,
         }),

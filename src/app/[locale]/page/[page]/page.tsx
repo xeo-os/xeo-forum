@@ -288,7 +288,7 @@ export default async function HomePage({ params }: Props) {
                             take: 3,
                         },
                     },
-                    orderBy: [{ pin: 'desc' }, { updatedAt: 'desc' }],
+                    orderBy: [{ lastReplyAt: 'desc' }],
                     skip,
                     take: POSTS_PER_PAGE,
                 }),

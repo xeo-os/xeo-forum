@@ -142,6 +142,7 @@ export async function POST(request: Request) {
         // 准备更新数据
         const updateData: any = {
             updatedAt: new Date(),
+            lastReplyAt: new Date(),
         };
 
         if (title !== undefined) {

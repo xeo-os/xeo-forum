@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache';
 
 export async function POST(request: Request) {
     const JWT = request.headers.get('Authorization')?.replace('Bearer ', '');
-    const { lang = 'en-US', content, postid, replyid, belongReply } = await request.json();
+    const { lang = 'en-US', content, postid, replyid } = await request.json();
 
     if (!JWT) {
         return response(401, {
@@ -50,7 +50,8 @@ export async function POST(request: Request) {
 
     const token = await auth(request);
 
-    if (token) {        try {
+    if (token) {
+        try {
             let result, fatherReply, post, calculatedBelongReply;
             if (postid) {
                 // post 评论 - 计算属于第几个回复
@@ -121,7 +122,8 @@ export async function POST(request: Request) {
                             },
                         },
                     },
-                });                result = await prisma.reply.create({
+                });
+                result = await prisma.reply.create({
                     data: {
                         content,
                         userUid: token.uid,
@@ -133,13 +135,23 @@ export async function POST(request: Request) {
                     },
                 });
             }
-            // 创建翻译Task
-            const task = await prisma.task.create({
-                data: {
-                    replyId: result?.id,
-                    userUid: token.uid,
-                },
-            });
+            // 并发更新文章的lastReplyAt和创建翻译Task
+            const [_, task] = await Promise.all([
+                prisma.post.update({
+                    where: {
+                        id: postid || fatherReply?.belongPostid,
+                    },
+                    data: {
+                        lastReplyAt: new Date(),
+                    },
+                }),
+                prisma.task.create({
+                    data: {
+                        replyId: result?.id,
+                        userUid: token.uid,
+                    },
+                }),
+            ]);
             // 开始翻译Task
             await fetch(process.env.TRANSLATE_WORKER as string, {
                 method: 'POST',
@@ -148,17 +160,20 @@ export async function POST(request: Request) {
                     task: task.id,
                 }),
             });
-            revalidatePath('/[locale]/page');
-            revalidatePath(`/[locale]/topic/${post?.topics[0]?.name.replace('_', '-')}/page`);
-            revalidatePath(`/[locale]/post/${fatherReply?.belongPostid}`);
-            revalidatePath(`/[locale]/user/${token.uid}}`);
-            return response(200, { 
-                message: 'Reply created successfully', 
+            // 并发 revalidatePath
+            await Promise.all([
+                revalidatePath('/[locale]/page'),
+                revalidatePath(`/[locale]/topic/${post?.topics[0]?.name.replace('_', '-')}/page`),
+                revalidatePath(`/[locale]/post/${fatherReply?.belongPostid}`),
+                revalidatePath(`/[locale]/user/${token.uid}}`),
+            ]);
+            return response(200, {
+                message: 'Reply created successfully',
                 ok: true,
                 data: {
                     id: result?.id,
-                    taskId: task.id
-                }
+                    taskId: task.id,
+                },
             });
         } catch (error) {
             console.error('Error creating reply:', error);

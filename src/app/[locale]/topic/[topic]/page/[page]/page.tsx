@@ -151,7 +151,7 @@ const getTopicPageData = cache(async (topic: string, page: number) => {
                     take: 3,
                 },
             },
-            orderBy: [{ pin: 'desc' }, { createdAt: 'desc' }],
+            orderBy: [{ lastReplyAt: 'desc' }],
             skip,
             take: POSTS_PER_PAGE,
         }),
