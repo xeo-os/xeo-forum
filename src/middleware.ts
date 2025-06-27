@@ -177,7 +177,7 @@ export const config = {
         // - _next/image (图片优化)
         // - favicon.ico (网站图标)
         // - 其他静态资源
-        '/((?!_next/static|_next/image|icon|favicon.ico|manifest.webmanifest|api|example|.*\\.(?:jpg|jpeg|gif|png|svg|ico|webp|js|css|woff|woff2|ttf|otf)).*)',
+        '/((?!_next/static|_next/image|robots.txt|sitemap.xml|icon|favicon.ico|manifest.webmanifest|api|example|.*\\.(?:jpg|jpeg|gif|png|svg|ico|webp|js|css|woff|woff2|ttf|otf)).*)',
     ],
     specialPages: ['/signin', '/signup', '/verify', '/reset-password', '/policies', '/contact'],
 };

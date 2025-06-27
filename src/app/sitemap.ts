@@ -6,12 +6,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
         {
             url: 'https://xeoos.net',
             lastModified: new Date(),
-            alternates: {
-                languages: {
-                    es: 'https://acme.com/en-US',
-                    de: 'https://acme.com/zh-CN',
-                },
-            },
+            // alternates: {
+            //     languages: {
+            //         es: 'https://acme.com/en-US',
+            //         de: 'https://acme.com/zh-CN',
+            //     },
+            // },
         },
     ];
 }
