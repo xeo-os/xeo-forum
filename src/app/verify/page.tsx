@@ -16,7 +16,6 @@ import lang from '@/lib/lang';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import '@/app/globals.css';
 
-
 export default function VerifyPage() {
     const router = useRouter();
     const [locale, setLocale] = useState('zh-CN');
@@ -34,7 +33,7 @@ export default function VerifyPage() {
         setEmail(emailParam);
 
         if (!emailParam) {
-            router.replace(`/signin&email=${encodeURIComponent(emailParam || '')}`);
+            router.replace(`/signin`);
             return;
         }
     }, [router]);
@@ -76,7 +75,7 @@ export default function VerifyPage() {
             });
             const data = await res.json();
             if (res.ok && data?.message?.includes('邮箱验证成功')) {
-                router.replace(`/signin`);
+                router.replace(`/signin&email=${encodeURIComponent(email || '')}`);
             } else {
                 setError(data.message);
                 setCode('');
@@ -179,16 +178,14 @@ export default function VerifyPage() {
                             e.preventDefault();
                             if (code.length === 6) handleComplete(code);
                         }}
-                        className='flex flex-col items-center gap-4'
-                    >
+                        className='flex flex-col items-center gap-4'>
                         <InputOTP
                             maxLength={6}
                             value={code}
                             onChange={handleChange}
                             onComplete={handleComplete}
                             ref={otpRef}
-                            disabled={loading}
-                        >
+                            disabled={loading}>
                             <InputOTPGroup>
                                 {[0, 1, 2, 3, 4, 5].map((i) => (
                                     <InputOTPSlot key={i} index={i} />
