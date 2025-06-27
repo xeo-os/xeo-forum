@@ -16,7 +16,6 @@ function getAvatar(userUids: number[]) {
         where: { uid: { in: userUids } },
         select: { uid: true, avatar: true, nickname: true },
     });
-    await prisma.$disconnect();
 }
 
 export async function GET(request: Request) {
