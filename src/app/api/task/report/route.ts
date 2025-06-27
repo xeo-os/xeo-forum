@@ -3,21 +3,27 @@ import broadcast from '../../_utils/broadcast';
 import messager from '../../_utils/messager';
 import prisma from '../../_utils/prisma';
 import response from '../../_utils/response';
+import { revalidatePath } from 'next/cache';
 
 import { MeiliSearch } from 'meilisearch';
-import { Post } from '@/generated/prisma';
+import { Post, Reply } from '@/generated/prisma';
 
 const client = new MeiliSearch({
-  host: process.env.MEILI_HOST || "",
-  apiKey: process.env.MEILI_API_KEY, 
-})
+    host: process.env.MEILI_HOST || '',
+    apiKey: process.env.MEILI_API_KEY,
+});
 
-const index = client.index('posts')
+const index = client.index('posts');
+const replyIndex = client.index('replies');
 
 async function addSingleDocument(post: Post) {
-  await index.addDocuments([post]) // 传入数组
+    await index.addDocuments([post]); // 传入数组
 }
 
+async function addReplyDocument(reply: Reply) {
+    console.log('Adding reply document:', reply);
+    await replyIndex.addDocuments([reply]); // 传入数组
+}
 
 // 添加字符串截断函数
 function truncateText(text: string, maxLength: number = 50): string {
@@ -41,92 +47,98 @@ export async function POST(request: Request) {
             message: 'Missing taskUuid or status',
         });
     }
-
     try {
         // 查询task信息
         // reply的话，给对方发送通知
-        if (status == 'DONE') {
-            task = await prisma.task.findUnique({
-                where: { id: taskUuid },
-                select: {
-                    id: true,
-                    user: {
-                        select: {
-                            uid: true,
-                            nickname: true,
-                        },
-                    },
-                    reply: {
-                        select: {
-                            belongPost: {
-                                select: {
-                                    User: {
-                                        select: {
-                                            uid: true,
-                                            nickname: true,
-                                            email: true,
-                                            emailNoticeLang: true,
-                                        },
-                                    },
-                                    id: true,
-                                },
-                            },
-                            parentReply: {
-                                select: {
-                                    user: {
-                                        select: {
-                                            uid: true,
-                                            nickname: true,
-                                            email: true,
-                                            emailNoticeLang: true,
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                    },
-                    post: {
-                        include: {
-                            topics: {
-                                select: {
-                                    name: true,
-                                },
-                            },
-                        }
-                    }
-                },
-            });
-            if (!task) {
-                return response(404, {
-                    message: lang({
-                        'zh-CN': '任务未找到',
-                        'en-US': 'Task not found',
-                        'zh-TW': '任務未找到',
-                        'de-DE': 'Aufgabe nicht gefunden',
-                        'fr-FR': 'Tâche non trouvée',
-                        'es-ES': 'Tarea no encontrada',
-                        'ru-RU': 'Задача не найдена',
-                        'ja-JP': 'タスクが見つかりません',
-                        'pt-BR': 'Tarefa não encontrada',
-                        'ko-KR': '작업을 찾을 수 없습니다.',
-                    }),
-                });
-            }
 
+        task = await prisma.task.findUnique({
+            where: { id: taskUuid },
+            select: {
+                id: true,
+                user: {
+                    select: {
+                        uid: true,
+                        nickname: true,
+                    },
+                },
+                reply: {
+                    include: {
+                        belongPost: {
+                            select: {
+                                User: {
+                                    select: {
+                                        uid: true,
+                                        nickname: true,
+                                        email: true,
+                                        emailNoticeLang: true,
+                                    },
+                                },
+                                id: true,
+                            },
+                        },
+                        parentReply: {
+                            select: {
+                                user: {
+                                    select: {
+                                        uid: true,
+                                        nickname: true,
+                                        email: true,
+                                        emailNoticeLang: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                post: {
+                    include: {
+                        topics: {
+                            select: {
+                                name: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+
+        if (!task) {
+            return response(404, {
+                message: lang({
+                    'zh-CN': '任务未找到',
+                    'en-US': 'Task not found',
+                    'zh-TW': '任務未找到',
+                    'de-DE': 'Aufgabe nicht gefunden',
+                    'fr-FR': 'Tâche non trouvée',
+                    'es-ES': 'Tarea no encontrada',
+                    'ru-RU': 'Задача не найдена',
+                    'ja-JP': 'タスクが見つかりません',
+                    'pt-BR': 'Tarefa não encontrada',
+                    'ko-KR': '작업을 찾을 수 없습니다.',
+                }),
+            });
+        }
+        if (status == 'DONE') {
             // post任务，不发messager通知，只broadcast
             if (!task.reply) {
-                console.log(task.post)
+                console.log(task.post);
                 await addSingleDocument(JSON.parse(JSON.stringify(task.post)));
                 console.log('Post task completed, skipping messager notification');
+                // 新增：revalidatePath，刷新首页和当前post页面缓存
+                if (typeof revalidatePath === 'function') {
+                    revalidatePath('/[locale]/page', 'page');
+                    if (task.post?.id) {
+                        revalidatePath(`/[locale]/post/${task.post.id}`, 'page');
+                    }
+                }
                 await broadcast({
                     type: 'task',
-                    content:
-                        {
-                            uuid: taskUuid,
-                            status: status,
-                            type: 'post',
-                            topic: task.post?.topics?.map((t) => t.name).join(', ') || '',
-                        },
+                    content: {
+                        uuid: taskUuid,
+                        status: status,
+                        type: 'post',
+                        topic: task.post?.topics?.map((t) => t.name).join(', ') || '',
+                    },
                     title: '',
                     link: '',
                 });
@@ -135,8 +147,9 @@ export async function POST(request: Request) {
                 });
             } else {
                 // reply任务，发送messager通知
-                console.log(task);
                 const user = task?.reply?.belongPost?.User || task?.reply?.parentReply?.user;
+
+                await addReplyDocument(JSON.parse(JSON.stringify(task.reply)));
 
                 // 防止自己回复自己的评论时发消息给自己
                 if (user && (!task.user || user.uid !== task.user.uid)) {
@@ -277,6 +290,12 @@ export async function POST(request: Request) {
                         },
                     );
                 }
+                // 新增：revalidatePath，刷新当前post页面缓存
+                if (typeof revalidatePath === 'function') {
+                    if (task.reply?.belongPost?.id) {
+                        revalidatePath(`/[locale]/post/${task.reply.belongPost.id}`, 'page');
+                    }
+                }
             }
             await broadcast({
                 type: 'task',
@@ -285,6 +304,21 @@ export async function POST(request: Request) {
                     status: status,
                     type: 'reply',
                     postId: task.reply?.belongPost?.id.toString() || '',
+                },
+                title: '',
+                link: '',
+            });
+            return response(200, {
+                message: 'Task report broadcasted successfully',
+            });
+        } else {
+            // 直接broadcast
+            await broadcast({
+                type: 'task',
+                content: {
+                    uuid: taskUuid,
+                    status: status,
+                    type: task?.reply ? 'reply' : 'post',
                 },
                 title: '',
                 link: '',
