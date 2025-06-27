@@ -75,7 +75,7 @@ export default function VerifyPage() {
             });
             const data = await res.json();
             if (res.ok && data?.message?.includes('邮箱验证成功')) {
-                router.replace(`/signin&email=${encodeURIComponent(email || '')}`);
+                router.replace(`/signin?email=${encodeURIComponent(email || '')}`);
             } else {
                 setError(data.message);
                 setCode('');

@@ -560,7 +560,7 @@ export default function SettingPage(props: { params: Promise<{ locale: string }>
                 'zh-TW': '郵箱通知語言',
                 'es-ES': 'Idioma de Notificación por Email',
                 'fr-FR': 'Langue de Notification par Email',
-                'ru-RU': 'Язык Уведомлений по Email',
+                'ru-RU': 'Язык Уведнений по Email',
                 'ja-JP': 'メール通知言語',
                 'de-DE': 'E-Mail-Benachrichtigungssprache',
                 'pt-BR': 'Idioma de Notificação por Email',

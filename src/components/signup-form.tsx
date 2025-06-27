@@ -64,6 +64,7 @@ export function SignUpForm({ className, ...props }: React.ComponentProps<'div'>)
         hasError: false,
         token: null,
     });
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // 移动token检查到useEffect中，避免阻止组件渲染
     useEffect(() => {
@@ -478,6 +479,7 @@ export function SignUpForm({ className, ...props }: React.ComponentProps<'div'>)
         }
 
         // 如果验证成功，直接执行注册
+        setIsSubmitting(true);
         executeSignup(username, email, password, turnstileState.token!);
     };
 
@@ -511,6 +513,7 @@ export function SignUpForm({ className, ...props }: React.ComponentProps<'div'>)
         })
             .then((response) => response.json())
             .then((data) => {
+                setIsSubmitting(false);
                 if (data.ok) {
                     // 注册成功，显示成功提示
                     toast.success(
@@ -565,6 +568,7 @@ export function SignUpForm({ className, ...props }: React.ComponentProps<'div'>)
                 }
             })
             .catch((error) => {
+                setIsSubmitting(false);
                 console.error('Error during signup:', error);
 
                 // 显示网络错误
@@ -828,23 +832,23 @@ export function SignUpForm({ className, ...props }: React.ComponentProps<'div'>)
                             <Button
                                 type='submit'
                                 className='w-full'
-                                disabled={turnstileState.isLoading}
+                                disabled={turnstileState.isLoading || isSubmitting}
                             >
-                                {turnstileState.isLoading ? (
+                                {(turnstileState.isLoading || isSubmitting) ? (
                                     <>
                                         <div className='mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
                                         {lang(
                                             {
-                                                'en-US': 'Verifying...',
-                                                'zh-CN': '验证中...',
-                                                'zh-TW': '驗證中...',
-                                                'es-ES': 'Verificando...',
-                                                'fr-FR': 'Vérification...',
-                                                'ru-RU': 'Проверка...',
-                                                'ja-JP': '認証中...',
-                                                'de-DE': 'Überprüfung...',
-                                                'pt-BR': 'Verificando...',
-                                                'ko-KR': '인증 중...',
+                                                'en-US': isSubmitting ? 'Registering...' : 'Verifying...',
+                                                'zh-CN': isSubmitting ? '注册中...' : '验证中...',
+                                                'zh-TW': isSubmitting ? '註冊中...' : '驗證中...',
+                                                'es-ES': isSubmitting ? 'Registrando...' : 'Verificando...',
+                                                'fr-FR': isSubmitting ? "Inscription..." : 'Vérification...',
+                                                'ru-RU': isSubmitting ? 'Регистрация...' : 'Проверка...',
+                                                'ja-JP': isSubmitting ? '登録中...' : '認証中...',
+                                                'de-DE': isSubmitting ? 'Registrieren...' : 'Überprüfung...',
+                                                'pt-BR': isSubmitting ? 'Registrando...' : 'Verificando...',
+                                                'ko-KR': isSubmitting ? '회원가입 중...' : '인증 중...',
                                             },
                                             locale,
                                         )}
