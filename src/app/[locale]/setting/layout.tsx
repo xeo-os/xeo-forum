@@ -1,8 +1,8 @@
 import lang from '@/lib/lang';
 import { Metadata } from 'next';
 
-export async function generateMetadata({ params }: { params: { locale: string } }): Promise<Metadata> {
-    const locale = params.locale;
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+    const { locale } = await params;
     const title = lang(
         {
             'zh-CN': '个人设置',
