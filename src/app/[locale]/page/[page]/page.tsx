@@ -41,8 +41,6 @@ import {
 
 export const revalidate = 31536000;
 
-
-
 type Props = {
     params: Promise<{ locale: string; page?: number }>;
 };
@@ -744,16 +742,16 @@ export default async function HomePage({ params }: Props) {
                                 if (!latest)
                                     return lang(
                                         {
-                                            'zh-CN': '服务条款更新',
-                                            'en-US': 'Terms of Service Update',
-                                            'zh-TW': '服務條款更新',
-                                            'es-ES': 'Actualización de Términos de Servicio',
-                                            'fr-FR': 'Mise à jour des Conditions de Service',
-                                            'ru-RU': 'Обновление Условий Обслуживания',
-                                            'ja-JP': 'サービス利用規約更新',
-                                            'de-DE': 'Aktualisierung der Nutzungsbedingungen',
-                                            'pt-BR': 'Atualização dos Termos de Serviço',
-                                            'ko-KR': '서비스 약관 업데이트',
+                                            'zh-CN': '暂无公告',
+                                            'en-US': 'No announcements',
+                                            'zh-TW': '暫無公告',
+                                            'es-ES': 'Sin anuncios',
+                                            'fr-FR': 'Aucune annonce',
+                                            'ru-RU': 'Нет объявлений',
+                                            'ja-JP': 'お知らせはありません',
+                                            'de-DE': 'Keine Ankündigungen',
+                                            'pt-BR': 'Nenhum anúncio',
+                                            'ko-KR': '공지 없음',
                                         },
                                         locale,
                                     );
@@ -938,7 +936,6 @@ export default async function HomePage({ params }: Props) {
                             <Card className='h-full'>
                                 <CardHeader className='pb-3'>
                                     <CardTitle className='text-lg flex items-center gap-2'>
-                                        📋{' '}
                                         {(() => {
                                             const announcements = getSortedAnnouncements();
                                             // 忽略 pinned: true 的公告
@@ -948,20 +945,16 @@ export default async function HomePage({ params }: Props) {
                                             if (!latest)
                                                 return lang(
                                                     {
-                                                        'zh-CN': '服务条款更新',
-                                                        'en-US': 'Terms of Service Update',
-                                                        'zh-TW': '服務條款更新',
-                                                        'es-ES':
-                                                            'Actualización de Términos de Servicio',
-                                                        'fr-FR':
-                                                            'Mise à jour des Conditions de Service',
-                                                        'ru-RU': 'Обновление Условий Обслуживания',
-                                                        'ja-JP': 'サービス利用規約更新',
-                                                        'de-DE':
-                                                            'Aktualisierung der Nutzungsbedingungen',
-                                                        'pt-BR':
-                                                            'Atualização dos Termos de Serviço',
-                                                        'ko-KR': '서비스 약관 업데이트',
+                                                        'zh-CN': '暂无公告',
+                                                        'en-US': 'No announcements',
+                                                        'zh-TW': '暫無公告',
+                                                        'es-ES': 'Sin anuncios',
+                                                        'fr-FR': 'Aucune annonce',
+                                                        'ru-RU': 'Нет объявлений',
+                                                        'ja-JP': 'お知らせはありません',
+                                                        'de-DE': 'Keine Ankündigungen',
+                                                        'pt-BR': 'Nenhum anúncio',
+                                                        'ko-KR': '공지 없음',
                                                     },
                                                     locale,
                                                 );
@@ -970,52 +963,58 @@ export default async function HomePage({ params }: Props) {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    <p className='text-sm text-muted-foreground'>
-                                        {lang(
-                                            {
-                                                'zh-CN': `我们于2025年6月10日更改了服务条款与隐私策略。`,
-                                                'en-US':
-                                                    'We updated our Terms of Service and Privacy Policy on June 10, 2025.',
-                                                'zh-TW':
-                                                    '我們於2025年6月10日更改了服務條款與隱私策略。',
-                                                'es-ES':
-                                                    'Actualizamos nuestros Términos de Servicio y Política de Privacidad el 10 de junio de 2025.',
-                                                'fr-FR':
-                                                    'Nous avons mis à jour nos Conditions de Service et notre Politique de Confidentialité le 10 juin 2025.',
-                                                'ru-RU':
-                                                    'Мы обновили наши Условия Обслуживания и Политику Конфиденциальности 10 июня 2025 года.',
-                                                'ja-JP':
-                                                    '2025年6月10日にサービス利用規約とプライバシーポリシーを更新しました。',
-                                                'de-DE':
-                                                    'Wir haben unsere Nutzungsbedingungen und Datenschutzrichtlinien am 10. Juni 2025 aktualisiert.',
-                                                'pt-BR':
-                                                    'Atualizamos nossos Termos de Serviço e Política de Privacidade em 10 de junho de 2025.',
-                                                'ko-KR':
-                                                    '2025년 6월 10일에 서비스 약관과 개인정보 처리방침을 업데이트했습니다。',
-                                            },
-                                            locale,
-                                        )}{' '}
-                                        <br />
-                                        <Link
-                                            href={`/${locale}/policies/privacy-policy`}
-                                            className='text-primary hover:text-primary/80 hover:underline transition-all duration-200'>
-                                            {lang(
-                                                {
-                                                    'zh-CN': '> 查看',
-                                                    'en-US': '> View',
-                                                    'zh-TW': '> 查看',
-                                                    'es-ES': '> Ver',
-                                                    'fr-FR': '> Voir',
-                                                    'ru-RU': '> Посмотреть',
-                                                    'ja-JP': '> 表示',
-                                                    'de-DE': '> Anzeigen',
-                                                    'pt-BR': '> Visualizar',
-                                                    'ko-KR': '> 보기',
-                                                },
-                                                locale,
-                                            )}
-                                        </Link>
-                                    </p>
+                                    {(() => {
+                                        const announcements = getSortedAnnouncements();
+                                        // 忽略 pinned: true 的公告
+                                        const latest = announcements.find(
+                                            (a) => !a.expired && !a.pinned,
+                                        );
+                                        if (!latest)
+                                            return (
+                                                <p className='text-sm text-muted-foreground'>
+                                                    {lang(
+                                                        {
+                                                            'zh-CN': '暂无公告',
+                                                            'en-US': 'No announcements',
+                                                            'zh-TW': '暫無公告',
+                                                            'es-ES': 'Sin anuncios',
+                                                            'fr-FR': 'Aucune annonce',
+                                                            'ru-RU': 'Нет объявлений',
+                                                            'ja-JP': 'お知らせはありません',
+                                                            'de-DE': 'Keine Ankündigungen',
+                                                            'pt-BR': 'Nenhum anúncio',
+                                                            'ko-KR': '공지 없음',
+                                                        },
+                                                        locale,
+                                                    )}
+                                                </p>
+                                            );
+                                        return (
+                                            <p className='text-sm text-muted-foreground'>
+                                                {getAnnouncementContent(latest, locale)}
+                                                <br />
+                                                <Link
+                                                    href={`/${locale}/announcements`}
+                                                    className='text-primary hover:text-primary/80 hover:underline transition-all duration-200'>
+                                                    {lang(
+                                                        {
+                                                            'zh-CN': '> 查看公告',
+                                                            'en-US': '> View Announcement',
+                                                            'zh-TW': '> 查看公告',
+                                                            'es-ES': '> Ver anuncio',
+                                                            'fr-FR': "> Voir l'annonce",
+                                                            'ru-RU': '> Посмотреть объявление',
+                                                            'ja-JP': '> お知らせを見る',
+                                                            'de-DE': '> Ankündigung ansehen',
+                                                            'pt-BR': '> Ver anúncio',
+                                                            'ko-KR': '> 공지 보기',
+                                                        },
+                                                        locale,
+                                                    )}
+                                                </Link>
+                                            </p>
+                                        );
+                                    })()}
                                 </CardContent>
                             </Card>
                         </CarouselItem>
