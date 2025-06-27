@@ -14,6 +14,7 @@ import { ContextMenuProvider } from '@/components/context-menu-provider';
 import { NewPostButton } from '@/components/new-post-button';
 import { Toaster } from 'sonner';
 import { UmamiScript } from '@/components/umami-script';
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 type Props = {
     children: React.ReactNode;
@@ -94,6 +95,7 @@ export default async function LocaleLayout({ children, params }: Props) {
                     </ClientLayout>
                 </ContextMenuProvider>
                 <UmamiScript />
+                <SpeedInsights />
             </body>
         </html>
     );

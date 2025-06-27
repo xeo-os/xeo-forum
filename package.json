@@ -30,6 +30,7 @@
         "@radix-ui/react-tooltip": "^1.2.7",
         "@remixicon/react": "^4.6.0",
         "@types/qrcode": "^1.5.5",
+        "@vercel/speed-insights": "^1.2.0",
         "ably": "^2.9.0",
         "argon2": "^0.43.0",
         "class-variance-authority": "^0.7.1",
