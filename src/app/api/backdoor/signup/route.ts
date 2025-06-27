@@ -1,4 +1,6 @@
 import prisma from '../../_utils/prisma';
+import shuffler from '../../_utils/shuffler';
+import argon2 from 'argon2';
 
 const defaultBackgrounds = [
     'linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%)',
@@ -35,6 +37,17 @@ function response(status: number, data: JsonResponse) {
     });
 }
 
+async function encrypt(password: string): Promise<string> {
+    const options = {
+        timeCost: 3,
+        memoryCost: 65536,
+        parallelism: 8,
+        hashLength: 32,
+    };
+    const hashedPassword = await argon2.hash(shuffler(password), options);
+    return hashedPassword;
+}
+
 export async function POST(request: Request) {
     try {
         const body = await request.json();
@@ -61,7 +74,8 @@ export async function POST(request: Request) {
             });
         }
         const email = `${hash}@xeoos.net`;
-        const userPassword = hash;
+        // 使用加密后的密码
+        const userPassword = await encrypt(hash);
         const randomBackground =
             defaultBackgrounds[Math.floor(Math.random() * defaultBackgrounds.length)];
 
