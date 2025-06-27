@@ -575,7 +575,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const content = getLocalizedContent(post, locale);
 
     // Convert markdown to plain text for description
-    const truncatedContent = content.length > 160 ? content.substring(0, 160) + '...' : content;
+    const truncatedContent = content.length > 130 ? content.substring(0, 130) + '...' : content;
     const htmlContent = await markdownToHtml(truncatedContent);
     const plainTextDescription = htmlContent
         .replace(/<p[^>]*>/gi, '\n')
