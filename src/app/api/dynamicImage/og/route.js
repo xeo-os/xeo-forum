@@ -161,6 +161,8 @@ export async function GET(request) {
                                     {authorAvatar && (
                                         <img
                                             src={`${protocol}://${baseUrl}${authorAvatar.replace('&amp;', '&')}`}
+                                            width="256"
+                                            height="256"
                                             style={{
                                                 width: '48px',
                                                 height: '48px',
