@@ -798,12 +798,6 @@ export default async function UserPage({ params }: Props) {
                                 {user.country}
                             </div>
                         )}
-                        {user.birth && (
-                            <div className='flex items-center gap-1 drop-shadow-sm'>
-                                <CalendarDays className='h-4 w-4' />
-                                {user.birth}
-                            </div>
-                        )}
                         <div className='flex items-center gap-1 drop-shadow-sm'>
                             <Users className='h-4 w-4' />
                             {texts.joinedAt} {new Date(user.createdAt).toLocaleDateString(locale)}
