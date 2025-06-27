@@ -408,13 +408,13 @@ export function ReplyEditor({
                   placeholder={placeholder}
                   className="w-full p-3 border border-input rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-ring bg-background text-sm"
                   rows={3}
-                  maxLength={200}
+                  maxLength={400}
                 />
               </div>
 
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground text-xs">
-                  {content.length}/200
+                  {content.length}/400
                 </span>
                 <div className="flex gap-2">
                   <Button

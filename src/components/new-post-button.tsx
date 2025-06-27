@@ -347,20 +347,20 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
             return false;
         }
 
-        if (content.length > 200) {
+        if (content.length > 400) {
             toast.error(
                 lang(
                     {
-                        'zh-CN': '内容不能超过200个字符',
-                        'zh-TW': '內容不能超過200個字符',
-                        'en-US': 'Content cannot exceed 200 characters',
-                        'es-ES': 'El contenido no puede exceder 200 caracteres',
-                        'fr-FR': 'Le contenu ne peut pas dépasser 200 caractères',
-                        'ru-RU': 'Содержание не может превышать 200 символов',
-                        'ja-JP': '内容は200文字を超えることはできません',
-                        'de-DE': 'Der Inhalt darf 200 Zeichen nicht überschreiten',
-                        'pt-BR': 'O conteúdo não pode exceder 200 caracteres',
-                        'ko-KR': '내용은 200자를 초과할 수 없습니다',
+                        'zh-CN': '内容不能超过400个字符',
+                        'zh-TW': '內容不能超過400個字符',
+                        'en-US': 'Content cannot exceed 400 characters',
+                        'es-ES': 'El contenido no puede exceder 400 caracteres',
+                        'fr-FR': 'Le contenu ne peut pas dépasser 400 caractères',
+                        'ru-RU': 'Содержание не может превышать 400 символов',
+                        'ja-JP': '内容は400文字を超えることはできません',
+                        'de-DE': 'Der Inhalt darf 400 Zeichen nicht überschreiten',
+                        'pt-BR': 'O conteúdo não pode exceder 400 caracteres',
+                        'ko-KR': '내용은 400자를 초과할 수 없습니다',
                     },
                     locale,
                 ),
@@ -1203,7 +1203,7 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
                                                     }
                                                     className='text-xs'
                                                 >
-                                                    {content.length}/200
+                                                    {content.length}/400
                                                 </Badge>
                                             </Label>
                                         </div>
@@ -1213,7 +1213,7 @@ export function NewPostButton({ locale, topics, onExposeHandlers }: NewPostButto
                                             value={content}
                                             onChange={setContent}
                                             locale={locale}
-                                            maxLength={200}
+                                            maxLength={400}
                                         />
                                     </div>
 

@@ -14,7 +14,11 @@ import {
 import { Heart, Trash2, Calendar, FileText, Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import { EnhancedLoading, ContentTransition, ListItemTransition } from '@/components/enhanced-loading';
+import {
+    EnhancedLoading,
+    ContentTransition,
+    ListItemTransition,
+} from '@/components/enhanced-loading';
 import token from '@/utils/userToken';
 import lang from '@/lib/lang';
 
@@ -59,18 +63,21 @@ export function UserRepliesManagement({ locale }: UserPostsManagementProps) {
 
     const getLocalizedTitle = (reply: Reply): string => {
         if (!reply.belongPost) {
-            return lang({
-                'zh-CN': '未知帖子',
-                'en-US': 'Unknown Post',
-                'zh-TW': '未知帖子',
-                'es-ES': 'Publicación Desconocida',
-                'fr-FR': 'Publication Inconnue',
-                'ru-RU': 'Неизвестный Пост',
-                'ja-JP': '不明な投稿',
-                'de-DE': 'Unbekannter Beitrag',
-                'pt-BR': 'Postagem Desconhecida',
-                'ko-KR': '알 수 없는 게시물',
-            }, locale);
+            return lang(
+                {
+                    'zh-CN': '未知帖子',
+                    'en-US': 'Unknown Post',
+                    'zh-TW': '未知帖子',
+                    'es-ES': 'Publicación Desconocida',
+                    'fr-FR': 'Publication Inconnue',
+                    'ru-RU': 'Неизвестный Пост',
+                    'ja-JP': '不明な投稿',
+                    'de-DE': 'Unbekannter Beitrag',
+                    'pt-BR': 'Postagem Desconhecida',
+                    'ko-KR': '알 수 없는 게시물',
+                },
+                locale,
+            );
         }
 
         const titleMap: Record<string, string | null | undefined> = {
@@ -90,18 +97,21 @@ export function UserRepliesManagement({ locale }: UserPostsManagementProps) {
 
     const getReplyTitle = (reply: Reply): string => {
         const postTitle = getLocalizedTitle(reply);
-        const replyPrefix = lang({
-            'zh-CN': '回复：',
-            'en-US': 'Reply: ',
-            'zh-TW': '回覆：',
-            'es-ES': 'Respuesta: ',
-            'fr-FR': 'Réponse : ',
-            'ru-RU': 'Ответ: ',
-            'ja-JP': '返信：',
-            'de-DE': 'Antwort: ',
-            'pt-BR': 'Resposta: ',
-            'ko-KR': '답글: ',
-        }, locale);
+        const replyPrefix = lang(
+            {
+                'zh-CN': '回复：',
+                'en-US': 'Reply: ',
+                'zh-TW': '回覆：',
+                'es-ES': 'Respuesta: ',
+                'fr-FR': 'Réponse : ',
+                'ru-RU': 'Ответ: ',
+                'ja-JP': '返信：',
+                'de-DE': 'Antwort: ',
+                'pt-BR': 'Resposta: ',
+                'ko-KR': '답글: ',
+            },
+            locale,
+        );
         return `${replyPrefix}${postTitle}`;
     };
 
@@ -376,324 +386,331 @@ export function UserRepliesManagement({ locale }: UserPostsManagementProps) {
     // 初始加载
     useEffect(() => {
         fetchReplies(1);
-    }, [fetchReplies]);    if (loading) {
-        return <EnhancedLoading type="replies" />;
+    }, [fetchReplies]);
+    if (loading) {
+        return <EnhancedLoading type='replies' />;
     }
 
     return (
         <ContentTransition isLoading={loading}>
             <div className='space-y-4'>
-            <div className='flex items-center justify-between'>
-                <div className='flex items-center gap-2'>
-                    <FileText className='h-5 w-5' />
-                    <h2 className='text-xl font-semibold'>
+                <div className='flex items-center justify-between'>
+                    <div className='flex items-center gap-2'>
+                        <FileText className='h-5 w-5' />
+                        <h2 className='text-xl font-semibold'>
+                            {lang(
+                                {
+                                    'zh-CN': '我的回复',
+                                    'en-US': 'My Replies',
+                                    'zh-TW': '我的回覆',
+                                    'es-ES': 'Mis Respuestas',
+                                    'fr-FR': 'Mes Réponses',
+                                    'ru-RU': 'Мои Ответы',
+                                    'ja-JP': '私の返信',
+                                    'de-DE': 'Meine Antworten',
+                                    'pt-BR': 'Minhas Respostas',
+                                    'ko-KR': '내 답변',
+                                },
+                                locale,
+                            )}
+                        </h2>
+                    </div>
+                    <Button
+                        variant='outline'
+                        size='sm'
+                        onClick={() => fetchReplies(1)}
+                        disabled={loading}>
+                        <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                         {lang(
                             {
-                                'zh-CN': '我的回复',
-                                'en-US': 'My Replies',
-                                'zh-TW': '我的回覆',
-                                'es-ES': 'Mis Respuestas',
-                                'fr-FR': 'Mes Réponses',
-                                'ru-RU': 'Мои Ответы',
-                                'ja-JP': '私の返信',
-                                'de-DE': 'Meine Antworten',
-                                'pt-BR': 'Minhas Respostas',
-                                'ko-KR': '내 답변',
+                                'zh-CN': '刷新',
+                                'en-US': 'Refresh',
+                                'zh-TW': '刷新',
+                                'es-ES': 'Actualizar',
+                                'fr-FR': 'Actualiser',
+                                'ru-RU': 'Обновить',
+                                'ja-JP': '更新',
+                                'de-DE': 'Aktualisieren',
+                                'pt-BR': 'Atualizar',
+                                'ko-KR': '새로고침',
                             },
                             locale,
                         )}
-                    </h2>
+                    </Button>
                 </div>
-                <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() => fetchReplies(1)}
-                    disabled={loading}>
-                    <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                    {lang(
-                        {
-                            'zh-CN': '刷新',
-                            'en-US': 'Refresh',
-                            'zh-TW': '刷新',
-                            'es-ES': 'Actualizar',
-                            'fr-FR': 'Actualiser',
-                            'ru-RU': 'Обновить',
-                            'ja-JP': '更新',
-                            'de-DE': 'Aktualisieren',
-                            'pt-BR': 'Atualizar',
-                            'ko-KR': '새로고침',
-                        },
-                        locale,
-                    )}
-                </Button>
-            </div>
 
-            {replies.length === 0 ? (
-                <Card>
-                    <CardContent className='py-12 text-center'>
-                        <FileText className='h-12 w-12 mx-auto mb-4 text-muted-foreground' />
-                        <p className='text-lg font-medium text-muted-foreground mb-2'>
-                            {lang(
-                                {
-                                    'zh-CN': '暂无回复',
-                                    'en-US': 'No replies yet',
-                                    'zh-TW': '暫無回覆',
-                                    'es-ES': 'Aún no hay respuestas',
-                                    'fr-FR': 'Aucune réponse pour le moment',
-                                    'ru-RU': 'Пока нет ответов',
-                                    'ja-JP': 'まだ返信はありません',
-                                    'de-DE': 'Noch keine Antworten',
-                                    'pt-BR': 'Ainda sem respostas',
-                                    'ko-KR': '아직 답변이 없습니다',
-                                },
-                                locale,
-                            )}
-                        </p>
-                        <p className='text-sm text-muted-foreground'>
-                            {lang(
-                                {
-                                    'zh-CN': '发布您的第一个回复来开始交流吧',
-                                    'en-US': 'Start engaging by posting your first reply',
-                                    'zh-TW': '發佈您的第一個回覆來開始交流吧',
-                                    'es-ES':
-                                        'Comienza a participar publicando tu primera respuesta',
-                                    'fr-FR':
-                                        'Commencez à interagir en publiant votre première réponse',
-                                    'ru-RU':
-                                        'Начните взаимодействовать, опубликовав свой первый ответ',
-                                    'ja-JP': '最初の返信を投稿して交流を始めましょう',
-                                    'de-DE':
-                                        'Beginnen Sie mit der Interaktion, indem Sie Ihre erste Antwort veröffentlichen',
-                                    'pt-BR': 'Comece a interagir postando sua primeira resposta',
-                                    'ko-KR': '첫 번째 답변을 게시하여 참여를 시작하세요',
-                                },
-                                locale,
-                            )}
-                        </p>
-                    </CardContent>
-                </Card>
-            ) : (                <div className='space-y-4'>
-                    {replies.map((reply, index) => (
-                        <ListItemTransition key={reply.id} index={index}>
-                            <Card
-                                ref={index === replies.length - 1 ? lastPostRef : null}
-                                className='hover:shadow-md transition-shadow'>
-                            <CardHeader className='pb-4'>
-                                <div className='flex items-start justify-between'>
-                                    <div className='flex-1 min-w-0'>
-                                        <h3 className='font-medium text-lg mb-2 line-clamp-2'>
-                                            {reply.belongPost ? (
-                                                <Link
-                                                    href={`/${locale}/post/${reply.belongPost.id}/${reply.belongPost.titleENUS?.toLowerCase().replaceAll(" ","-").replace(/[^a-z-]/g, '')}`}
-                                                    className='hover:text-primary transition-colors'
-                                                    rel="noopener"
-                                                >
-                                                    {getReplyTitle(reply)}
-                                                </Link>
-                                            ) : (
-                                                <span className='text-muted-foreground'>
-                                                    {getReplyTitle(reply)}
-                                                </span>
-                                            )}
-                                        </h3>
-
-                                        <div className='flex items-center gap-2 text-sm text-muted-foreground mb-3'>
-                                            <div className='flex items-center gap-1'>
-                                                <Calendar className='h-4 w-4' />
-                                                <time dateTime={reply.createdAt}>
-                                                    {formatTime(reply.createdAt)}
-                                                </time>
-                                            </div>
-                                        </div>
-
-                                        <div className='flex items-center gap-4 text-sm text-muted-foreground'>
-                                            <div className='flex items-center gap-1'>
-                                                <Heart className='h-4 w-4' />
-                                                <span>{reply._count.likes}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <Button
-                                        variant='outline'
-                                        size='sm'
-                                        onClick={() => {
-                                            setPostToDelete(reply);
-                                            setDeleteDialogOpen(true);
-                                        }}
-                                        disabled={deletingPosts.has(reply.id)}
-                                        className='ml-4 text-destructive hover:text-destructive'>
-                                        {deletingPosts.has(reply.id) ? (
-                                            <Loader2 className='h-4 w-4 animate-spin' />
-                                        ) : (
-                                            <Trash2 className='h-4 w-4' />
-                                        )}
-                                    </Button>
-                                </div>
-                            </CardHeader>
-
-                            <CardContent className='pt-0'>
-                                <p className='text-sm text-muted-foreground line-clamp-3'>
-                                    {reply.content.substring(0, 200)}
-                                    {reply.content.length > 200 && '...'}
-                                </p>                            </CardContent>
-                        </Card>
-                        </ListItemTransition>
-                    ))}
-
-                    {loadingMore && (
-                        <div className='flex items-center justify-center py-8'>
-                            <Loader2 className='h-6 w-6 animate-spin' />
-                            <span className='ml-2 text-sm text-muted-foreground'>
+                {replies.length === 0 ? (
+                    <Card>
+                        <CardContent className='py-12 text-center'>
+                            <FileText className='h-12 w-12 mx-auto mb-4 text-muted-foreground' />
+                            <p className='text-lg font-medium text-muted-foreground mb-2'>
                                 {lang(
                                     {
-                                        'zh-CN': '加载更多...',
-                                        'en-US': 'Loading more...',
-                                        'zh-TW': '載入更多...',
-                                        'es-ES': 'Cargando más...',
-                                        'fr-FR': 'Chargement...',
-                                        'ru-RU': 'Загрузка...',
-                                        'ja-JP': '読み込み中...',
-                                        'de-DE': 'Lade mehr...',
-                                        'pt-BR': 'Carregando mais...',
-                                        'ko-KR': '더 불러오는 중...',
+                                        'zh-CN': '暂无回复',
+                                        'en-US': 'No replies yet',
+                                        'zh-TW': '暫無回覆',
+                                        'es-ES': 'Aún no hay respuestas',
+                                        'fr-FR': 'Aucune réponse pour le moment',
+                                        'ru-RU': 'Пока нет ответов',
+                                        'ja-JP': 'まだ返信はありません',
+                                        'de-DE': 'Noch keine Antworten',
+                                        'pt-BR': 'Ainda sem respostas',
+                                        'ko-KR': '아직 답변이 없습니다',
                                     },
                                     locale,
                                 )}
-                            </span>
-                        </div>
-                    )}
-
-                    {!hasMore && replies.length > 0 && (
-                        <div className='text-center py-8'>
+                            </p>
                             <p className='text-sm text-muted-foreground'>
                                 {lang(
                                     {
-                                        'zh-CN': '没有更多帖子了',
-                                        'en-US': 'No more posts',
-                                        'zh-TW': '沒有更多帖子了',
-                                        'es-ES': 'No hay más publicaciones',
-                                        'fr-FR': 'Aucun autre post',
-                                        'ru-RU': 'Больше постов нет',
-                                        'ja-JP': 'これ以上投稿はありません',
-                                        'de-DE': 'Keine weiteren Beiträge',
-                                        'pt-BR': 'Não há mais postagens',
-                                        'ko-KR': '더 이상 게시물이 없습니다',
+                                        'zh-CN': '发布您的第一个回复来开始交流吧',
+                                        'en-US': 'Start engaging by posting your first reply',
+                                        'zh-TW': '發佈您的第一個回覆來開始交流吧',
+                                        'es-ES':
+                                            'Comienza a participar publicando tu primera respuesta',
+                                        'fr-FR':
+                                            'Commencez à interagir en publiant votre première réponse',
+                                        'ru-RU':
+                                            'Начните взаимодействовать, опубликовав свой первый ответ',
+                                        'ja-JP': '最初の返信を投稿して交流を始めましょう',
+                                        'de-DE':
+                                            'Beginnen Sie mit der Interaktion, indem Sie Ihre erste Antwort veröffentlichen',
+                                        'pt-BR':
+                                            'Comece a interagir postando sua primeira resposta',
+                                        'ko-KR': '첫 번째 답변을 게시하여 참여를 시작하세요',
                                     },
                                     locale,
                                 )}
                             </p>
-                        </div>
-                    )}
-                </div>
-            )}
+                        </CardContent>
+                    </Card>
+                ) : (
+                    <div className='space-y-4'>
+                        {replies.map((reply, index) => (
+                            <ListItemTransition key={reply.id} index={index}>
+                                <Card
+                                    ref={index === replies.length - 1 ? lastPostRef : null}
+                                    className='hover:shadow-md transition-shadow'>
+                                    <CardHeader className='pb-4'>
+                                        <div className='flex items-start justify-between'>
+                                            <div className='flex-1 min-w-0'>
+                                                <h3 className='font-medium text-lg mb-2 line-clamp-2'>
+                                                    {reply.belongPost ? (
+                                                        <Link
+                                                            href={`/${locale}/post/${reply.belongPost.id}/${reply.belongPost.titleENUS
+                                                                ?.toLowerCase()
+                                                                .replaceAll(' ', '-')
+                                                                .replace(/[^a-z-]/g, '')}`}
+                                                            className='hover:text-primary transition-colors'
+                                                            rel='noopener'>
+                                                            {getReplyTitle(reply)}
+                                                        </Link>
+                                                    ) : (
+                                                        <span className='text-muted-foreground'>
+                                                            {getReplyTitle(reply)}
+                                                        </span>
+                                                    )}
+                                                </h3>
 
-            {/* 删除确认对话框 */}
-            <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>
-                            {lang(
-                                {
-                                    'zh-CN': '确认删除',
-                                    'en-US': 'Confirm Delete',
-                                    'zh-TW': '確認刪除',
-                                    'es-ES': 'Confirmar eliminación',
-                                    'fr-FR': 'Confirmer la suppression',
-                                    'ru-RU': 'Подтвердить удаление',
-                                    'ja-JP': '削除の確認',
-                                    'de-DE': 'Löschen bestätigen',
-                                    'pt-BR': 'Confirmar exclusão',
-                                    'ko-KR': '삭제 확인',
-                                },
-                                locale,
-                            )}
-                        </DialogTitle>
-                        <DialogDescription>
-                            {lang(
-                                {
-                                    'zh-CN': '您确定要删除这条回复吗？此操作无法撤销。',
-                                    'en-US':
-                                        'Are you sure you want to delete this reply? This action cannot be undone.',
-                                    'zh-TW': '您確定要刪除這條回覆嗎？此操作無法撤銷。',
-                                    'es-ES':
-                                        '¿Estás seguro de que quieres eliminar esta respuesta? Esta acción no se puede deshacer.',
-                                    'fr-FR':
-                                        'Êtes-vous sûr de vouloir supprimer cette réponse ? Cette action ne peut pas être annulée.',
-                                    'ru-RU':
-                                        'Вы уверены, что хотите удалить этот ответ? Это действие нельзя отменить.',
-                                    'ja-JP':
-                                        'この返信を削除してもよろしいですか？この操作は元に戻せません。',
-                                    'de-DE':
-                                        'Sind Sie sicher, dass Sie diese Antwort löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.',
-                                    'pt-BR':
-                                        'Tem certeza de que deseja excluir esta resposta? Esta ação não pode ser desfeita.',
-                                    'ko-KR':
-                                        '이 답글을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
-                                },
-                                locale,
-                            )}
-                        </DialogDescription>
-                    </DialogHeader>
-                    {postToDelete && (
-                        <div className='py-4'>
-                            <p className='font-medium'>{getReplyTitle(postToDelete)}</p>
-                            <p className='text-sm text-muted-foreground mt-1'>
-                                {postToDelete.content.substring(0, 100)}
-                                {postToDelete.content.length > 100 && '...'}
-                            </p>
-                        </div>
-                    )}
-                    <DialogFooter>
-                        <Button
-                            variant='outline'
-                            onClick={() => {
-                                setDeleteDialogOpen(false);
-                                setPostToDelete(null);
-                            }}>
-                            {lang(
-                                {
-                                    'zh-CN': '取消',
-                                    'en-US': 'Cancel',
-                                    'zh-TW': '取消',
-                                    'es-ES': 'Cancelar',
-                                    'fr-FR': 'Annuler',
-                                    'ru-RU': 'Отменить',
-                                    'ja-JP': 'キャンセル',
-                                    'de-DE': 'Abbrechen',
-                                    'pt-BR': 'Cancelar',
-                                    'ko-KR': '취소',
-                                },
-                                locale,
-                            )}
-                        </Button>
-                        <Button
-                            variant='destructive'
-                            onClick={() => postToDelete && handleDeletePost(postToDelete)}
-                            disabled={deletingPosts.has(postToDelete?.id || 0)}>
-                            {deletingPosts.has(postToDelete?.id || 0) ? (
-                                <Loader2 className='h-4 w-4 animate-spin mr-2' />
-                            ) : (
-                                <Trash2 className='h-4 w-4 mr-2' />
-                            )}
-                            {lang(
-                                {
-                                    'zh-CN': '删除',
-                                    'en-US': 'Delete',
-                                    'zh-TW': '刪除',
-                                    'es-ES': 'Eliminar',
-                                    'fr-FR': 'Supprimer',
-                                    'ru-RU': 'Удалить',
-                                    'ja-JP': '削除',
-                                    'de-DE': 'Löschen',
-                                    'pt-BR': 'Excluir',
-                                    'ko-KR': '삭제',
-                                },
-                                locale,
-                            )}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>            </Dialog>
+                                                <div className='flex items-center gap-2 text-sm text-muted-foreground mb-3'>
+                                                    <div className='flex items-center gap-1'>
+                                                        <Calendar className='h-4 w-4' />
+                                                        <time dateTime={reply.createdAt}>
+                                                            {formatTime(reply.createdAt)}
+                                                        </time>
+                                                    </div>
+                                                </div>
+
+                                                <div className='flex items-center gap-4 text-sm text-muted-foreground'>
+                                                    <div className='flex items-center gap-1'>
+                                                        <Heart className='h-4 w-4' />
+                                                        <span>{reply._count.likes}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <Button
+                                                variant='outline'
+                                                size='sm'
+                                                onClick={() => {
+                                                    setPostToDelete(reply);
+                                                    setDeleteDialogOpen(true);
+                                                }}
+                                                disabled={deletingPosts.has(reply.id)}
+                                                className='ml-4 text-destructive hover:text-destructive'>
+                                                {deletingPosts.has(reply.id) ? (
+                                                    <Loader2 className='h-4 w-4 animate-spin' />
+                                                ) : (
+                                                    <Trash2 className='h-4 w-4' />
+                                                )}
+                                            </Button>
+                                        </div>
+                                    </CardHeader>
+
+                                    <CardContent className='pt-0'>
+                                        <p className='text-sm text-muted-foreground line-clamp-3'>
+                                            {reply.content.substring(0, 200)}
+                                            {reply.content.length > 200 && '...'}
+                                        </p>{' '}
+                                    </CardContent>
+                                </Card>
+                            </ListItemTransition>
+                        ))}
+
+                        {loadingMore && (
+                            <div className='flex items-center justify-center py-8'>
+                                <Loader2 className='h-6 w-6 animate-spin' />
+                                <span className='ml-2 text-sm text-muted-foreground'>
+                                    {lang(
+                                        {
+                                            'zh-CN': '加载更多...',
+                                            'en-US': 'Loading more...',
+                                            'zh-TW': '載入更多...',
+                                            'es-ES': 'Cargando más...',
+                                            'fr-FR': 'Chargement...',
+                                            'ru-RU': 'Загрузка...',
+                                            'ja-JP': '読み込み中...',
+                                            'de-DE': 'Lade mehr...',
+                                            'pt-BR': 'Carregando mais...',
+                                            'ko-KR': '더 불러오는 중...',
+                                        },
+                                        locale,
+                                    )}
+                                </span>
+                            </div>
+                        )}
+
+                        {!hasMore && replies.length > 0 && (
+                            <div className='text-center py-8'>
+                                <p className='text-sm text-muted-foreground'>
+                                    {lang(
+                                        {
+                                            'zh-CN': '没有更多帖子了',
+                                            'en-US': 'No more posts',
+                                            'zh-TW': '沒有更多帖子了',
+                                            'es-ES': 'No hay más publicaciones',
+                                            'fr-FR': 'Aucun autre post',
+                                            'ru-RU': 'Больше постов нет',
+                                            'ja-JP': 'これ以上投稿はありません',
+                                            'de-DE': 'Keine weiteren Beiträge',
+                                            'pt-BR': 'Não há mais postagens',
+                                            'ko-KR': '더 이상 게시물이 없습니다',
+                                        },
+                                        locale,
+                                    )}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* 删除确认对话框 */}
+                <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>
+                                {lang(
+                                    {
+                                        'zh-CN': '确认删除',
+                                        'en-US': 'Confirm Delete',
+                                        'zh-TW': '確認刪除',
+                                        'es-ES': 'Confirmar eliminación',
+                                        'fr-FR': 'Confirmer la suppression',
+                                        'ru-RU': 'Подтвердить удаление',
+                                        'ja-JP': '削除の確認',
+                                        'de-DE': 'Löschen bestätigen',
+                                        'pt-BR': 'Confirmar exclusão',
+                                        'ko-KR': '삭제 확인',
+                                    },
+                                    locale,
+                                )}
+                            </DialogTitle>
+                            <DialogDescription>
+                                {lang(
+                                    {
+                                        'zh-CN': '您确定要删除这条回复吗？此操作无法撤销。',
+                                        'en-US':
+                                            'Are you sure you want to delete this reply? This action cannot be undone.',
+                                        'zh-TW': '您確定要刪除這條回覆嗎？此操作無法撤銷。',
+                                        'es-ES':
+                                            '¿Estás seguro de que quieres eliminar esta respuesta? Esta acción no se puede deshacer.',
+                                        'fr-FR':
+                                            'Êtes-vous sûr de vouloir supprimer cette réponse ? Cette action ne peut pas être annulée.',
+                                        'ru-RU':
+                                            'Вы уверены, что хотите удалить этот ответ? Это действие нельзя отменить.',
+                                        'ja-JP':
+                                            'この返信を削除してもよろしいですか？この操作は元に戻せません。',
+                                        'de-DE':
+                                            'Sind Sie sicher, dass Sie diese Antwort löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.',
+                                        'pt-BR':
+                                            'Tem certeza de que deseja excluir esta resposta? Esta ação não pode ser desfeita.',
+                                        'ko-KR':
+                                            '이 답글을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
+                                    },
+                                    locale,
+                                )}
+                            </DialogDescription>
+                        </DialogHeader>
+                        {postToDelete && (
+                            <div className='py-4'>
+                                <p className='font-medium'>{getReplyTitle(postToDelete)}</p>
+                                <p className='text-sm text-muted-foreground mt-1'>
+                                    {postToDelete.content.substring(0, 100)}
+                                    {postToDelete.content.length > 100 && '...'}
+                                </p>
+                            </div>
+                        )}
+                        <DialogFooter>
+                            <Button
+                                variant='outline'
+                                onClick={() => {
+                                    setDeleteDialogOpen(false);
+                                    setPostToDelete(null);
+                                }}>
+                                {lang(
+                                    {
+                                        'zh-CN': '取消',
+                                        'en-US': 'Cancel',
+                                        'zh-TW': '取消',
+                                        'es-ES': 'Cancelar',
+                                        'fr-FR': 'Annuler',
+                                        'ru-RU': 'Отменить',
+                                        'ja-JP': 'キャンセル',
+                                        'de-DE': 'Abbrechen',
+                                        'pt-BR': 'Cancelar',
+                                        'ko-KR': '취소',
+                                    },
+                                    locale,
+                                )}
+                            </Button>
+                            <Button
+                                variant='destructive'
+                                onClick={() => postToDelete && handleDeletePost(postToDelete)}
+                                disabled={deletingPosts.has(postToDelete?.id || 0)}>
+                                {deletingPosts.has(postToDelete?.id || 0) ? (
+                                    <Loader2 className='h-4 w-4 animate-spin mr-2' />
+                                ) : (
+                                    <Trash2 className='h-4 w-4 mr-2' />
+                                )}
+                                {lang(
+                                    {
+                                        'zh-CN': '删除',
+                                        'en-US': 'Delete',
+                                        'zh-TW': '刪除',
+                                        'es-ES': 'Eliminar',
+                                        'fr-FR': 'Supprimer',
+                                        'ru-RU': 'Удалить',
+                                        'ja-JP': '削除',
+                                        'de-DE': 'Löschen',
+                                        'pt-BR': 'Excluir',
+                                        'ko-KR': '삭제',
+                                    },
+                                    locale,
+                                )}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>{' '}
+                </Dialog>
             </div>
         </ContentTransition>
     );

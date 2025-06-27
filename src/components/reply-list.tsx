@@ -1443,7 +1443,7 @@ function SingleReply({
                                                     isMobile ? 'text-xs' : 'text-sm'
                                                 }`}
                                                 rows={isMobile ? 2 : 3}
-                                                maxLength={200}
+                                                maxLength={400}
                                             />
                                         )}
                                     </div>{' '}
@@ -1464,7 +1464,7 @@ function SingleReply({
                                                             ? 'text-destructive'
                                                             : ''
                                                     } ${isMobile ? 'text-xs' : 'text-xs'}`}>
-                                                    {content.length}/200
+                                                    {content.length}/400
                                                 </span>
                                             </div>
                                             <div className='flex gap-1'>
@@ -1497,7 +1497,7 @@ function SingleReply({
                                                     disabled={
                                                         isSubmitting ||
                                                         !content.trim() ||
-                                                        content.length > 200
+                                                        content.length > 400
                                                     }
                                                     size='sm'
                                                     className={`px-2 ${isMobile ? 'h-6 text-xs' : 'h-7 text-xs'}`}>

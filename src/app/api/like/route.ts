@@ -113,7 +113,8 @@ export async function POST(request: Request) {
             });
             await prisma.$disconnect();
 
-            revalidatePath(`/[locale]/post/${post}`);
+            if (post) revalidatePath(`/[locale]/post/${post}`);
+            
             revalidatePath(`/[locale]/page/`);
 
 
@@ -163,7 +164,7 @@ export async function POST(request: Request) {
             });
             await prisma.$disconnect();
 
-            revalidatePath(`/[locale]/post/${post}`);
+            if (post) revalidatePath(`/[locale]/post/${post}`);
             revalidatePath(`/[locale]/page/`);
 
 

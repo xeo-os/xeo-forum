@@ -105,7 +105,6 @@ export async function POST(request: Request) {
             },
         });
         await prisma.$disconnect();
-        console.log(posts, myPosts, myReplies, receivedReplies);
         return response(200, {
             ok: true,
             posts: posts.map((p) => ({

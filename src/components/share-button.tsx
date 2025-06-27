@@ -34,7 +34,7 @@ export function ShareButton({ postId, slug, title, locale, isOpen: externalOpen,
   // 生成 QR 码
   useEffect(() => {
     QRCode.toDataURL(permanentUrl, {
-      width: 200,
+      width: 400,
       margin: 2,
       color: {
         dark: '#000',

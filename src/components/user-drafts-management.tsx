@@ -788,8 +788,8 @@ export function UserDraftsManagement({ locale }: UserDraftsManagementProps) {
 
                             <CardContent className="pt-0">
                                 <p className="text-sm text-muted-foreground line-clamp-3">
-                                    {draft.origin.substring(0, 200)}
-                                    {draft.origin.length > 200 && '...'}
+                                    {draft.origin.substring(0, 400)}
+                                    {draft.origin.length > 400 && '...'}
                                 </p>                            </CardContent>
                         </Card>
                         </ListItemTransition>
@@ -1088,7 +1088,7 @@ export function UserDraftsManagement({ locale }: UserDraftsManagementProps) {
                                                 }
                                                 className='text-xs'
                                             >
-                                                {editContent.length}/200
+                                                {editContent.length}/400
                                             </Badge>
                                         </Label>
                                     </div>
@@ -1098,7 +1098,7 @@ export function UserDraftsManagement({ locale }: UserDraftsManagementProps) {
                                         value={editContent}
                                         onChange={setEditContent}
                                         locale={locale}
-                                        maxLength={200}
+                                        maxLength={400}
                                     />
                                 </div>
 

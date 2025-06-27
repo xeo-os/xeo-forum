@@ -45,7 +45,7 @@ model User {
 
 model Post {
   id            Int      @id @default(autoincrement())
-  origin        String   @db.VarChar(200)
+  origin        String   @db.VarChar(400)
   userUid       Int?
   createdAt     DateTime @default(now())
   lastReplyAt   DateTime @default(now())
@@ -142,7 +142,7 @@ model Classification {
 
 model Reply {
   id           String   @id @default(uuid())
-  content      String   @db.VarChar(200)
+  content      String   @db.VarChar(400)
   originLang   String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

@@ -441,7 +441,7 @@ export function PostDetailClient({
         );
     };
 
-    const MAX_REPLY_LENGTH = 200;
+    const MAX_REPLY_LENGTH = 400;
     const editorVariants = {
         hidden: {
             height: 0,

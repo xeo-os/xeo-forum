@@ -48,7 +48,7 @@ export function MarkdownEditor({
     onChange, 
     locale, 
     placeholder,
-    maxLength = 200,
+    maxLength = 400,
     className = ''
 }: MarkdownEditorProps) {
     const [editMode, setEditMode] = useState<'markdown' | 'visual'>('markdown');
