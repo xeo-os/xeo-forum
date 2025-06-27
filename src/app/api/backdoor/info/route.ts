@@ -23,27 +23,23 @@ export async function POST(request: Request) {
             select: {
                 id: true,
                 titleZHCN: true,
+                title: true,
                 contentZHCN: true,
+                origin: true,
                 createdAt: true,
                 userUid: true,
+                belongReplies: {
+                    take: 30,
+                    select: {
+                        id: true,
+                        contentZHCN: true,
+                        content: true,
+                        createdAt: true,
+                    }
+                },
             },
         });
-        const postIds = posts.map(p => p.id);
-        // 4. 这些帖子下最近50条评论
-        const comments = await prisma.reply.findMany({
-            where: { belongPostid: { in: postIds }, contentZHCN: { not: null } },
-            orderBy: { createdAt: 'desc' },
-            take: 50,
-            select: {
-                id: true,
-                contentZHCN: true,
-                createdAt: true,
-                userUid: true,
-                belongPostid: true,
-                user: { select: { username: true } },
-            },
-        });
-        // 5. 用户自己发的前5个帖子
+        // 4. 用户自己发的前5个帖子
         const myPosts = await prisma.post.findMany({
             where: { userUid: user.uid, published: true },
             orderBy: { createdAt: 'desc' },
@@ -51,23 +47,26 @@ export async function POST(request: Request) {
             select: {
                 id: true,
                 titleZHCN: true,
+                title: true,
                 contentZHCN: true,
+                origin: true,
                 createdAt: true,
             },
         });
-        // 6. 用户自己发的10个回复
+        // 5. 用户自己发的10个回复
         const myReplies = await prisma.reply.findMany({
-            where: { userUid: user.uid, contentZHCN: { not: null } },
+            where: { userUid: user.uid, originLang: { not: null } },
             orderBy: { createdAt: 'desc' },
             take: 10,
             select: {
                 id: true,
                 contentZHCN: true,
+                content: true,
                 createdAt: true,
                 belongPostid: true,
             },
         });
-        // 7. 用户最近收到的10条回复（回复了自己帖子或自己回复的评论）
+        // 6. 用户最近收到的10条回复（回复了自己帖子或自己回复的评论）
         // 先查自己所有帖子id和自己所有回复id
         const myAllPosts = await prisma.post.findMany({
             where: { userUid: user.uid },
@@ -77,13 +76,19 @@ export async function POST(request: Request) {
             where: { userUid: user.uid },
             select: { id: true },
         });
-        const myPostIds = myAllPosts.map(p => p.id);
-        const myReplyIds = myAllReplies.map(r => r.id);
+        const myPostIds = myAllPosts.map((p) => p.id);
+        const myReplyIds = myAllReplies.map((r) => r.id);
         const receivedReplies = await prisma.reply.findMany({
             where: {
                 OR: [
-                    { belongPostid: { in: myPostIds }, userUid: { not: user.uid }, contentZHCN: { not: null } },
-                    { commentUid: { in: myReplyIds }, userUid: { not: user.uid }, contentZHCN: { not: null } },
+                    {
+                        belongPostid: { in: myPostIds },
+                        userUid: { not: user.uid },
+                    },
+                    {
+                        commentUid: { in: myReplyIds },
+                        userUid: { not: user.uid },
+                    },
                 ],
             },
             orderBy: { createdAt: 'desc' },
@@ -91,6 +96,7 @@ export async function POST(request: Request) {
             select: {
                 id: true,
                 contentZHCN: true,
+                content: true,
                 createdAt: true,
                 userUid: true,
                 user: { select: { username: true } },
@@ -99,37 +105,36 @@ export async function POST(request: Request) {
             },
         });
         await prisma.$disconnect();
+        console.log(posts, myPosts, myReplies, receivedReplies);
         return response(200, {
             ok: true,
-            posts: posts.map(p => ({
+            posts: posts.map((p) => ({
                 id: p.id,
-                title: p.titleZHCN,
-                content: p.contentZHCN,
+                title: p.titleZHCN || p.title,
+                content: p.contentZHCN || p.origin || '',
                 createdAt: p.createdAt,
                 userUid: p.userUid,
+                replies: p.belongReplies.map((r) => ({
+                    id: r.id,
+                    content: r.contentZHCN || r.content || '',
+                    createdAt: r.createdAt,
+                })),
             })),
-            comments: comments.map(c => ({
-                id: c.id,
-                content: c.contentZHCN,
-                createdAt: c.createdAt,
-                user: c.user ? { username: c.user.username } : null,
-                belongPostid: c.belongPostid,
-            })),
-            myPosts: myPosts.map(p => ({
+            myPosts: myPosts.map((p) => ({
                 id: p.id,
-                title: p.titleZHCN,
-                content: p.contentZHCN,
+                title: p.titleZHCN || p.title,
+                content: p.contentZHCN || p.origin || '',
                 createdAt: p.createdAt,
             })),
-            myReplies: myReplies.map(r => ({
+            myReplies: myReplies.map((r) => ({
                 id: r.id,
-                content: r.contentZHCN,
+                content: r.contentZHCN || r.content || '',
                 createdAt: r.createdAt,
                 belongPostid: r.belongPostid,
             })),
-            receivedReplies: receivedReplies.map(r => ({
+            receivedReplies: receivedReplies.map((r) => ({
                 id: r.id,
-                content: r.contentZHCN,
+                content: r.contentZHCN || r.content || '',
                 createdAt: r.createdAt,
                 user: r.user ? { username: r.user.username } : null,
                 belongPostid: r.belongPostid,
