@@ -52,12 +52,8 @@ export function SidebarInner({
             }
         }
 
-        // 第一次访问，默认全部展开
-        const allTopicTitles = new Set<string>();
-        topics.forEach((topic) => {
-            allTopicTitles.add(topic.title);
-        });
-        return allTopicTitles;
+        // 第一次访问，默认全部收起
+        return new Set<string>();
     });
 
     // 记录是否已经初始化过localStorage
