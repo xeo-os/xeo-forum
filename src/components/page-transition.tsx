@@ -36,7 +36,10 @@ export function PageTransition({ children }: PageTransitionProps) {
             if (href === pathname) return;
 
             e.preventDefault();
-            setNextPath(href);
+            setTimeout(() => {
+                setNextPath(href);
+            }, 300);
+
             setIsTransitioning(true);
         };
 
@@ -74,8 +77,7 @@ export function PageTransition({ children }: PageTransitionProps) {
                     duration: 0.3,
                     ease: 'easeInOut',
                 }}
-                style={{ minHeight: '100vh' }}
-            >
+                style={{ minHeight: '100vh' }}>
                 {children}
             </motion.div>
         </AnimatePresence>

@@ -23,6 +23,8 @@ import Link from 'next/link';
 import EmojiBackground from '@/components/emoji-background';
 import { getGlobalStats, formatCount } from '@/lib/stats';
 
+export const revalidate = 31536000;
+
 type Props = {
     params: Promise<{ locale: string }>;
 };

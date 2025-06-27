@@ -66,6 +66,8 @@ type Post = {
     };
 };
 
+export const revalidate = 31536000;
+
 const POSTS_PER_PAGE = 50;
 
 // 合并所有数据获取的单一函数
@@ -290,14 +292,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         ),
     };
 }
-
-export async function generateStaticParams() {
-    const pages = Array.from({ length: 1 }, (_, i) => ({
-        page: (i + 1).toString(),
-    }));
-    return pages;
-}
-export const revalidate = 31536000; // 365 days in seconds
 
 function getLocalizedTitle(post: Post, locale: string): string {
     const titleMap: Record<string, string | null> = {

@@ -23,6 +23,8 @@ import EmojiBackground from '@/components/emoji-background';
 
 import '@/app/globals.css';
 
+export const revalidate = 31536000;
+
 type Props = {
     params: Promise<{ locale: string; uid: string; page: string }>;
 };

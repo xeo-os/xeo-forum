@@ -16,6 +16,7 @@ import lang from '@/lib/lang';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import '@/app/globals.css';
 
+
 export default function VerifyPage() {
     const router = useRouter();
     const [locale, setLocale] = useState('zh-CN');

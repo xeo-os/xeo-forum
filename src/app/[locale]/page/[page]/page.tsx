@@ -33,11 +33,18 @@ import {
 import '@/app/globals.css';
 import { NewPostsBanner } from '@/components/new-posts-banner';
 import { AnimatedCounter } from '@/components/animated-counter';
-import { getSortedAnnouncements, getAnnouncementTitle, getAnnouncementContent } from '@/utils/announcements';
+import {
+    getSortedAnnouncements,
+    getAnnouncementTitle,
+    getAnnouncementContent,
+} from '@/utils/announcements';
+
+export const revalidate = 31536000;
+
+
 
 type Props = {
     params: Promise<{ locale: string; page?: number }>;
-    searchParams: Promise<{ page?: string }>;
 };
 
 type Post = {
@@ -85,14 +92,6 @@ type Post = {
 };
 
 const POSTS_PER_PAGE = 50;
-
-export async function generateStaticParams() {
-    const pages = Array.from({ length: 1 }, (_, i) => ({
-        page: (i + 1).toString(),
-    }));
-    return pages;
-}
-export const revalidate = 31536000; // 365 days in seconds
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     // read route params
@@ -215,7 +214,7 @@ function getLocalizedTopicName(topic: Post['topics'][0], locale: string): string
 export default async function HomePage({ params }: Props) {
     const { locale, page: pageParam = 1 } = await params;
     const page = Number(pageParam);
-    const skip = (page - 1) * POSTS_PER_PAGE;    // 优化：使用单个事务查询减少数据库往返次数
+    const skip = (page - 1) * POSTS_PER_PAGE; // 优化：使用单个事务查询减少数据库往返次数
     const postWhereCondition = {
         published: true,
         originLang: {
@@ -321,17 +320,20 @@ export default async function HomePage({ params }: Props) {
     const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE);
 
     // 计算当前页面交互数（点赞+回复）的最大值，用于动态颜色
-    const maxInteractionsOnPage = posts.length > 0 ? Math.max(...posts.map((post) => post._count.likes + post._count.belongReplies)) : 0;
+    const maxInteractionsOnPage =
+        posts.length > 0
+            ? Math.max(...posts.map((post) => post._count.likes + post._count.belongReplies))
+            : 0;
 
     // 计算交互颜色的函数 - 返回primary的透明度
     const getInteractionOpacity = (likes: number, replies: number) => {
         const totalInteractions = likes + replies;
-        
+
         // 如果没有任何互动，返回0透明度（完全显示底层muted色）
         if (totalInteractions === 0) return 0;
-        
+
         let percentage: number;
-        
+
         // 如果页面上没有其他帖子或最大值为0，根据绝对数值创建渐变
         if (maxInteractionsOnPage === 0 || maxInteractionsOnPage === totalInteractions) {
             // 使用对数缩放来处理绝对数值，创建更合理的渐变
@@ -339,10 +341,10 @@ export default async function HomePage({ params }: Props) {
         } else {
             percentage = totalInteractions / maxInteractionsOnPage;
         }
-        
+
         // 使用平方根函数让低值变化更明显
         const opacity = Math.sqrt(percentage);
-        
+
         return Math.max(0.1, Math.min(0.95, 0.1 + opacity * 0.85));
     };
 
@@ -382,7 +384,9 @@ export default async function HomePage({ params }: Props) {
         topLikedPosts: [...posts].sort((a, b) => b._count.likes - a._count.likes).slice(0, 3),
 
         // 回复最多的帖子 - 使用数组副本
-        topRepliedPosts: [...posts].sort((a, b) => b._count.belongReplies - a._count.belongReplies).slice(0, 3),
+        topRepliedPosts: [...posts]
+            .sort((a, b) => b._count.belongReplies - a._count.belongReplies)
+            .slice(0, 3),
 
         // 时间分布（柱状图数据）
         timeDistribution: (() => {
@@ -734,19 +738,23 @@ export default async function HomePage({ params }: Props) {
                             {(() => {
                                 const announcements = getSortedAnnouncements();
                                 // 忽略 pinned: true 的公告
-                                const latest = announcements.find(a => !a.expired && !a.pinned);
-                                if (!latest) return lang({
-                                    'zh-CN': '服务条款更新',
-                                    'en-US': 'Terms of Service Update',
-                                    'zh-TW': '服務條款更新',
-                                    'es-ES': 'Actualización de Términos de Servicio',
-                                    'fr-FR': 'Mise à jour des Conditions de Service',
-                                    'ru-RU': 'Обновление Условий Обслуживания',
-                                    'ja-JP': 'サービス利用規約更新',
-                                    'de-DE': 'Aktualisierung der Nutzungsbedingungen',
-                                    'pt-BR': 'Atualização dos Termos de Serviço',
-                                    'ko-KR': '서비스 약관 업데이트',
-                                }, locale);
+                                const latest = announcements.find((a) => !a.expired && !a.pinned);
+                                if (!latest)
+                                    return lang(
+                                        {
+                                            'zh-CN': '服务条款更新',
+                                            'en-US': 'Terms of Service Update',
+                                            'zh-TW': '服務條款更新',
+                                            'es-ES': 'Actualización de Términos de Servicio',
+                                            'fr-FR': 'Mise à jour des Conditions de Service',
+                                            'ru-RU': 'Обновление Условий Обслуживания',
+                                            'ja-JP': 'サービス利用規約更新',
+                                            'de-DE': 'Aktualisierung der Nutzungsbedingungen',
+                                            'pt-BR': 'Atualização dos Termos de Serviço',
+                                            'ko-KR': '서비스 약관 업데이트',
+                                        },
+                                        locale,
+                                    );
                                 return getAnnouncementTitle(latest, locale);
                             })()}
                         </CardTitle>
@@ -755,23 +763,27 @@ export default async function HomePage({ params }: Props) {
                         {(() => {
                             const announcements = getSortedAnnouncements();
                             // 忽略 pinned: true 的公告
-                            const latest = announcements.find(a => !a.expired && !a.pinned);
-                            if (!latest) return (
-                                <p className='text-sm text-muted-foreground'>
-                                    {lang({
-                                        'zh-CN': '暂无公告',
-                                        'en-US': 'No announcements',
-                                        'zh-TW': '暫無公告',
-                                        'es-ES': 'Sin anuncios',
-                                        'fr-FR': 'Aucune annonce',
-                                        'ru-RU': 'Нет объявлений',
-                                        'ja-JP': 'お知らせはありません',
-                                        'de-DE': 'Keine Ankündigungen',
-                                        'pt-BR': 'Nenhum anúncio',
-                                        'ko-KR': '공지 없음',
-                                    }, locale)}
-                                </p>
-                            );
+                            const latest = announcements.find((a) => !a.expired && !a.pinned);
+                            if (!latest)
+                                return (
+                                    <p className='text-sm text-muted-foreground'>
+                                        {lang(
+                                            {
+                                                'zh-CN': '暂无公告',
+                                                'en-US': 'No announcements',
+                                                'zh-TW': '暫無公告',
+                                                'es-ES': 'Sin anuncios',
+                                                'fr-FR': 'Aucune annonce',
+                                                'ru-RU': 'Нет объявлений',
+                                                'ja-JP': 'お知らせはありません',
+                                                'de-DE': 'Keine Ankündigungen',
+                                                'pt-BR': 'Nenhum anúncio',
+                                                'ko-KR': '공지 없음',
+                                            },
+                                            locale,
+                                        )}
+                                    </p>
+                                );
                             return (
                                 <p className='text-sm text-muted-foreground'>
                                     {getAnnouncementContent(latest, locale)}
@@ -779,18 +791,21 @@ export default async function HomePage({ params }: Props) {
                                     <Link
                                         href={`/${locale}/announcements`}
                                         className='text-primary hover:text-primary/80 hover:underline transition-all duration-200'>
-                                        {lang({
-                                            'zh-CN': '> 查看公告',
-                                            'en-US': '> View Announcement',
-                                            'zh-TW': '> 查看公告',
-                                            'es-ES': '> Ver anuncio',
-                                            'fr-FR': "> Voir l'annonce",
-                                            'ru-RU': '> Посмотреть объявление',
-                                            'ja-JP': '> お知らせを見る',
-                                            'de-DE': '> Ankündigung ansehen',
-                                            'pt-BR': '> Ver anúncio',
-                                            'ko-KR': '> 공지 보기',
-                                        }, locale)}
+                                        {lang(
+                                            {
+                                                'zh-CN': '> 查看公告',
+                                                'en-US': '> View Announcement',
+                                                'zh-TW': '> 查看公告',
+                                                'es-ES': '> Ver anuncio',
+                                                'fr-FR': "> Voir l'annonce",
+                                                'ru-RU': '> Посмотреть объявление',
+                                                'ja-JP': '> お知らせを見る',
+                                                'de-DE': '> Ankündigung ansehen',
+                                                'pt-BR': '> Ver anúncio',
+                                                'ko-KR': '> 공지 보기',
+                                            },
+                                            locale,
+                                        )}
                                     </Link>
                                 </p>
                             );
@@ -798,7 +813,6 @@ export default async function HomePage({ params }: Props) {
                     </CardContent>
                 </Card>
             </div>
-
             {/* 移动版：使用Carousel */}
             <div className='block lg:hidden mb-6'>
                 <Carousel className='w-full'>
@@ -926,19 +940,29 @@ export default async function HomePage({ params }: Props) {
                                         {(() => {
                                             const announcements = getSortedAnnouncements();
                                             // 忽略 pinned: true 的公告
-                                            const latest = announcements.find(a => !a.expired && !a.pinned);
-                                            if (!latest) return lang({
-                                                'zh-CN': '服务条款更新',
-                                                'en-US': 'Terms of Service Update',
-                                                'zh-TW': '服務條款更新',
-                                                'es-ES': 'Actualización de Términos de Servicio',
-                                                'fr-FR': 'Mise à jour des Conditions de Service',
-                                                'ru-RU': 'Обновление Условий Обслуживания',
-                                                'ja-JP': 'サービス利用規約更新',
-                                                'de-DE': 'Aktualisierung der Nutzungsbedingungen',
-                                                'pt-BR': 'Atualização dos Termos de Serviço',
-                                                'ko-KR': '서비스 약관 업데이트',
-                                            }, locale);
+                                            const latest = announcements.find(
+                                                (a) => !a.expired && !a.pinned,
+                                            );
+                                            if (!latest)
+                                                return lang(
+                                                    {
+                                                        'zh-CN': '服务条款更新',
+                                                        'en-US': 'Terms of Service Update',
+                                                        'zh-TW': '服務條款更新',
+                                                        'es-ES':
+                                                            'Actualización de Términos de Servicio',
+                                                        'fr-FR':
+                                                            'Mise à jour des Conditions de Service',
+                                                        'ru-RU': 'Обновление Условий Обслуживания',
+                                                        'ja-JP': 'サービス利用規約更新',
+                                                        'de-DE':
+                                                            'Aktualisierung der Nutzungsbedingungen',
+                                                        'pt-BR':
+                                                            'Atualização dos Termos de Serviço',
+                                                        'ko-KR': '서비스 약관 업데이트',
+                                                    },
+                                                    locale,
+                                                );
                                             return getAnnouncementTitle(latest, locale);
                                         })()}
                                     </CardTitle>
@@ -998,7 +1022,6 @@ export default async function HomePage({ params }: Props) {
                     <CarouselNext className='right-2' />
                 </Carousel>
             </div>
-
             <div className='mb-6'>
                 <h1 className='text-2xl font-bold mb-1'>{labels.latestPosts}</h1>
                 <p className='text-sm text-muted-foreground'>
@@ -1018,7 +1041,8 @@ export default async function HomePage({ params }: Props) {
                         locale,
                     )}
                 </p>
-            </div>            <div className='flex gap-6'>
+            </div>{' '}
+            <div className='flex gap-6'>
                 {/* 主要内容区域 - 使用 Page 组件包裹，参与动画 */}
                 <div className='flex-1'>
                     <NewPostsBanner locale={locale} />
@@ -1071,7 +1095,12 @@ export default async function HomePage({ params }: Props) {
                                             <div className='flex-1 min-w-0'>
                                                 <div className='flex items-center gap-2'>
                                                     <Link
-                                                       href={`/${locale}/post/${post.id}/${(post.titleENUS || post.title)?.toLowerCase().replaceAll(" ", "-").replace(/[^a-z-]/g, '') || ''}`}
+                                                        href={`/${locale}/post/${post.id}/${
+                                                            (post.titleENUS || post.title)
+                                                                ?.toLowerCase()
+                                                                .replaceAll(' ', '-')
+                                                                .replace(/[^a-z-]/g, '') || ''
+                                                        }`}
                                                         className='font-medium hover:text-primary transition-colors text-sm leading-tight break-words'
                                                         title={getLocalizedTitle(post, locale)}
                                                         rel='noopener'>
@@ -1091,7 +1120,7 @@ export default async function HomePage({ params }: Props) {
                                                                     .map((topic) => (
                                                                         <Link
                                                                             key={topic.name}
-                                                                            href={`/${locale}/topic/${topic.name.replaceAll("_","-")}`}
+                                                                            href={`/${locale}/topic/${topic.name.replaceAll('_', '-')}`}
                                                                             className='hover:opacity-80 transition-opacity'
                                                                             title={`${lang(
                                                                                 {
@@ -1178,12 +1207,14 @@ export default async function HomePage({ params }: Props) {
                                                         <span>{post._count.likes}</span>
                                                     </div>
                                                     {/* 上层 primary 颜色，使用动态透明度 */}
-                                                    <div 
+                                                    <div
                                                         className='relative text-primary flex items-center gap-1'
-                                                        style={{ 
-                                                            opacity: getInteractionOpacity(post._count.likes, post._count.belongReplies) 
-                                                        }}
-                                                    >
+                                                        style={{
+                                                            opacity: getInteractionOpacity(
+                                                                post._count.likes,
+                                                                post._count.belongReplies,
+                                                            ),
+                                                        }}>
                                                         <Heart className='h-3 w-3' />
                                                         <span>{post._count.likes}</span>
                                                     </div>
@@ -1195,12 +1226,14 @@ export default async function HomePage({ params }: Props) {
                                                         <span>{post._count.belongReplies}</span>
                                                     </div>
                                                     {/* 上层 primary 颜色，使用动态透明度 */}
-                                                    <div 
+                                                    <div
                                                         className='relative text-primary flex items-center gap-1'
-                                                        style={{ 
-                                                            opacity: getInteractionOpacity(post._count.likes, post._count.belongReplies) 
-                                                        }}
-                                                    >
+                                                        style={{
+                                                            opacity: getInteractionOpacity(
+                                                                post._count.likes,
+                                                                post._count.belongReplies,
+                                                            ),
+                                                        }}>
                                                         <MessageCircle className='h-3 w-3' />
                                                         <span>{post._count.belongReplies}</span>
                                                     </div>
@@ -1354,7 +1387,8 @@ export default async function HomePage({ params }: Props) {
                                 <div className='text-center p-3 rounded-lg hover:bg-primary/5 transition-colors'>
                                     <div className='flex items-center justify-center gap-1 text-primary mb-1'>
                                         <FileText className='h-4 w-4' />
-                                    </div>                                    <AnimatedCounter initialCount={totalPosts} />
+                                    </div>{' '}
+                                    <AnimatedCounter initialCount={totalPosts} />
                                     <div className='text-xs text-muted-foreground mt-1'>
                                         {lang(
                                             {
@@ -1613,7 +1647,7 @@ export default async function HomePage({ params }: Props) {
                                         key={topic.name}
                                         className='flex items-center justify-between'>
                                         <Link
-                                            href={`/${locale}/topic/${topic.name.replaceAll("_","-")}`}
+                                            href={`/${locale}/topic/${topic.name.replaceAll('_', '-')}`}
                                             className='hover:opacity-80 transition-opacity'
                                             title={`${lang(
                                                 {
@@ -1678,7 +1712,12 @@ export default async function HomePage({ params }: Props) {
                                         key={post.id}
                                         className='flex items-center justify-between'>
                                         <Link
-                                           href={`/${locale}/post/${post.id}/${(post.titleENUS || post.title)?.toLowerCase().replaceAll(" ", "-").replace(/[^a-z-]/g, '') || ''}`}
+                                            href={`/${locale}/post/${post.id}/${
+                                                (post.titleENUS || post.title)
+                                                    ?.toLowerCase()
+                                                    .replaceAll(' ', '-')
+                                                    .replace(/[^a-z-]/g, '') || ''
+                                            }`}
                                             className='text-xs hover:text-primary transition-colors truncate flex-1 mr-2'
                                             title={`${lang(
                                                 {
@@ -1686,12 +1725,17 @@ export default async function HomePage({ params }: Props) {
                                                     'en-US': 'View post',
                                                     'pt-BR': 'Ver postagem',
                                                     'ko-KR': '게시물 보기',
+                                                    'de-DE': 'Beitrag anzeigen',
+                                                    'zh-TW': '查看貼文',
+                                                    'es-ES': 'Ver publicación',
+                                                    'fr-FR': 'Voir le message',
+                                                    'ru-RU': 'Посмотреть сообщение',
+                                                    'ja-JP': '投稿を表示',
                                                 },
                                                 locale,
                                             )}: ${getLocalizedTitle(post, locale)}`}
                                             rel='noopener'>
                                             {getLocalizedTitle(post, locale)}
-                                       
                                         </Link>
                                         <span className='text-xs text-muted-foreground flex items-center gap-1'>
                                             <Heart className='h-3 w-3' />
@@ -1732,7 +1776,12 @@ export default async function HomePage({ params }: Props) {
                                         key={post.id}
                                         className='flex items-center justify-between'>
                                         <Link
-                                            href={`/${locale}/post/${post.id}/${(post.titleENUS || post.title)?.toLowerCase().replaceAll(" ", "-").replace(/[^a-z-]/g, '') || ''}`}
+                                            href={`/${locale}/post/${post.id}/${
+                                                (post.titleENUS || post.title)
+                                                    ?.toLowerCase()
+                                                    .replaceAll(' ', '-')
+                                                    .replace(/[^a-z-]/g, '') || ''
+                                            }`}
                                             className='text-xs hover:text-primary transition-colors truncate flex-1 mr-2'
                                             title={`${lang(
                                                 {

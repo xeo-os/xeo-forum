@@ -12,6 +12,8 @@ type Props = {
     params: Promise<{ locale: string }>;
 };
 
+export const revalidate = 31536000;
+
 export async function generateMetadata({
     params,
 }: {

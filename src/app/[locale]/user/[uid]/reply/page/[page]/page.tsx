@@ -11,6 +11,8 @@ import lang from '@/lib/lang';
 
 import '@/app/globals.css';
 
+export const revalidate = 31536000;
+
 // 优化的数据获取函数 - 使用关联查询一次性获取用户信息和回复
 async function getUserWithReplies(uid: number, page: number, itemsPerPage: number) {
     const skip = (page - 1) * itemsPerPage;

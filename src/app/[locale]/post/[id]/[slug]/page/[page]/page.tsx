@@ -26,6 +26,8 @@ import Link from 'next/link';
 import { markdownToHtml } from '@/lib/markdown-utils';
 import { cache } from 'react';
 
+export const revalidate = 31536000;
+
 type Props = {
     params: Promise<{ locale: string; id: string; slug: string; page: string }>;
 };

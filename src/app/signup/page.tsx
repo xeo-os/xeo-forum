@@ -3,6 +3,8 @@ import { SignUpForm } from '@/components/signup-form';
 import { Metadata } from 'next';
 import lang from '@/lib/lang';
 
+export const revalidate = 31536000;
+
 export async function generateMetadata({
     searchParams,
 }: {

@@ -27,6 +27,7 @@ import {
 import { toast, Toaster } from 'sonner';
 import '@/app/globals.css';
 
+
 // Extend the Window interface to include the turnstile property
 declare global {
     interface Window {

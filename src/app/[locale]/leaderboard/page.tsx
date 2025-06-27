@@ -25,6 +25,8 @@ import {
     type LeaderboardPost,
 } from '@/lib/stats';
 
+export const revalidate = 600;
+
 type Props = {
     params: Promise<{ locale: string }>;
 };
