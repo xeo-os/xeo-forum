@@ -361,6 +361,7 @@ export async function POST(request: Request) {
                     },
                 },
             });
+            await prisma.$disconnect();
 
             const htmlEmail = generateVerificationEmail(lang || 'en-US', code);
             const resendConfig = {

@@ -68,6 +68,7 @@ async function getUserWithPosts(uid: number, page: number, itemsPerPage: number)
             }
         },
     });
+    await prisma.$disconnect();
 
     if (!user) {
         return { user: null, posts: [] };
@@ -126,6 +127,7 @@ export async function generateMetadata({
         where: { uid: parseInt(uid) },
         select: { username: true, nickname: true },
     });
+    await prisma.$disconnect();
 
     if (!user) {
         return {

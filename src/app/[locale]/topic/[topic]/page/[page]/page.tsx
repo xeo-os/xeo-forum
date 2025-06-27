@@ -199,6 +199,7 @@ const getTopicPageData = cache(async (topic: string, page: number) => {
          AND "Post"."originLang" IS NOT NULL) as "topicLikes"
     ` as Promise<[{ topicUsers: bigint; topicReplies: bigint; topicLikes: bigint }]>,
     ]);
+    await prisma.$disconnect();
 
     return {
         topicObject,

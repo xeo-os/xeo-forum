@@ -81,6 +81,7 @@ export async function POST(request: Request) {
                     ...(postId ? { postId: postId } : { replyId: replyId }),
                 },
             });
+            await prisma.$disconnect();
 
             if (existingLike) {
                 return response(400, {
@@ -110,6 +111,7 @@ export async function POST(request: Request) {
                     ...(postId ? { postId: postId } : { replyId: replyId }),
                 },
             });
+            await prisma.$disconnect();
 
             revalidatePath(`/[locale]/post/${post}`);
             revalidatePath(`/[locale]/page/`);
@@ -130,6 +132,7 @@ export async function POST(request: Request) {
                     ...(postId ? { postId: postId } : { replyId: replyId }),
                 },
             });
+            await prisma.$disconnect();
 
             if (!existingLike) {
                 return response(400, {
@@ -158,6 +161,7 @@ export async function POST(request: Request) {
                     uuid: existingLike.uuid,
                 },
             });
+            await prisma.$disconnect();
 
             revalidatePath(`/[locale]/post/${post}`);
             revalidatePath(`/[locale]/page/`);

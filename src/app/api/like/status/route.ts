@@ -105,6 +105,7 @@ export async function GET(request: Request) {
                 replyId: true,
             },
         });
+        await prisma.$disconnect();
 
         // 构建回复点赞状态映射
         const replyLikesMap: Record<string, boolean> = {};

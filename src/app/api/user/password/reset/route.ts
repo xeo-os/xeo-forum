@@ -423,6 +423,7 @@ export async function POST(request: Request) {
                     where: { email },
                     data: { emailVerifyCode: resetCode },
                 });
+                await prisma.$disconnect();
 
                 const emailContent = generatePasswordResetEmail(lang, extractCode(resetCode));
                 const resendConfig = {

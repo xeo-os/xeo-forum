@@ -76,6 +76,7 @@ async function getUserWithReplies(uid: number, page: number, itemsPerPage: numbe
             }
         },
     });
+    await prisma.$disconnect();
 
     if (!user) {
         return { user: null, replies: [] };
@@ -144,6 +145,7 @@ export async function generateMetadata({    params,
         where: { uid: parseInt(uid) },
         select: { username: true, nickname: true },
     });
+    await prisma.$disconnect();
 
     if (!user) {
         return {

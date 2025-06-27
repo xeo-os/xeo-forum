@@ -307,6 +307,8 @@ export default async function HomePage({ params }: Props) {
     ` as Promise<[{ totalUsers: bigint; totalReplies: bigint; totalLikes: bigint }]>,
     ]);
 
+    await prisma.$disconnect();
+
     const posts = postsWithTotal.posts;
     const totalPosts = postsWithTotal.totalCount;
 

@@ -291,7 +291,7 @@ const getPostWithReplies = cache(async (postId: number, page: number) => {
             },
         }),
     ]);
-
+    await prisma.$disconnect();
     return {
         post,
         replies,

@@ -132,6 +132,8 @@ export async function POST(request: Request) {
             where: { id: parseInt(id) },
         });
 
+        await prisma.$disconnect();
+
         // 重新验证相关页面
         revalidatePath('/[locale]/page');
         post.topics.forEach(topic => {

@@ -120,6 +120,8 @@ export async function GET(request: Request) {
                 }
             });
 
+            await prisma.$disconnect();
+
             if (!post) {
                 return response(404, {
                     error: 'post_not_found',

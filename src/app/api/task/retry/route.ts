@@ -132,6 +132,7 @@ export async function POST(request: Request) {
                 status: 'PENDING',
             },
         });
+        await prisma.$disconnect();
 
         await fetch(process.env.TRANSLATE_WORKER as string, {
             method: 'POST',

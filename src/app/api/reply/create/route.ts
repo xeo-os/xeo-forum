@@ -152,6 +152,7 @@ export async function POST(request: Request) {
                     },
                 }),
             ]);
+            await prisma.$disconnect();
             // 开始翻译Task
             await fetch(process.env.TRANSLATE_WORKER as string, {
                 method: 'POST',

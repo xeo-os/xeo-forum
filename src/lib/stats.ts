@@ -275,6 +275,7 @@ export async function getGlobalStats(): Promise<GlobalStats> {
         await prisma.user.count(),
         await prisma.task.count(),
     ]);
+    await prisma.$disconnect();
 
     return {
         userCount,

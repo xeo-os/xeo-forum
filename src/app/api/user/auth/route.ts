@@ -253,6 +253,7 @@ export async function POST(request: Request) {
                     avatar: true,
                 },
             });
+            await prisma.$disconnect();
 
             if (!result) {
                 return response(400, {

@@ -180,6 +180,7 @@ export async function POST(request: Request) {
                             },
                         },
                     });
+                    await prisma.$disconnect();
                     const langSuffixForContent =
                         user.emailNoticeLang?.replace('-', '').toUpperCase() || 'ENUS'; // 获取原始内容并截断
                     const originalContent =

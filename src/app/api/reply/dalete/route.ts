@@ -138,6 +138,7 @@ export async function POST(request: Request) {
         });
 
         // 重新验证相关页面
+        await prisma.$disconnect();
         revalidatePath('/[locale]/page');
         post.belongPost?.topics.forEach((topic: { name: string }) => {
             revalidatePath(`/[locale]/topic/${topic.name.replace('_', '-')}/page`);

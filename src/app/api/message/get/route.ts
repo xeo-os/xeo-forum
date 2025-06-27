@@ -49,7 +49,7 @@ export async function POST(request: Request) {
                     locale,
                 ),
             });
-        }        // 解析请求体获取分页参数
+        } // 解析请求体获取分页参数
         const body = await request.json().catch(() => ({}));
         const page = Math.max(1, parseInt(body.page) || 1);
         const limit = 20; // 固定每页20个消息
@@ -71,10 +71,13 @@ export async function POST(request: Request) {
                 createdAt: true,
                 link: true,
                 isRead: true,
-            }
+            },
         });
 
-        const hasMore = messages.length === limit;        return response(200, {
+        await prisma.$disconnect();
+
+        const hasMore = messages.length === limit;
+        return response(200, {
             ok: true,
             messages,
             hasMore,

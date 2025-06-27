@@ -114,6 +114,7 @@ export async function POST(request: Request) {
                 },
             },
         });
+        await prisma.$disconnect();
 
         // 合并所有任务并按创建时间排序
         const allTasks = [...nonDoneTasks, ...doneTasks]

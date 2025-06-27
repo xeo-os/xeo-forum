@@ -272,6 +272,8 @@ export async function POST(request: NextRequest) {
                 },
             });
 
+            await prisma.$disconnect();
+
             // 如果提供了头像信息，更新头像
             if (avatar && avatar.emoji && avatar.background) {
                 // 删除现有头像

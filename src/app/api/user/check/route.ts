@@ -43,7 +43,7 @@ export async function GET(request: Request) {
                 username: username,
             },
         });
-        prisma.$disconnect();
+        await prisma.$disconnect();
 
         await limitControl.update(request);
 

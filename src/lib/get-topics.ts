@@ -50,6 +50,8 @@ async function fetchTopicsFromDatabase(): Promise<ClassificationData[]> {
         },
     });
 
+    await prisma.$disconnect();
+
     return classifications;
 }
 

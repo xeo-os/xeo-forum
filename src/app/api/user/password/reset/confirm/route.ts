@@ -294,6 +294,8 @@ export async function POST(request: Request) {
                 },
             });
 
+            await prisma.$disconnect();
+
             return response(200, {
                 ok: true,
                 message: langs(

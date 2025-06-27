@@ -126,6 +126,8 @@ export async function POST(request: Request) {
             }
         });
 
+        await prisma.$disconnect();
+
         // 构建返回数据
         const postLiked = userLikes.some(like => like.postId === postId);
         const replyLikes: Record<string, boolean> = {};

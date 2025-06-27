@@ -112,6 +112,7 @@ export async function POST(request: Request) {
                 published: false,
             },
         });
+        await prisma.$disconnect();
 
         await limitControl.update(request);
 

@@ -80,6 +80,7 @@ export default async function messager(
                 link: message.link,
             },
         });
+        await prisma.$disconnect();
         id = result.id;
     } catch (error) {
         console.error('Error saving message to database:', error);
@@ -116,6 +117,7 @@ export default async function messager(
                 where: { uid: Number(user.uid) },
                 select: { emailNotice: true },
             });
+            await prisma.$disconnect();
             if (!userMessageSetting?.emailNotice) {
                 return {
                     ok: false,
