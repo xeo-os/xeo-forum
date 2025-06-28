@@ -226,74 +226,72 @@ export default async function HomePage({ params }: Props) {
     ] = await Promise.all([
         // 使用事务一次性获取帖子列表和总数
         prisma.$transaction(async (tx) => {
-            const [posts, totalCount] = await Promise.all([
-                tx.post.findMany({
-                    where: postWhereCondition,
-                    select: {
-                        id: true,
-                        title: true,
-                        createdAt: true,
-                        published: true,
-                        pin: true,
-                        originLang: true,
-                        titleDEDE: true,
-                        titleENUS: true,
-                        titleESES: true,
-                        titleFRFR: true,
-                        titleJAJP: true,
-                        titleKOKR: true,
-                        titlePTBR: true,
-                        titleRURU: true,
-                        titleZHCN: true,
-                        titleZHTW: true,
-                        User: {
-                            select: {
-                                uid: true,
-                                nickname: true,
-                                username: true,
-                                profileEmoji: true,
-                                avatar: {
-                                    select: {
-                                        id: true,
-                                        emoji: true,
-                                        background: true,
-                                    },
-                                    take: 1,
+            const posts = await tx.post.findMany({
+                where: postWhereCondition,
+                select: {
+                    id: true,
+                    title: true,
+                    createdAt: true,
+                    published: true,
+                    pin: true,
+                    originLang: true,
+                    titleDEDE: true,
+                    titleENUS: true,
+                    titleESES: true,
+                    titleFRFR: true,
+                    titleJAJP: true,
+                    titleKOKR: true,
+                    titlePTBR: true,
+                    titleRURU: true,
+                    titleZHCN: true,
+                    titleZHTW: true,
+                    User: {
+                        select: {
+                            uid: true,
+                            nickname: true,
+                            username: true,
+                            profileEmoji: true,
+                            avatar: {
+                                select: {
+                                    id: true,
+                                    emoji: true,
+                                    background: true,
                                 },
+                                take: 1,
                             },
-                        },
-                        _count: {
-                            select: {
-                                likes: true,
-                                belongReplies: true,
-                            },
-                        },
-                        topics: {
-                            select: {
-                                name: true,
-                                emoji: true,
-                                nameZHCN: true,
-                                nameENUS: true,
-                                nameZHTW: true,
-                                nameESES: true,
-                                nameFRFR: true,
-                                nameRURU: true,
-                                nameJAJP: true,
-                                nameDEDE: true,
-                                namePTBR: true,
-                                nameKOKR: true,
-                            },
-                            take: 3,
                         },
                     },
-                    orderBy: [{ lastReplyAt: 'desc' }],
-                    skip,
-                    take: POSTS_PER_PAGE,
-                }),
-                tx.post.count({
-                    where: postWhereCondition,
-                }),
-            ]);
+                    _count: {
+                        select: {
+                            likes: true,
+                            belongReplies: true,
+                        },
+                    },
+                    topics: {
+                        select: {
+                            name: true,
+                            emoji: true,
+                            nameZHCN: true,
+                            nameENUS: true,
+                            nameZHTW: true,
+                            nameESES: true,
+                            nameFRFR: true,
+                            nameRURU: true,
+                            nameJAJP: true,
+                            nameDEDE: true,
+                            namePTBR: true,
+                            nameKOKR: true,
+                        },
+                        take: 3,
+                    },
+                },
+                orderBy: [{ lastReplyAt: 'desc' }],
+                skip,
+                take: POSTS_PER_PAGE,
+            });
+            const totalCount = await tx.post.count({
+                where: postWhereCondition,
+            });
             return { posts, totalCount };
         }),
         // 优化：合并多个统计查询为一次原生查询
