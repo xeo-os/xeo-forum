@@ -64,6 +64,11 @@ export default async function messager(
         email: string;
     },
 ) {
+    if (user.email.includes("@xeoos,net")) {
+        return {
+            ok: true,
+        };
+    }
     const ably = new Ably.Rest(process.env.ABLY_API_KEY || '');
     const channel = ably.channels.get('user-' + user.uid);
     const party = ably.channels.get('broadcast');
