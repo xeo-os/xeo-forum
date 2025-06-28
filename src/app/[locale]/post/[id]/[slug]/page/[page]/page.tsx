@@ -1227,8 +1227,8 @@ export default async function PostDetailPage({ params }: Props) {
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className='flex flex-wrap gap-2'>
-                                    {uniqueLikers.slice(0, 20).map((user, index) => (
+                                <div className='flex flex-wrap gap-1'>
+                                    {uniqueLikers.slice(0, 27).map((user, index) => (
                                         <Link
                                             key={`${user.uid}-${index}`}
                                             href={`/${locale}/user/${user.uid}`}
@@ -1262,9 +1262,9 @@ export default async function PostDetailPage({ params }: Props) {
                                             </Avatar>
                                         </Link>
                                     ))}
-                                    {uniqueLikers.length > 20 && (
+                                    {uniqueLikers.length > 27 && (
                                         <div className='h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs text-muted-foreground'>
-                                            +{uniqueLikers.length - 20}
+                                            +{uniqueLikers.length - 27}
                                         </div>
                                     )}
                                 </div>
@@ -1298,8 +1298,8 @@ export default async function PostDetailPage({ params }: Props) {
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className='flex flex-wrap gap-2'>
-                                    {uniqueRepliers.slice(0, 20).map((user, index) => (
+                                <div className='flex flex-wrap gap-1'>
+                                    {uniqueRepliers.slice(0, 27).map((user, index) => (
                                         <Link
                                             key={`${user.uid}-${index}`}
                                             href={`/${locale}/user/${user.uid}`}
@@ -1333,9 +1333,9 @@ export default async function PostDetailPage({ params }: Props) {
                                             </Avatar>
                                         </Link>
                                     ))}
-                                    {uniqueRepliers.length > 20 && (
+                                    {uniqueRepliers.length > 27 && (
                                         <div className='h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs text-muted-foreground'>
-                                            +{uniqueRepliers.length - 20}
+                                            +{uniqueRepliers.length - 27}
                                         </div>
                                     )}
                                 </div>
