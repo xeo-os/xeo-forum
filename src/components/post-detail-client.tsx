@@ -467,13 +467,14 @@ export function PostDetailClient({
     useEffect(() => {
         console.log('PostDetailClient - replyLikes updated:', replyLikes);
         console.log('PostDetailClient - likeStatusLoaded:', likeStatusLoaded);
-    }, [replyLikes, likeStatusLoaded]);    // 处理回复点赞状态变化 - 使用 useCallback 优化
+    }, [replyLikes, likeStatusLoaded]); // 处理回复点赞状态变化 - 使用 useCallback 优化
     const handleReplyLikeChange = useCallback((replyId: string, isLiked: boolean) => {
         setReplyLikes((prev) => ({
             ...prev,
             [replyId]: isLiked,
         }));
-        console.log('Updated reply like status:', replyId, isLiked);    }, []);
+        console.log('Updated reply like status:', replyId, isLiked);
+    }, []);
 
     // 使用 useMemo 优化 replyLikes 传递，避免不必要的重新渲染
     const optimizedReplyLikes = useMemo(() => replyLikes, [replyLikes]);
@@ -686,7 +687,7 @@ export function PostDetailClient({
                         duration: Infinity,
                         dismissible: false,
                     },
-                );                // 保存翻译进度状态
+                ); // 保存翻译进度状态
                 setTranslationProgress({
                     uuid: replyUuid,
                     toastId: toastId as string,
@@ -792,7 +793,7 @@ export function PostDetailClient({
             {/* 交互按钮卡片 */}
             <Card>
                 <CardContent className='p-4'>
-                    <div className='flex items-center gap-4'>
+                    <div className='flex items-center gap-4 flex-wrap'>
                         <Button
                             variant='outline'
                             size='sm'
@@ -828,7 +829,8 @@ export function PostDetailClient({
                                 variant='outline'
                                 size='sm'
                                 onClick={fetchOriginalContent}
-                                disabled={isLoadingOriginal}>
+                                disabled={isLoadingOriginal}
+                                className='whitespace-normal'>
                                 {isLoadingOriginal ? (
                                     <Loader2 className='h-4 w-4 mr-2 animate-spin' />
                                 ) : (
@@ -837,31 +839,31 @@ export function PostDetailClient({
                                 {showOriginal && hasOriginalContent
                                     ? lang(
                                           {
-                                              'zh-CN': '显示译文',
-                                              'en-US': 'Show translation',
-                                              'zh-TW': '顯示譯文',
-                                              'es-ES': 'Mostrar traducción',
-                                              'fr-FR': 'Afficher la traduction',
-                                              'ru-RU': 'Показать перевод',
-                                              'ja-JP': '翻訳を表示',
-                                              'de-DE': 'Übersetzung anzeigen',
-                                              'pt-BR': 'Mostrar tradução',
-                                              'ko-KR': '번역 보기',
+                                              'zh-CN': '译文',
+                                              'en-US': 'Translation',
+                                              'zh-TW': '譯文',
+                                              'es-ES': 'Traducción',
+                                              'fr-FR': 'Traduction',
+                                              'ru-RU': 'Перевод',
+                                              'ja-JP': '翻訳',
+                                              'de-DE': 'Übersetzung',
+                                              'pt-BR': 'Tradução',
+                                              'ko-KR': '번역',
                                           },
                                           locale,
                                       )
                                     : lang(
                                           {
-                                              'zh-CN': '查看原文',
-                                              'en-US': 'Show original',
-                                              'zh-TW': '查看原文',
-                                              'es-ES': 'Mostrar original',
-                                              'fr-FR': "Afficher l'original",
-                                              'ru-RU': 'Показать оригинал',
-                                              'ja-JP': '原文を表示',
-                                              'de-DE': 'Original anzeigen',
-                                              'pt-BR': 'Mostrar original',
-                                              'ko-KR': '원문 보기',
+                                              'zh-CN': '原文',
+                                              'en-US': 'Original',
+                                              'zh-TW': '原文',
+                                              'es-ES': 'Original',
+                                              'fr-FR': 'Original',
+                                              'ru-RU': 'Оригинал',
+                                              'ja-JP': '原文',
+                                              'de-DE': 'Original',
+                                              'pt-BR': 'Original',
+                                              'ko-KR': '원문',
                                           },
                                           locale,
                                       )}
@@ -1060,8 +1062,8 @@ export function PostDetailClient({
                             </CardContent>
                         </Card>
                     </motion.div>
-                )}            </AnimatePresence>
-            
+                )}{' '}
+            </AnimatePresence>
             {/* 新回复横幅 */}
             <NewRepliesBanner
                 locale={locale}
@@ -1069,7 +1071,7 @@ export function PostDetailClient({
                 totalPages={totalPages}
                 postSlug={slug}
             />
-              {/* 回复列表 */}
+            {/* 回复列表 */}
             <ReplyList
                 replies={localReplies}
                 locale={locale}
