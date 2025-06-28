@@ -32,7 +32,7 @@ type Props = {
     params: Promise<{ locale: string; id: string; slug: string; page: string }>;
 };
 
-const REPLIES_PER_PAGE = 20;
+const REPLIES_PER_PAGE = 10;
 
 // 定义类型
 type Topic = {
@@ -282,9 +282,7 @@ const getPostWithReplies = cache(async (postId: number, page: number) => {
         prisma.reply.count({
             where: {
                 belongPostid: postId,
-                belongReply: {
-                    gte: 1, // belongReply >= 1 表示是顶级回复
-                },
+                postUid: postId,
                 NOT: {
                     originLang: null,
                 },
@@ -924,7 +922,7 @@ export default async function PostDetailPage({ params }: Props) {
                             likes: post._count.likes,
                             replies: post._count.belongReplies,
                             isTranslated: post.originLang !== locale,
-                            authorUid: post.User?.uid, // 添加帖子作者uid
+                            authorUid: post.User?.uid,
                         }}
                         replies={finalReplies}
                         locale={locale}
