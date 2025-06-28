@@ -147,15 +147,16 @@ export async function POST(request: Request) {
                 });
             } else {
                 // reply任务，发送messager通知
-                const user = task?.reply?.belongPost?.User || task?.reply?.parentReply?.user;
+                // 修正：优先 parentReply.user 作为通知对象，其次 belongPost.User
+                const notifyUser = task?.reply?.parentReply?.user || task?.reply?.belongPost?.User;
 
                 await addReplyDocument(JSON.parse(JSON.stringify(task.reply)));
 
                 // 防止自己回复自己的评论时发消息给自己
-                if (user && (!task.user || user.uid !== task.user.uid)) {
+                if (notifyUser && (!task.user || notifyUser.uid !== task.user.uid)) {
                     // 查询相应语言的详细信息
                     const langSuffix =
-                        user.emailNoticeLang?.replace('-', '').toUpperCase() || 'ENUS';
+                        notifyUser.emailNoticeLang?.replace('-', '').toUpperCase() || 'ENUS';
                     taskDetails = await prisma.task.findUnique({
                         where: { id: taskUuid },
                         select: {
@@ -182,24 +183,23 @@ export async function POST(request: Request) {
                     });
                     await prisma.$disconnect();
                     const langSuffixForContent =
-                        user.emailNoticeLang?.replace('-', '').toUpperCase() || 'ENUS'; // 获取原始内容并截断
-                    const originalContent =
-                        (taskDetails?.reply?.belongPost as unknown as Record<string, string>)?.[
-                            `title${langSuffixForContent}`
-                        ] ||
-                        (taskDetails?.reply?.belongPost as unknown as Record<string, string>)
-                            ?.title ||
-                        (taskDetails?.reply?.parentReply as unknown as Record<string, string>)?.[
-                            `content${langSuffixForContent}`
-                        ] ||
-                        (taskDetails?.reply?.parentReply as unknown as Record<string, string>)
-                            ?.content ||
-                        '';
+                        notifyUser.emailNoticeLang?.replace('-', '').toUpperCase() || 'ENUS';
+                    // 修正：优先 parentReply 内容，其次帖子 title
+                    let originalContent = '';
+                    if (taskDetails?.reply?.parentReply) {
+                        originalContent =
+                            (taskDetails.reply.parentReply as unknown as Record<string, string>)[`content${langSuffixForContent}`] ||
+                            (taskDetails.reply.parentReply as unknown as Record<string, string>).content ||
+                            '';
+                    } else if (taskDetails?.reply?.belongPost) {
+                        originalContent =
+                            (taskDetails.reply.belongPost as unknown as Record<string, string>)[`title${langSuffixForContent}`] ||
+                            (taskDetails.reply.belongPost as unknown as Record<string, string>).title ||
+                            '';
+                    }
 
                     const replyContent =
-                        (taskDetails?.reply as unknown as Record<string, string>)?.[
-                            `content${langSuffixForContent}`
-                        ] ||
+                        (taskDetails?.reply as unknown as Record<string, string>)?.[`content${langSuffixForContent}`] ||
                         (taskDetails?.reply as unknown as Record<string, string>)?.content ||
                         '';
 
@@ -221,7 +221,7 @@ export async function POST(request: Request) {
                                     'pt-BR': `Sua ${task.reply?.parentReply ? 'resposta' : 'postagem'} foi respondida por ${task.user?.nickname}.`,
                                     'ko-KR': `당신의 ${task.reply?.parentReply ? '답글' : '게시물'}이 ${task.user?.nickname}에 의해 답변되었습니다.`,
                                 },
-                                user?.emailNoticeLang || 'en-US',
+                                notifyUser?.emailNoticeLang || 'en-US',
                             ),
                             content: lang(
                                 {
@@ -276,18 +276,18 @@ export async function POST(request: Request) {
                                         `이 <strong>${task.user?.nickname}</strong>에 의해 답변되었습니다:<br>` +
                                         `${truncatedReplyContent}`,
                                 },
-                                user?.emailNoticeLang || 'en-US',
+                                notifyUser?.emailNoticeLang || 'en-US',
                             ),
                             link: task.reply
                                 ? `https://xeoos.net/post/${taskDetails?.reply?.belongPostid}`
                                 : `https://xeoos.net/post/${(task?.reply as unknown as Record<string, Record<string, number>>)?.belongPost?.id}`,
-                            locale: user?.emailNoticeLang || 'en-US',
+                            locale: notifyUser?.emailNoticeLang || 'en-US',
                             type: 'message',
                         },
                         {
-                            uid: user?.uid.toString(),
-                            nickname: user?.nickname,
-                            email: user?.email,
+                            uid: notifyUser?.uid.toString(),
+                            nickname: notifyUser?.nickname,
+                            email: notifyUser?.email,
                         },
                     );
                 }

@@ -64,7 +64,7 @@ export default async function messager(
         email: string;
     },
 ) {
-    if (user.email.includes("@xeoos,net")) {
+    if (user.email.includes("@xeoos.net")) {
         return {
             ok: true,
         };
