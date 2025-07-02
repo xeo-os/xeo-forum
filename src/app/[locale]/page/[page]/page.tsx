@@ -1,5 +1,6 @@
 import lang from '@/lib/lang';
 import prisma from '../../../api/_utils/prisma';
+import { safeTransaction, safeQuery } from '@/lib/db-utils';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -224,8 +225,8 @@ export default async function HomePage({ params }: Props) {
         { posts: Post[]; totalCount: number },
         [{ totalUsers: bigint; totalReplies: bigint; totalLikes: bigint }],
     ] = await Promise.all([
-        // 使用事务一次性获取帖子列表和总数
-        prisma.$transaction(async (tx) => {
+        // 使用安全事务一次性获取帖子列表和总数
+        safeTransaction(async (tx) => {
             const posts = await tx.post.findMany({
                 where: postWhereCondition,
                 select: {
@@ -293,14 +294,19 @@ export default async function HomePage({ params }: Props) {
                 where: postWhereCondition,
             });
             return { posts, totalCount };
+        }, {
+            timeout: 15000, // 15秒超时
+            maxWait: 10000, // 10秒等待
         }),
-        // 优化：合并多个统计查询为一次原生查询
-        prisma.$queryRaw`
-      SELECT 
-        (SELECT COUNT(*) FROM "User") as "totalUsers",
-        (SELECT COUNT(*) FROM "Reply") as "totalReplies", 
-        (SELECT COUNT(*) FROM "Like") as "totalLikes"
-    ` as Promise<[{ totalUsers: bigint; totalReplies: bigint; totalLikes: bigint }]>,
+        // 优化：使用安全查询执行统计查询
+        safeQuery(() => 
+            prisma.$queryRaw`
+        SELECT 
+          (SELECT COUNT(*) FROM "User") as "totalUsers",
+          (SELECT COUNT(*) FROM "Reply") as "totalReplies", 
+          (SELECT COUNT(*) FROM "Like") as "totalLikes"
+      ` as Promise<[{ totalUsers: bigint; totalReplies: bigint; totalLikes: bigint }]>
+        ),
     ]);
 
 

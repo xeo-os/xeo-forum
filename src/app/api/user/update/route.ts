@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '../../_utils/prisma';
+import { safeTransaction } from '@/lib/db-utils';
 import response from '../../_utils/response';
 import limitControl from '../../_utils/limit';
 import auth from '../../_utils/auth';
@@ -261,8 +262,8 @@ export async function POST(request: NextRequest) {
             updatedAt: new Date(),
         };
 
-        // 开始事务更新
-        const result = await prisma.$transaction(async (tx) => {
+        // 开始安全事务更新
+        const result = await safeTransaction(async (tx) => {
             // 更新用户基本信息
             const updatedUser = await tx.user.update({
                 where: { uid: user.uid },
