@@ -14,13 +14,12 @@ export async function generateMetadata(): Promise<Metadata> {
     const headersList = await headers();
     const pathname = headersList.get('x-pathname') || '/';
 
-    // 获取当前语言
-    const lang = new URLSearchParams((await headersList.get('query')) || '').get('lang') || 'zh-CN';
+    // 从URL路径中提取语言
+    const localeMatch = pathname.match(/^\/([a-z]{2}-[A-Z]{2})/);
+    const lang = localeMatch ? localeMatch[1] : 'zh-CN';
 
     // 移除语言前缀
-    const pathWithoutLocale =
-        pathname.replace(/^\/(en-US|zh-CN|zh-TW|es-ES|fr-FR|ru-RU|ja-JP|de-DE|pt-BR|ko-KR)/, '') ||
-        '';
+    const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}-[A-Z]{2}/, '') || '/';
 
     // 生成一个siteURL
     const siteURL = `https://xeoos.net/${lang}${pathWithoutLocale}`;
