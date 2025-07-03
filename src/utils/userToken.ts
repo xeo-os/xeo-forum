@@ -15,7 +15,6 @@ const base = {
 };
 
 let refreshInterval: NodeJS.Timeout | null = null;
-let lastRefreshTime = 0;
 
 const token = {
     read: <T>(property: string): T | undefined => {
@@ -131,35 +130,44 @@ const token = {
             clearInterval(refreshInterval);
         }
 
-        // 初始化上次刷新时间为当前时间
-        lastRefreshTime = Date.now();
-
         // 立即检查并刷新一次（如果需要）
         const checkAndRefresh = () => {
-            const currentTime = Date.now();
-            const timeSinceLastRefresh = currentTime - lastRefreshTime;
+            const currentToken = token.get();
+            if (!currentToken) {
+                console.log('No token found, skipping refresh');
+                return;
+            }
 
-            // 如果距离上次刷新超过50分钟，则进行刷新
-            if (timeSinceLastRefresh >= 50 * 60 * 1000) {
-                const currentToken = token.get();
-                if (currentToken) {
+            try {
+                // 从 token 中获取 iat 时间
+                const tokenParts = currentToken.split('.');
+                const payload = JSON.parse(base.decrypt(tokenParts[1]));
+                const tokenIssuedTime = payload.iat * 1000; // 转换为毫秒
+                const currentTime = Date.now();
+                const timeSinceIssued = currentTime - tokenIssuedTime;
+
+                // 如果距离 token 签发时间超过50分钟，则进行刷新
+                if (timeSinceIssued >= 50 * 60 * 1000) {
+                    console.log('Token needs refresh, refreshing...');
                     token
                         .refresh()
                         .then(() => {
-                            lastRefreshTime = Date.now();
                             console.log('Token refreshed successfully');
                         })
                         .catch((error) => {
                             console.error('Token refresh failed:', error);
                         });
+                } else {
+                    const remainingTime = Math.ceil((50 * 60 * 1000 - timeSinceIssued) / 1000 / 60);
+                    console.log(`Token is still fresh, will refresh in ${remainingTime} minutes`);
                 }
-            } else {
-                console.log('Skipping token refresh - refreshed recently');
+            } catch (error) {
+                console.error('Error parsing token for refresh check:', error);
             }
         };
 
-        // 60 分钟
-        refreshInterval = setInterval(checkAndRefresh, 60 * 60 * 1000);
+        // 每30分钟检查一次（比50分钟的刷新阈值更频繁，确保不会错过）
+        refreshInterval = setInterval(checkAndRefresh, 30 * 60 * 1000);
 
         // 立即执行一次检查
         checkAndRefresh();
