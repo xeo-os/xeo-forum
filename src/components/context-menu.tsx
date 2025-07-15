@@ -44,16 +44,37 @@ export function ContextMenu({ children, locale = 'en-US' }: ContextMenuProps) {
     const [showShareDialog, setShowShareDialog] = useState(false);
     const [url, setUrl] = useState('/');
     const [title, setTitle] = useState('');
+    const [isMobile, setIsMobile] = useState(false);
 
     const { broadcast } = useBroadcast();
 
     useEffect(() => {
+        // 检测是否为移动设备
+        const checkIsMobile = () => {
+            const userAgent = navigator.userAgent.toLowerCase();
+            const mobileKeywords = ['android', 'iphone', 'ipad', 'ipod', 'blackberry', 'windows phone', 'mobile'];
+            const isMobileUA = mobileKeywords.some(keyword => userAgent.includes(keyword));
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            const isSmallScreen = window.innerWidth <= 768;
+            
+            return isMobileUA || (isTouchDevice && isSmallScreen);
+        };
+
+        setIsMobile(checkIsMobile());
+
         const handleSelectionChange = () => {
+            if (isMobile) return; // 移动设备上不处理文本选择
             const selection = window.getSelection();
             setSelectedText(selection?.toString() || '');
         };
 
         const handleContextMenu = (e: MouseEvent) => {
+            if (isMobile) {
+                // 移动设备上阻止自定义右键菜单
+                e.preventDefault();
+                return;
+            }
+
             const target = e.target as HTMLElement;
 
             // 检查是否是链接
@@ -76,14 +97,16 @@ export function ContextMenu({ children, locale = 'en-US' }: ContextMenuProps) {
             setCanGoForward(false);
         };
 
-        document.addEventListener('selectionchange', handleSelectionChange);
+        if (!isMobile) {
+            document.addEventListener('selectionchange', handleSelectionChange);
+        }
         document.addEventListener('contextmenu', handleContextMenu);
 
         return () => {
             document.removeEventListener('selectionchange', handleSelectionChange);
             document.removeEventListener('contextmenu', handleContextMenu);
         };
-    }, []);
+    }, [isMobile]);
 
     // 当右键菜单打开时锁定滚动
     useEffect(() => {
@@ -605,112 +628,117 @@ export function ContextMenu({ children, locale = 'en-US' }: ContextMenuProps) {
 
     return (
         <>
-            <ShadcnContextMenu onOpenChange={setIsMenuOpen}>
-                <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
-                <ContextMenuContent className='w-64'>
-                    {/* 导航相关 */}
-                    <ContextMenuItem onClick={handleBack} disabled={!canGoBack}>
-                        <ArrowLeft className='mr-2 h-4 w-4' />
-                        {texts.back}
-                    </ContextMenuItem>
-                    <ContextMenuItem onClick={handleForward} disabled={!canGoForward}>
-                        <ArrowRight className='mr-2 h-4 w-4' />
-                        {texts.forward}
-                    </ContextMenuItem>
-                    <ContextMenuItem onClick={handleRefresh}>
-                        <RefreshCw className='mr-2 h-4 w-4' />
-                        {texts.refresh}
-                        <ContextMenuShortcut>F5</ContextMenuShortcut>
-                    </ContextMenuItem>
-                    <ContextMenuItem onClick={handleHome}>
-                        <Home className='mr-2 h-4 w-4' />
-                        {texts.home}
-                    </ContextMenuItem>
-
-                    <ContextMenuSeparator />
-
-                    {/* 编辑相关 */}
-                    {selectedText && (
-                        <ContextMenuItem onClick={handleCopy}>
-                            <Copy className='mr-2 h-4 w-4' />
-                            {texts.copy}
-                            <ContextMenuShortcut>Ctrl+C</ContextMenuShortcut>
+            {isMobile ? (
+                // 移动设备上直接返回子组件，不包装右键菜单
+                children
+            ) : (
+                <ShadcnContextMenu onOpenChange={setIsMenuOpen}>
+                    <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
+                    <ContextMenuContent className='w-64'>
+                        {/* 导航相关 */}
+                        <ContextMenuItem onClick={handleBack} disabled={!canGoBack}>
+                            <ArrowLeft className='mr-2 h-4 w-4' />
+                            {texts.back}
                         </ContextMenuItem>
-                    )}
+                        <ContextMenuItem onClick={handleForward} disabled={!canGoForward}>
+                            <ArrowRight className='mr-2 h-4 w-4' />
+                            {texts.forward}
+                        </ContextMenuItem>
+                        <ContextMenuItem onClick={handleRefresh}>
+                            <RefreshCw className='mr-2 h-4 w-4' />
+                            {texts.refresh}
+                            <ContextMenuShortcut>F5</ContextMenuShortcut>
+                        </ContextMenuItem>
+                        <ContextMenuItem onClick={handleHome}>
+                            <Home className='mr-2 h-4 w-4' />
+                            {texts.home}
+                        </ContextMenuItem>
 
-                    <ContextMenuItem onClick={handlePaste}>
-                        <ClipboardPaste className='mr-2 h-4 w-4' />
-                        {texts.paste}
-                        <ContextMenuShortcut>Ctrl+V</ContextMenuShortcut>
-                    </ContextMenuItem>
+                        <ContextMenuSeparator />
 
-                    {/* 搜索相关 */}
-                    <ContextMenuItem onClick={handleSearch}>
-                        <Search className='mr-2 h-4 w-4' />
-                        {selectedText
-                            ? `${texts.searchText} "${selectedText.slice(0, 20)}${selectedText.length > 20 ? '...' : ''}"`
-                            : texts.searchText}
-                    </ContextMenuItem>
+                        {/* 编辑相关 */}
+                        {selectedText && (
+                            <ContextMenuItem onClick={handleCopy}>
+                                <Copy className='mr-2 h-4 w-4' />
+                                {texts.copy}
+                                <ContextMenuShortcut>Ctrl+C</ContextMenuShortcut>
+                            </ContextMenuItem>
+                        )}
 
-                    {/* 链接相关 */}
-                    {contextUrl && (
-                        <>
-                            <ContextMenuSeparator />
-                            <ContextMenuItem onClick={handleOpenLink}>
-                                <ExternalLink className='mr-2 h-4 w-4' />
-                                {texts.openLink}
-                            </ContextMenuItem>
-                            <ContextMenuItem onClick={handleOpenInNewTab}>
-                                <ExternalLink className='mr-2 h-4 w-4' />
-                                {texts.openInNewTab}
-                                <ContextMenuShortcut>Ctrl+Click</ContextMenuShortcut>
-                            </ContextMenuItem>
-                            <ContextMenuItem onClick={handleCopyLink}>
-                                <Link className='mr-2 h-4 w-4' />
-                                {texts.copyLink}
-                            </ContextMenuItem>
-                            {contextLinkText && (
-                                <ContextMenuItem onClick={handleCopyLinkText}>
-                                    <Copy className='mr-2 h-4 w-4' />
-                                    {texts.copyLinkText}
+                        <ContextMenuItem onClick={handlePaste}>
+                            <ClipboardPaste className='mr-2 h-4 w-4' />
+                            {texts.paste}
+                            <ContextMenuShortcut>Ctrl+V</ContextMenuShortcut>
+                        </ContextMenuItem>
+
+                        {/* 搜索相关 */}
+                        <ContextMenuItem onClick={handleSearch}>
+                            <Search className='mr-2 h-4 w-4' />
+                            {selectedText
+                                ? `${texts.searchText} "${selectedText.slice(0, 20)}${selectedText.length > 20 ? '...' : ''}"`
+                                : texts.searchText}
+                        </ContextMenuItem>
+
+                        {/* 链接相关 */}
+                        {contextUrl && (
+                            <>
+                                <ContextMenuSeparator />
+                                <ContextMenuItem onClick={handleOpenLink}>
+                                    <ExternalLink className='mr-2 h-4 w-4' />
+                                    {texts.openLink}
                                 </ContextMenuItem>
-                            )}
-                        </>
-                    )}
+                                <ContextMenuItem onClick={handleOpenInNewTab}>
+                                    <ExternalLink className='mr-2 h-4 w-4' />
+                                    {texts.openInNewTab}
+                                    <ContextMenuShortcut>Ctrl+Click</ContextMenuShortcut>
+                                </ContextMenuItem>
+                                <ContextMenuItem onClick={handleCopyLink}>
+                                    <Link className='mr-2 h-4 w-4' />
+                                    {texts.copyLink}
+                                </ContextMenuItem>
+                                {contextLinkText && (
+                                    <ContextMenuItem onClick={handleCopyLinkText}>
+                                        <Copy className='mr-2 h-4 w-4' />
+                                        {texts.copyLinkText}
+                                    </ContextMenuItem>
+                                )}
+                            </>
+                        )}
 
-                    {/* 图片相关 */}
-                    {contextImageUrl && (
-                        <>
-                            <ContextMenuSeparator />
-                            <ContextMenuItem onClick={handleViewImage}>
-                                <Eye className='mr-2 h-4 w-4' />
-                                {texts.viewImage}
-                            </ContextMenuItem>
-                        </>
-                    )}
+                        {/* 图片相关 */}
+                        {contextImageUrl && (
+                            <>
+                                <ContextMenuSeparator />
+                                <ContextMenuItem onClick={handleViewImage}>
+                                    <Eye className='mr-2 h-4 w-4' />
+                                    {texts.viewImage}
+                                </ContextMenuItem>
+                            </>
+                        )}
 
-                    <ContextMenuSeparator />
+                        <ContextMenuSeparator />
 
-                    {/* 功能相关 */}
-                    <ContextMenuItem onClick={handleCreatePost}>
-                        <MessageSquarePlus className='mr-2 h-4 w-4' />
-                        {texts.createPost}
-                    </ContextMenuItem>
-
-                    {/* 分享功能 - 使用普通菜单项而非子菜单 */}
-                    <ContextMenuItem onClick={() => setShowShareDialog(true)}>
-                        <Share2 className='mr-2 h-4 w-4' />
-                        {texts.shareUrl}
-                    </ContextMenuItem>
-
-                    {selectedText && (
-                        <ContextMenuItem onClick={handleShareText}>
-                            <Share2 className='mr-2 h-4 w-4' />
-                            {texts.shareText}
+                        {/* 功能相关 */}
+                        <ContextMenuItem onClick={handleCreatePost}>
+                            <MessageSquarePlus className='mr-2 h-4 w-4' />
+                            {texts.createPost}
                         </ContextMenuItem>
-                    )}
-                </ContextMenuContent>
-            </ShadcnContextMenu>
+
+                        {/* 分享功能 - 使用普通菜单项而非子菜单 */}
+                        <ContextMenuItem onClick={() => setShowShareDialog(true)}>
+                            <Share2 className='mr-2 h-4 w-4' />
+                            {texts.shareUrl}
+                        </ContextMenuItem>
+
+                        {selectedText && (
+                            <ContextMenuItem onClick={handleShareText}>
+                                <Share2 className='mr-2 h-4 w-4' />
+                                {texts.shareText}
+                            </ContextMenuItem>
+                        )}
+                    </ContextMenuContent>
+                </ShadcnContextMenu>
+            )}
             {/* 分享弹窗 */}
             {showShareDialog && (
                 <ShareButton
