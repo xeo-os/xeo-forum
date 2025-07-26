@@ -1,5 +1,35 @@
 [
     {
+        "pinned": false,
+        "expired": false,
+        "type": "info",
+        "publishedAt": "2025-06-26T00:00:00Z",
+        "title": {
+            "zh-CN": "🚀 公测开始",
+            "en-US": "🚀 Public Beta Launch",
+            "zh-TW": "🚀 公測開始",
+            "es-ES": "🚀 Lanzamiento de Beta Pública",
+            "fr-FR": "🚀 Lancement de la Bêta Publique",
+            "ru-RU": "🚀 Запуск Публичной Беты",
+            "ja-JP": "🚀 パブリックベータ開始",
+            "de-DE": "🚀 Öffentlicher Beta-Start",
+            "pt-BR": "🚀 Lançamento da Beta Pública",
+            "ko-KR": "🚀 공개 베타 시작"
+        },
+        "content": {
+            "zh-CN": "我们于2025年6月26日正式开始公开运行。如遇问题，请反馈给我们！",
+            "en-US": "We officially launched the public beta on June 26, 2025. If you encounter any issues, please let us know!",
+            "zh-TW": "我們於2025年6月26日正式開始公開運行。如遇問題，請反饋給我們！",
+            "es-ES": "Lanzamos oficialmente la beta pública el 26 de junio de 2025. ¡Si encuentras algún problema, háznoslo saber!",
+            "fr-FR": "Nous avons lancé officiellement la bêta publique le 26 juin 2025. Si vous rencontrez des problèmes, faites-le nous savoir !",
+            "ru-RU": "Мы официально запустили публичную бету 26 июня 2025 года. Если вы столкнетесь с какими-либо проблемами, пожалуйста, дайте нам знать!",
+            "ja-JP": "2025年6月26日にパブリックベータを正式に開始しました。問題が発生した場合は、お知らせください！",
+            "de-DE": "Wir haben die öffentliche Beta am 26. Juni 2025 offiziell gestartet. Wenn Sie auf Probleme stoßen, lassen Sie es uns bitte wissen!",
+            "pt-BR": "Lançamos oficialmente a beta pública em 26 de junho de 2025. Se você encontrar algum problema, por favor, nos avise!",
+            "ko-KR": "2025년 6월 26일에 공개 베타를 공식적으로 시작했습니다. 문제가 발생하면 알려주세요!"
+        }
+    },
+    {
         "pinned": true,
         "expired": false,
         "type": "info",
@@ -33,30 +63,90 @@
         "pinned": false,
         "expired": false,
         "type": "info",
-        "publishedAt": "2025-06-26T00:00:00Z",
+        "publishedAt": "2025-07-10T00:00:00Z",
         "title": {
-            "zh-CN": "🚀 公测开始",
-            "en-US": "🚀 Public Beta Launch",
-            "zh-TW": "🚀 公測開始",
-            "es-ES": "🚀 Lanzamiento de Beta Pública",
-            "fr-FR": "🚀 Lancement de la Bêta Publique",
-            "ru-RU": "🚀 Запуск Публичной Беты",
-            "ja-JP": "🚀 パブリックベータ開始",
-            "de-DE": "🚀 Öffentlicher Beta-Start",
-            "pt-BR": "🚀 Lançamento da Beta Pública",
-            "ko-KR": "🚀 공개 베타 시작"
+            "zh-CN": "💬 回复数量突破1000！",
+            "en-US": "💬 1000 Replies Milestone!",
+            "zh-TW": "💬 回覆數量突破1000！",
+            "es-ES": "💬 ¡Hito de 1000 respuestas!",
+            "fr-FR": "💬 Jalon de 1000 réponses !",
+            "ru-RU": "💬 Рубеж в 1000 ответов!",
+            "ja-JP": "💬 返信数1000突破！",
+            "de-DE": "💬 1000 Antworten-Meilenstein!",
+            "pt-BR": "💬 Marco de 1000 respostas!",
+            "ko-KR": "💬 댓글 1000개 돌파!"
         },
         "content": {
-            "zh-CN": "我们于2025年6月26日正式开始公开运行。如遇问题，请反馈给我们！",
-            "en-US": "We officially launched the public beta on June 26, 2025. If you encounter any issues, please let us know!",
-            "zh-TW": "我們於2025年6月26日正式開始公開運行。如遇問題，請反饋給我們！",
-            "es-ES": "Lanzamos oficialmente la beta pública el 26 de junio de 2025. ¡Si encuentras algún problema, háznoslo saber!",
-            "fr-FR": "Nous avons lancé officiellement la bêta publique le 26 juin 2025. Si vous rencontrez des problèmes, faites-le nous savoir !",
-            "ru-RU": "Мы официально запустили публичную бету 26 июня 2025 года. Если вы столкнетесь с какими-либо проблемами, пожалуйста, дайте нам знать!",
-            "ja-JP": "2025年6月26日にパブリックベータを正式に開始しました。問題が発生した場合は、お知らせください！",
-            "de-DE": "Wir haben die öffentliche Beta am 26. Juni 2025 offiziell gestartet. Wenn Sie auf Probleme stoßen, lassen Sie es uns bitte wissen!",
-            "pt-BR": "Lançamos oficialmente a beta pública em 26 de junho de 2025. Se você encontrar algum problema, por favor, nos avise!",
-            "ko-KR": "2025년 6월 26일에 공개 베타를 공식적으로 시작했습니다. 문제가 발생하면 알려주세요!"
+            "zh-CN": "激动人心的消息！截至2025年7月10日，我们社区的总回复数量已经达到了1000条！这标志着我们的社区正在蓬勃发展，用户间的互动越来越活跃。\n\n每一条回复都体现了用户之间的深度交流和思想碰撞，这正是我们建立这个平台的初衷。感谢大家的积极参与，让我们的社区充满活力！",
+            "en-US": "Exciting news! As of July 10, 2025, our community's total number of replies has reached 1000! This marks that our community is thriving and user interactions are becoming increasingly active.\n\nEach reply reflects deep communication and exchange of ideas between users, which is exactly the purpose for which we built this platform. Thank you for everyone's active participation in making our community vibrant!",
+            "zh-TW": "激動人心的消息！截至2025年7月10日，我們社群的總回覆數量已經達到了1000條！這標誌著我們的社群正在蓬勃發展，用戶間的互動越來越活躍。\n\n每一條回覆都體現了用戶之間的深度交流和思想碰撞，這正是我們建立這個平台的初衷。感謝大家的積極參與，讓我們的社群充滿活力！",
+            "es-ES": "¡Noticias emocionantes! Al 10 de julio de 2025, el número total de respuestas de nuestra comunidad ha alcanzado las 1000. ¡Esto marca que nuestra comunidad está prosperando y las interacciones de los usuarios se están volviendo cada vez más activas.\n\nCada respuesta refleja la comunicación profunda e intercambio de ideas entre usuarios, que es exactamente el propósito para el cual construimos esta plataforma. ¡Gracias a todos por su participación activa en hacer nuestra comunidad vibrante!",
+            "fr-FR": "Nouvelles passionnantes ! Au 10 juillet 2025, le nombre total de réponses de notre communauté a atteint 1000 ! Cela marque que notre communauté prospère et que les interactions des utilisateurs deviennent de plus en plus actives.\n\nChaque réponse reflète une communication profonde et un échange d'idées entre les utilisateurs, ce qui est exactement le but pour lequel nous avons construit cette plateforme. Merci à tous pour votre participation active à rendre notre communauté dynamique !",
+            "ru-RU": "Захватывающие новости! По состоянию на 10 июля 2025 года общее количество ответов в нашем сообществе достигло 1000! Это означает, что наше сообщество процветает, а взаимодействие пользователей становится все более активным.\n\nКаждый ответ отражает глубокое общение и обмен идеями между пользователями, что именно то, для чего мы создали эту платформу. Спасибо всем за активное участие в том, чтобы сделать наше сообщество живым!",
+            "ja-JP": "エキサイティングなニュースです！2025年7月10日現在、私たちのコミュニティの総返信数が1000に達しました！これは私たちのコミュニティが繁栄し、ユーザー間の交流がますます活発になっていることを示しています。\n\n一つひとつの返信は、ユーザー間の深いコミュニケーションとアイデアの交換を反映しており、これがまさに私たちがこのプラットフォームを構築した目的です。私たちのコミュニティを活気づけるための皆さんの積極的な参加に感謝します！",
+            "de-DE": "Aufregende Neuigkeiten! Zum 10. Juli 2025 hat die Gesamtzahl der Antworten unserer Community 1000 erreicht! Dies zeigt, dass unsere Community gedeiht und Benutzerinteraktionen immer aktiver werden.\n\nJede Antwort spiegelt tiefe Kommunikation und Ideenaustausch zwischen Benutzern wider, was genau der Zweck ist, für den wir diese Plattform gebaut haben. Danke an alle für die aktive Teilnahme daran, unsere Community lebendig zu machen!",
+            "pt-BR": "Notícias emocionantes! Em 10 de julho de 2025, o número total de respostas da nossa comunidade chegou a 1000! Isso marca que nossa comunidade está prosperando e as interações dos usuários estão se tornando cada vez mais ativas.\n\nCada resposta reflete comunicação profunda e troca de ideias entre usuários, que é exatamente o propósito para o qual construímos esta plataforma. Obrigado a todos pela participação ativa em tornar nossa comunidade vibrante!",
+            "ko-KR": "흥미진진한 소식입니다! 2025년 7월 10일 현재, 우리 커뮤니티의 총 댓글 수가 1000개에 도달했습니다! 이는 우리 커뮤니티가 번영하고 있으며 사용자 간의 상호작용이 점점 더 활발해지고 있음을 나타냅니다.\n\n하나하나의 댓글은 사용자 간의 깊은 소통과 아이디어 교환을 반영하며, 이것이 바로 우리가 이 플랫폼을 구축한 목적입니다. 우리 커뮤니티를 활기차게 만들어주시는 모든 분들의 적극적인 참여에 감사드립니다!"
+        }
+    },
+    {
+        "pinned": false,
+        "expired": false,
+        "type": "info",
+        "publishedAt": "2025-07-13T00:00:00Z",
+        "title": {
+            "zh-CN": "👍 点赞数量突破1000！",
+            "en-US": "👍 1000 Likes Milestone!",
+            "zh-TW": "👍 點讚數量突破1000！",
+            "es-ES": "👍 ¡Hito de 1000 me gusta!",
+            "fr-FR": "👍 Jalon de 1000 j'aime !",
+            "ru-RU": "👍 Рубеж в 1000 лайков!",
+            "ja-JP": "👍 いいね数1000突破！",
+            "de-DE": "👍 1000 Likes-Meilenstein!",
+            "pt-BR": "👍 Marco de 1000 curtidas!",
+            "ko-KR": "👍 좋아요 1000개 돌파!"
+        },
+        "content": {
+            "zh-CN": "太棒了！截至2025年7月13日，我们的社区总点赞数量已经突破了1000！这个成就体现了大家对优质内容的认可和支持。\n\n每一个点赞都代表着用户对内容的喜爱和认同，这激励着我们继续提供更好的平台体验。感谢每一位用户的参与和互动！",
+            "en-US": "Fantastic! As of July 13, 2025, our community's total number of likes has surpassed 1000! This achievement reflects everyone's recognition and support for quality content.\n\nEach like represents users' appreciation and approval of content, which motivates us to continue providing a better platform experience. Thank you to every user for their participation and interaction!",
+            "zh-TW": "太棒了！截至2025年7月13日，我們的社群總點讚數量已經突破了1000！這個成就體現了大家對優質內容的認可和支持。\n\n每一個點讚都代表著用戶對內容的喜愛和認同，這激勵著我們繼續提供更好的平台體驗。感謝每一位用戶的參與和互動！",
+            "es-ES": "¡Fantástico! Al 13 de julio de 2025, el número total de me gusta de nuestra comunidad ha superado los 1000. Este logro refleja el reconocimiento y apoyo de todos hacia el contenido de calidad.\n\nCada me gusta representa la apreciación y aprobación de los usuarios hacia el contenido, lo que nos motiva a seguir brindando una mejor experiencia en la plataforma. ¡Gracias a cada usuario por su participación e interacción!",
+            "fr-FR": "Fantastique ! Au 13 juillet 2025, le nombre total de j'aime de notre communauté a dépassé 1000 ! Cette réalisation reflète la reconnaissance et le soutien de chacun pour un contenu de qualité.\n\nChaque j'aime représente l'appréciation et l'approbation des utilisateurs pour le contenu, ce qui nous motive à continuer à offrir une meilleure expérience sur la plateforme. Merci à chaque utilisateur pour sa participation et son interaction !",
+            "ru-RU": "Фантастически! По состоянию на 13 июля 2025 года общее количество лайков в нашем сообществе превысило 1000! Это достижение отражает признание и поддержку всех качественного контента.\n\nКаждый лайк представляет оценку и одобрение пользователями контента, что мотивирует нас продолжать предоставлять лучший опыт на платформе. Спасибо каждому пользователю за участие и взаимодействие!",
+            "ja-JP": "素晴らしい！2025年7月13日現在、私たちのコミュニティの総いいね数が1000を超えました！この成果は、皆さんの質の高いコンテンツへの認識とサポートを反映しています。\n\n一つひとつのいいねは、ユーザーのコンテンツに対する評価と承認を表しており、これが私たちがより良いプラットフォーム体験を提供し続ける動機となっています。すべてのユーザーの皆さんの参加と交流に感謝します！",
+            "de-DE": "Fantastisch! Zum 13. Juli 2025 hat die Gesamtzahl der Likes unserer Community 1000 überschritten! Diese Leistung spiegelt die Anerkennung und Unterstützung aller für qualitativ hochwertige Inhalte wider.\n\nJeder Like repräsentiert die Wertschätzung und Zustimmung der Benutzer zu Inhalten, was uns motiviert, weiterhin eine bessere Plattformerfahrung zu bieten. Danke an jeden Benutzer für seine Teilnahme und Interaktion!",
+            "pt-BR": "Fantástico! Em 13 de julho de 2025, o número total de curtidas da nossa comunidade ultrapassou 1000! Esta conquista reflete o reconhecimento e apoio de todos ao conteúdo de qualidade.\n\nCada curtida representa a apreciação e aprovação dos usuários pelo conteúdo, o que nos motiva a continuar fornecendo uma melhor experiência na plataforma. Obrigado a cada usuário pela participação e interação!",
+            "ko-KR": "환상적입니다! 2025년 7월 13일 현재, 우리 커뮤니티의 총 좋아요 수가 1000을 돌파했습니다! 이 성과는 모든 분들의 양질의 콘텐츠에 대한 인정과 지원을 반영합니다.\n\n하나하나의 좋아요는 사용자들의 콘텐츠에 대한 감사와 승인을 나타내며, 이는 우리가 더 나은 플랫폼 경험을 계속 제공하도록 동기를 부여합니다. 모든 사용자의 참여와 상호작용에 감사드립니다!"
+        }
+    },
+     {
+        "pinned": false,
+        "expired": false,
+        "type": "info",
+        "publishedAt": "2025-07-22T00:00:00Z",
+        "title": {
+            "zh-CN": "🎊 感谢大家！用户量突破1000！",
+            "en-US": "🎊 Thank You All! 1000 Users Milestone!",
+            "zh-TW": "🎊 感謝大家！用戶量突破1000！",
+            "es-ES": "🎊 ¡Gracias a todos! ¡Hito de 1000 usuarios!",
+            "fr-FR": "🎊 Merci à tous ! Jalon de 1000 utilisateurs !",
+            "ru-RU": "🎊 Спасибо всем! Рубеж в 1000 пользователей!",
+            "ja-JP": "🎊 皆さん、ありがとうございます！ユーザー数1000突破！",
+            "de-DE": "🎊 Vielen Dank an alle! 1000 Benutzer-Meilenstein!",
+            "pt-BR": "🎊 Obrigado a todos! Marco de 1000 usuários!",
+            "ko-KR": "🎊 모든 분들께 감사드립니다! 사용자 1000명 돌파!"
+        },
+        "content": {
+            "zh-CN": "感谢大家的支持和信任！我们非常激动地宣布，截至2025年7月22日，XEO OS社区的注册用户数量成功突破了1000大关！\n\n这个里程碑的达成离不开每一位用户的参与和贡献。正是因为有了大家的积极互动、精彩内容分享和宝贵反馈，XEO OS才能快速发展到今天的规模。\n\n让我们继续携手，打造一个更加多元、包容的全球化交流平台！",
+            "en-US": "Thank you for your support and trust! We are thrilled to announce that as of July 22, 2025, the XEO OS community has successfully surpassed 1000 registered users!\n\nThis milestone could not have been achieved without the participation and contribution of each and every user. It is because of everyone's active interaction, wonderful content sharing, and valuable feedback that XEO OS has been able to grow rapidly to its current scale.\n\nLet's continue to work together to build a more diverse and inclusive global communication platform!",
+            "zh-TW": "感謝大家的支持和信任！我們非常激動地宣布，截至2025年7月22日，XEO OS社群的註冊用戶數量成功突破了1000大關！\n\n這個里程碑的達成離不開每一位用戶的參與和貢獻。正是因為有了大家的積極互動、精彩內容分享和寶貴反饋，XEO OS才能快速發展到今天的規模。\n\n讓我們繼續攜手，打造一個更加多元、包容的全球化交流平台！",
+            "es-ES": "¡Gracias por su apoyo y confianza! ¡Estamos emocionados de anunciar que, al 22 de julio de 2025, la comunidad XEO OS ha superado exitosamente los 1000 usuarios registrados!\n\nEste hito no podría haberse logrado sin la participación y contribución de cada usuario. Es gracias a la interacción activa de todos, el intercambio de contenido maravilloso y los comentarios valiosos que XEO OS ha podido crecer rápidamente hasta su escala actual.\n\n¡Continuemos trabajando juntos para construir una plataforma de comunicación global más diversa e inclusiva!",
+            "fr-FR": "Merci pour votre soutien et votre confiance ! Nous sommes ravis d'annoncer qu'au 22 juillet 2025, la communauté XEO OS a dépassé avec succès les 1000 utilisateurs enregistrés !\n\nCe jalon n'aurait pas pu être atteint sans la participation et la contribution de chaque utilisateur. C'est grâce à l'interaction active de chacun, au partage de contenu merveilleux et aux commentaires précieux que XEO OS a pu se développer rapidement jusqu'à son échelle actuelle.\n\nContinuons à travailler ensemble pour construire une plateforme de communication mondiale plus diversifiée et inclusive !",
+            "ru-RU": "Спасибо за вашу поддержку и доверие! Мы рады сообщить, что по состоянию на 22 июля 2025 года сообщество XEO OS успешно превысило 1000 зарегистрированных пользователей!\n\nЭтот рубеж не мог быть достигнут без участия и вклада каждого пользователя. Именно благодаря активному взаимодействию всех, обмену замечательным контентом и ценным отзывам XEO OS смог быстро вырасти до нынешнего масштаба.\n\nДавайте продолжим работать вместе, чтобы построить более разнообразную и инклюзивную глобальную платформу для общения!",
+            "ja-JP": "皆様のサポートと信頼に感謝いたします！2025年7月22日現在、XEO OSコミュニティの登録ユーザー数が1000人を突破したことを発表できることを嬉しく思います！\n\nこのマイルストーンは、すべてのユーザーの参加と貢献なしには達成できませんでした。皆さんの積極的な交流、素晴らしいコンテンツの共有、貴重なフィードバックがあったからこそ、XEO OSは現在の規模まで急速に成長することができました。\n\n引き続き協力して、より多様で包括的なグローバルコミュニケーションプラットフォームを構築していきましょう！",
+            "de-DE": "Vielen Dank für Ihre Unterstützung und Ihr Vertrauen! Wir freuen uns, bekannt geben zu können, dass die XEO OS-Community am 22. Juli 2025 erfolgreich über 1000 registrierte Benutzer erreicht hat!\n\nDieser Meilenstein hätte ohne die Teilnahme und den Beitrag jedes einzelnen Benutzers nicht erreicht werden können. Dank der aktiven Interaktion aller, dem Teilen wunderbarer Inhalte und wertvollen Feedbacks konnte XEO OS schnell auf seine heutige Größe anwachsen.\n\nLassen Sie uns weiterhin zusammenarbeiten, um eine vielfältigere und inklusivere globale Kommunikationsplattform aufzubauen!",
+            "pt-BR": "Obrigado pelo seu apoio e confiança! Estamos emocionados em anunciar que, em 22 de julho de 2025, a comunidade XEO OS ultrapassou com sucesso 1000 usuários registrados!\n\nEste marco não poderia ter sido alcançado sem a participação e contribuição de cada usuário. É graças à interação ativa de todos, compartilhamento de conteúdo maravilhoso e feedback valioso que o XEO OS conseguiu crescer rapidamente para sua escala atual.\n\nVamos continuar trabalhando juntos para construir uma plataforma de comunicação global mais diversa e inclusiva!",
+            "ko-KR": "여러분의 지원과 신뢰에 감사드립니다! 2025년 7월 22일 현재 XEO OS 커뮤니티의 등록 사용자 수가 1000명을 돌파했다는 소식을 발표하게 되어 매우 기쁩니다!\n\n이 이정표는 모든 사용자의 참여와 기여 없이는 달성할 수 없었을 것입니다. 모든 분들의 적극적인 상호작용, 훌륭한 콘텐츠 공유, 소중한 피드백이 있었기에 XEO OS가 현재 규모까지 빠르게 성장할 수 있었습니다.\n\n더욱 다양하고 포용적인 글로벌 소통 플랫폼을 구축하기 위해 계속해서 함께 노력해 나가겠습니다!"
         }
     },
     {

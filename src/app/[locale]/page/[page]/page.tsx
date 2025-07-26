@@ -38,7 +38,9 @@ import {
     getSortedAnnouncements,
     getAnnouncementTitle,
     getAnnouncementContent,
+    type AnnouncementType,
 } from '@/utils/announcements';
+import announcementsData from '@/data/announcements.json';
 
 export const revalidate = 31536000;
 
@@ -739,10 +741,9 @@ export default async function HomePage({ params }: Props) {
                     <CardHeader className='pb-3'>
                         <CardTitle className='text-lg flex items-center gap-2'>
                             {(() => {
-                                const announcements = getSortedAnnouncements();
-                                // 忽略 pinned: true 的公告
-                                const latest = announcements.find((a) => !a.expired && !a.pinned);
-                                if (!latest)
+                                // 获取JSON中的第一个公告
+                                const rawAnnouncement = announcementsData[0];
+                                if (!rawAnnouncement)    
                                     return lang(
                                         {
                                             'zh-CN': '暂无公告',
@@ -758,16 +759,26 @@ export default async function HomePage({ params }: Props) {
                                         },
                                         locale,
                                     );
+                                // 转换为正确的 Announcement 类型
+                                const latest = {
+                                    id: 0,
+                                    priority: 0,
+                                    pinned: !!rawAnnouncement.pinned,
+                                    expired: !!rawAnnouncement.expired,
+                                    type: rawAnnouncement.type as AnnouncementType,
+                                    publishedAt: rawAnnouncement.publishedAt,
+                                    title: rawAnnouncement.title ?? {},
+                                    content: rawAnnouncement.content ?? {},
+                                };
                                 return getAnnouncementTitle(latest, locale);
                             })()}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         {(() => {
-                            const announcements = getSortedAnnouncements();
-                            // 忽略 pinned: true 的公告
-                            const latest = announcements.find((a) => !a.expired && !a.pinned);
-                            if (!latest)
+                            // 获取JSON中的第一个公告
+                            const rawAnnouncement = announcementsData[0];
+                            if (!rawAnnouncement)
                                 return (
                                     <p className='text-sm text-muted-foreground'>
                                         {lang(
@@ -787,6 +798,17 @@ export default async function HomePage({ params }: Props) {
                                         )}
                                     </p>
                                 );
+                            // 转换为正确的 Announcement 类型
+                            const latest = {
+                                id: 0,
+                                priority: 0,
+                                pinned: !!rawAnnouncement.pinned,
+                                expired: !!rawAnnouncement.expired,
+                                type: rawAnnouncement.type as AnnouncementType,
+                                publishedAt: rawAnnouncement.publishedAt,
+                                title: rawAnnouncement.title ?? {},
+                                content: rawAnnouncement.content ?? {},
+                            };
                             return (
                                 <p className='text-sm text-muted-foreground'>
                                     {getAnnouncementContent(latest, locale)}
@@ -940,12 +962,9 @@ export default async function HomePage({ params }: Props) {
                                 <CardHeader className='pb-3'>
                                     <CardTitle className='text-lg flex items-center gap-2'>
                                         {(() => {
-                                            const announcements = getSortedAnnouncements();
-                                            // 忽略 pinned: true 的公告
-                                            const latest = announcements.find(
-                                                (a) => !a.expired && !a.pinned,
-                                            );
-                                            if (!latest)
+                                            // 获取JSON中的第一个公告
+                                            const rawAnnouncement = announcementsData[0];
+                                            if (!rawAnnouncement)
                                                 return lang(
                                                     {
                                                         'zh-CN': '暂无公告',
@@ -961,6 +980,17 @@ export default async function HomePage({ params }: Props) {
                                                     },
                                                     locale,
                                                 );
+                                            // 转换为正确的 Announcement 类型
+                                            const latest = {
+                                                id: 0,
+                                                priority: 0,
+                                                pinned: !!rawAnnouncement.pinned,
+                                                expired: !!rawAnnouncement.expired,
+                                                type: rawAnnouncement.type as AnnouncementType,
+                                                publishedAt: rawAnnouncement.publishedAt,
+                                                title: rawAnnouncement.title ?? {},
+                                                content: rawAnnouncement.content ?? {},
+                                            };
                                             return getAnnouncementTitle(latest, locale);
                                         })()}
                                     </CardTitle>
@@ -968,10 +998,8 @@ export default async function HomePage({ params }: Props) {
                                 <CardContent>
                                     {(() => {
                                         const announcements = getSortedAnnouncements();
-                                        // 忽略 pinned: true 的公告
-                                        const latest = announcements.find(
-                                            (a) => !a.expired && !a.pinned,
-                                        );
+                                        // 获取JSON中的第一个公告
+                                        const latest = announcements[0];
                                         if (!latest)
                                             return (
                                                 <p className='text-sm text-muted-foreground'>
