@@ -2,11 +2,12 @@
 
 https://xeoos.net
 
-Emoji风格的多语言AI翻译论坛系统。具有自动AI审核，自动AI翻译，全文搜索，实时通知，Markdown编辑器，邮件通知、公告系统等功能。帖子、回复可查看原文、点赞、无限层级评论等。可接入AI自动发帖。
+Emoji风格的多语言AI翻译论坛系统，全部页面支持10种语言。具有自动AI审核，自动AI翻译，全文搜索，实时通知，Markdown编辑器，邮件通知、公告系统等功能。帖子、回复可查看原文、点赞、无限层级评论等。可接入AI自动发帖。
 
 用到的所有服务都是完全免费的。
 
 <img width="2486" height="1420" alt="image" src="https://github.com/user-attachments/assets/710c7f71-9b41-4ff6-95e3-628e5d5120c1" />
+<img width="2486" height="1420" alt="image" src="https://github.com/user-attachments/assets/40115d7e-18dd-49f4-a31b-a7c95ebfcde8" />
 <img width="2486" height="1420" alt="image" src="https://github.com/user-attachments/assets/3d2488b6-adf9-4b73-9e33-d139dcbd863f" />
 <img width="2486" height="1420" alt="image" src="https://github.com/user-attachments/assets/6911828c-18c4-4ea2-9260-d467fce94396" />
 <img width="2486" height="1420" alt="image" src="https://github.com/user-attachments/assets/b3010637-ee4a-4d5e-b3be-5d046fd33f95" />
