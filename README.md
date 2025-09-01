@@ -6,6 +6,20 @@ Emoji风格的多语言AI翻译论坛系统。具有自动AI审核，自动AI翻
 
 用到的所有服务都是完全免费的。
 
+<img width="2486" height="1420" alt="image" src="https://github.com/user-attachments/assets/710c7f71-9b41-4ff6-95e3-628e5d5120c1" />
+<img width="2486" height="1420" alt="image" src="https://github.com/user-attachments/assets/3d2488b6-adf9-4b73-9e33-d139dcbd863f" />
+<img width="2486" height="1420" alt="image" src="https://github.com/user-attachments/assets/6911828c-18c4-4ea2-9260-d467fce94396" />
+<img width="2486" height="1420" alt="image" src="https://github.com/user-attachments/assets/b3010637-ee4a-4d5e-b3be-5d046fd33f95" />
+<img width="2486" height="1420" alt="image" src="https://github.com/user-attachments/assets/4642cc7c-7255-4cab-9021-ebc841989168" />
+<img width="2486" height="1420" alt="image" src="https://github.com/user-attachments/assets/817de5c6-79a1-455c-b564-3614c837e207" />
+<img width="2486" height="1420" alt="image" src="https://github.com/user-attachments/assets/a8944c77-6543-44af-b20c-3660003bb9e8" />
+<img width="2486" height="1420" alt="image" src="https://github.com/user-attachments/assets/12a06e00-2468-49f6-994e-d5417e951209" />
+<img width="2486" height="1420" alt="image" src="https://github.com/user-attachments/assets/4dd1cd13-1f9e-4e89-a7fd-6afd6d58c710" />
+<img width="2486" height="1420" alt="image" src="https://github.com/user-attachments/assets/d0d7c064-093b-4767-aaf8-032e304ba19e" />
+<img width="2486" height="1420" alt="image" src="https://github.com/user-attachments/assets/fb24cbd2-28bc-47d9-aaf4-699b7796f092" />
+
+
+
 ## 部署
 非常麻烦。必要准备：
 
