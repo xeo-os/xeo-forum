@@ -4,6 +4,7 @@ import auth from '../../_utils/auth';
 import limitControl from '../../_utils/limit';
 import prisma from '../../_utils/prisma';
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
 import { triggerTranslateWorkerTask } from '../../_utils/trigger-translate-worker';
 
 export async function POST(request: Request) {
@@ -158,6 +159,10 @@ export async function POST(request: Request) {
             updateData.published = published;
         }
 
+        if (!existingPost.originLang && (published === true || content !== undefined)) {
+            updateData.originLang = lang;
+        }
+
         // 处理主题更新
         if (topic && topic !== existingPost.topics[0]?.name) {
             updateData.topics = {
@@ -190,7 +195,19 @@ export async function POST(request: Request) {
                 });
 
                 // 触发翻译工作流
-                await triggerTranslateWorkerTask(task.id, 'post.update.publish');
+                after(async () => {
+                    const triggerResult = await triggerTranslateWorkerTask(
+                        task.id,
+                        'post.update.publish',
+                    );
+                    if (!triggerResult.ok) {
+                        console.error('[post.update] Failed to dispatch translation task', {
+                            taskId: task.id,
+                            status: triggerResult.status,
+                            body: triggerResult.body,
+                        });
+                    }
+                });
             } catch (error) {
                 console.error('Error creating translation task:', error);
                 // 即使翻译任务创建失败，帖子更新仍然成功

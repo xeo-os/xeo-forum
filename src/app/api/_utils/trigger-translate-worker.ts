@@ -30,7 +30,9 @@ export async function triggerTranslateWorkerTask(
         | `custom:${string}`,
 ): Promise<TriggerTranslateWorkerResult> {
     const workerUrl = process.env.TRANSLATE_WORKER;
-    const workerFallbackUrl = process.env.TRANSLATE_WORKER_FALLBACK;
+    const workerFallbackUrl =
+        process.env.TRANSLATE_WORKER_FALLBACK ||
+        'https://xeo-cf-translate-worker.ravelloh.workers.dev';
     const workerPassword = process.env.TRANSLATE_WORKER_PASSWORD;
 
     if (!workerUrl || !workerPassword) {
@@ -100,14 +102,17 @@ export async function triggerTranslateWorkerTask(
     try {
         const primaryResult = await dispatch(workerUrl, 'primary');
 
-        if (
-            workerFallbackUrl &&
-            workerFallbackUrl !== workerUrl &&
-            looksLikeCloudflareChallenge(primaryResult.status, primaryResult.body)
-        ) {
-            console.warn('[translate-trigger] Cloudflare challenge detected, trying fallback URL', {
+        if (workerFallbackUrl && workerFallbackUrl !== workerUrl && !primaryResult.ok) {
+            const fallbackReason = looksLikeCloudflareChallenge(
+                primaryResult.status,
+                primaryResult.body,
+            )
+                ? 'cloudflare_challenge'
+                : 'primary_not_ok';
+            console.warn('[translate-trigger] Primary dispatch failed, trying fallback URL', {
                 source,
                 taskId,
+                fallbackReason,
                 primaryUrl: workerUrl,
                 fallbackUrl: workerFallbackUrl,
                 primaryStatus: primaryResult.status,

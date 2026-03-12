@@ -15,9 +15,14 @@ export async function POST(request: Request) {
         if (!password || password !== process.env.BACKDOOR_PASSWORD) {
             return response(403, { error: 'forbidden', message: '密码错误' });
         }
-        // 3. 最近5篇帖子
+        const visiblePostWhere = {
+            published: true,
+            originLang: { not: null as string | null },
+        };
+
+        // 3. 最近5篇前台可见帖子
         const posts = await prisma.post.findMany({
-            where: { published: true },
+            where: visiblePostWhere,
             orderBy: { createdAt: 'desc' },
             take: 5,
             select: {
@@ -29,6 +34,9 @@ export async function POST(request: Request) {
                 createdAt: true,
                 userUid: true,
                 belongReplies: {
+                    where: {
+                        originLang: { not: null },
+                    },
                     take: 30,
                     select: {
                         id: true,
@@ -39,9 +47,9 @@ export async function POST(request: Request) {
                 },
             },
         });
-        // 4. 用户自己发的前5个帖子
+        // 4. 用户自己发的前5个前台可见帖子
         const myPosts = await prisma.post.findMany({
-            where: { userUid: user.uid, published: true },
+            where: { userUid: user.uid, ...visiblePostWhere },
             orderBy: { createdAt: 'desc' },
             take: 5,
             select: {
@@ -69,7 +77,7 @@ export async function POST(request: Request) {
         // 6. 用户最近收到的10条回复（回复了自己帖子或自己回复的评论）
         // 先查自己所有帖子id和自己所有回复id
         const myAllPosts = await prisma.post.findMany({
-            where: { userUid: user.uid },
+            where: { userUid: user.uid, ...visiblePostWhere },
             select: { id: true },
         });
         const myAllReplies = await prisma.reply.findMany({

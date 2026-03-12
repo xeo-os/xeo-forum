@@ -3,6 +3,7 @@ import response from '../../_utils/response';
 import auth from '../../_utils/auth';
 import prisma from '../../_utils/prisma';
 import limitControl from '../../_utils/limit';
+import { after } from 'next/server';
 import { triggerTranslateWorkerTask } from '../../_utils/trigger-translate-worker';
 
 export async function POST(request: Request) {
@@ -139,7 +140,16 @@ export async function POST(request: Request) {
             taskId: taskInfo.id,
             userUid: user.uid,
         });
-        await triggerTranslateWorkerTask(taskInfo.id, 'task.retry');
+        after(async () => {
+            const triggerResult = await triggerTranslateWorkerTask(taskInfo.id, 'task.retry');
+            if (!triggerResult.ok) {
+                console.error('[task.retry] Failed to dispatch translation task', {
+                    taskId: taskInfo.id,
+                    status: triggerResult.status,
+                    body: triggerResult.body,
+                });
+            }
+        });
 
         await limitControl.update(request);
 

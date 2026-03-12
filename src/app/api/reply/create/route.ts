@@ -4,6 +4,7 @@ import auth from '../../_utils/auth';
 import limitControl from '../../_utils/limit';
 import prisma from '../../_utils/prisma';
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
 import { triggerTranslateWorkerTask } from '../../_utils/trigger-translate-worker';
 
 export async function POST(request: Request) {
@@ -161,13 +162,23 @@ export async function POST(request: Request) {
             });
             await prisma.$disconnect();
             // 开始翻译Task
-            await triggerTranslateWorkerTask(task.id, 'reply.create');
+            after(async () => {
+                const triggerResult = await triggerTranslateWorkerTask(task.id, 'reply.create');
+                if (!triggerResult.ok) {
+                    console.error('[reply.create] Failed to dispatch translation task', {
+                        taskId: task.id,
+                        status: triggerResult.status,
+                        body: triggerResult.body,
+                    });
+                }
+            });
             // 并发 revalidatePath
             await Promise.all([
-                revalidatePath('/[locale]/page'),
-                revalidatePath(`/[locale]/topic/${post?.topics[0]?.name.replace('_', '-')}/page`),
-                revalidatePath(`/[locale]/post/${fatherReply?.belongPostid}`),
-                revalidatePath(`/[locale]/user/${token.uid}}`),
+                revalidatePath('/[locale]/page/[page]', 'page'),
+                revalidatePath('/[locale]/topic/[topic]/page/[page]', 'page'),
+                revalidatePath('/[locale]/post/[id]/[slug]/page/[page]', 'page'),
+                revalidatePath('/[locale]/user/[uid]/page/[page]', 'page'),
+                revalidatePath('/[locale]/user/[uid]/reply/page/[page]', 'page'),
             ]);
             return response(200, {
                 message: 'Reply created successfully',

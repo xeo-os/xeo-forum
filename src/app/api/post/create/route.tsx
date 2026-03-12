@@ -4,6 +4,7 @@ import auth from '../../_utils/auth';
 import limitControl from '../../_utils/limit';
 import prisma from '../../_utils/prisma';
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
 import { triggerTranslateWorkerTask } from '../../_utils/trigger-translate-worker';
 
 export async function POST(request: Request) {
@@ -115,6 +116,7 @@ export async function POST(request: Request) {
                     data: {
                         title,
                         origin: content,
+                        originLang: lang,
                         topics: {
                             connect: { name: topic },
                         },
@@ -138,11 +140,22 @@ export async function POST(request: Request) {
 
                 await prisma.$disconnect();
                 // 开始翻译Task
-                await triggerTranslateWorkerTask(task.id, 'post.create');
-                revalidatePath('/[locale]/page');
-                revalidatePath(`/[locale]/topic/${topic.replace('_', '-')}/page`);
-                revalidatePath(`/[locale]/post/${post.id}`);
-                revalidatePath(`/[locale]/user/${token.uid}}`);
+                after(async () => {
+                    const triggerResult = await triggerTranslateWorkerTask(task.id, 'post.create');
+                    if (!triggerResult.ok) {
+                        console.error('[post.create] Failed to dispatch translation task', {
+                            taskId: task.id,
+                            status: triggerResult.status,
+                            body: triggerResult.body,
+                        });
+                    }
+                });
+                revalidatePath('/[locale]/page/[page]', 'page');
+                revalidatePath('/[locale]/topic/[topic]/page/[page]', 'page');
+                revalidatePath('/[locale]/post/[id]/[slug]/page/[page]', 'page');
+                revalidatePath('/[locale]/user/[uid]/page/[page]', 'page');
+                revalidatePath('/[locale]/user/[uid]/post/page/[page]', 'page');
+                revalidatePath('/[locale]/user/[uid]/reply/page/[page]', 'page');
                 return response(200, { message: task.id, ok: true });
             }
         } catch (error) {

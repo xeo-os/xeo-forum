@@ -249,10 +249,10 @@ export async function POST(request: Request) {
                 console.log('Post task completed, skipping messager notification');
                 // 新增：revalidatePath，刷新首页和当前post页面缓存
                 if (typeof revalidatePath === 'function') {
-                    revalidatePath('/[locale]/page', 'page');
-                    if (task.post?.id) {
-                        revalidatePath(`/[locale]/post/${task.post.id}`, 'page');
-                    }
+                    revalidatePath('/[locale]/page/[page]', 'page');
+                    revalidatePath('/[locale]/topic/[topic]/page/[page]', 'page');
+                    revalidatePath('/[locale]/post/[id]/[slug]/page/[page]', 'page');
+                    revalidatePath('/[locale]/user/[uid]/page/[page]', 'page');
                 }
                 await sendTaskBroadcast({
                     type: 'task',
@@ -417,9 +417,10 @@ export async function POST(request: Request) {
                 }
                 // 新增：revalidatePath，刷新当前post页面缓存
                 if (typeof revalidatePath === 'function') {
-                    if (task.reply?.belongPost?.id) {
-                        revalidatePath(`/[locale]/post/${task.reply.belongPost.id}`, 'page');
-                    }
+                    revalidatePath('/[locale]/page/[page]', 'page');
+                    revalidatePath('/[locale]/topic/[topic]/page/[page]', 'page');
+                    revalidatePath('/[locale]/post/[id]/[slug]/page/[page]', 'page');
+                    revalidatePath('/[locale]/user/[uid]/page/[page]', 'page');
                 }
             }
             await sendTaskBroadcast({
