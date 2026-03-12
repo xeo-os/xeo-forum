@@ -25,6 +25,98 @@ async function addReplyDocument(reply: Reply) {
     await replyIndex.addDocuments([reply]); // 传入数组
 }
 
+async function syncPostToSearchIndex(post: Post, taskUuid: string) {
+    if (!process.env.MEILI_HOST) {
+        console.warn('[task.report] Skip post index sync: MEILI_HOST is missing', {
+            taskUuid,
+        });
+        return;
+    }
+    try {
+        await addSingleDocument(post);
+        console.info('[task.report] Post index sync completed', {
+            taskUuid,
+            postId: post.id,
+            meiliHost: process.env.MEILI_HOST,
+        });
+    } catch (error) {
+        console.error('[task.report] Post index sync failed (non-blocking)', {
+            taskUuid,
+            postId: post.id,
+            meiliHost: process.env.MEILI_HOST,
+            error,
+        });
+    }
+}
+
+async function syncReplyToSearchIndex(reply: Reply, taskUuid: string) {
+    if (!process.env.MEILI_HOST) {
+        console.warn('[task.report] Skip reply index sync: MEILI_HOST is missing', {
+            taskUuid,
+        });
+        return;
+    }
+    try {
+        await addReplyDocument(reply);
+        console.info('[task.report] Reply index sync completed', {
+            taskUuid,
+            replyId: reply.id,
+            postId: reply.belongPostid,
+            meiliHost: process.env.MEILI_HOST,
+        });
+    } catch (error) {
+        console.error('[task.report] Reply index sync failed (non-blocking)', {
+            taskUuid,
+            replyId: reply.id,
+            postId: reply.belongPostid,
+            meiliHost: process.env.MEILI_HOST,
+            error,
+        });
+    }
+}
+
+async function sendTaskBroadcast(
+    message: Parameters<typeof broadcast>[0],
+    taskUuid: string,
+) {
+    try {
+        await broadcast(message);
+        console.info('[task.report] Broadcast completed', {
+            taskUuid,
+            type: message?.type,
+        });
+    } catch (error) {
+        console.error('[task.report] Broadcast failed (non-blocking)', {
+            taskUuid,
+            type: message?.type,
+            error,
+        });
+    }
+}
+
+async function sendTaskMessage(
+    message: Parameters<typeof messager>[0],
+    user: Parameters<typeof messager>[1],
+    taskUuid: string,
+) {
+    try {
+        const result = await messager(message, user);
+        console.info('[task.report] Messager completed', {
+            taskUuid,
+            notifyUid: user.uid,
+            ok: result?.ok,
+            method: (result as { method?: string })?.method || 'unknown',
+            error: (result as { error?: string })?.error || null,
+        });
+    } catch (error) {
+        console.error('[task.report] Messager failed (non-blocking)', {
+            taskUuid,
+            notifyUid: user.uid,
+            error,
+        });
+    }
+}
+
 // 添加字符串截断函数
 function truncateText(text: string, maxLength: number = 50): string {
     if (!text) return '';
@@ -153,7 +245,7 @@ export async function POST(request: Request) {
             // post任务，不发messager通知，只broadcast
             if (!task.reply) {
                 console.log(task.post);
-                await addSingleDocument(JSON.parse(JSON.stringify(task.post)));
+                await syncPostToSearchIndex(JSON.parse(JSON.stringify(task.post)), taskUuid);
                 console.log('Post task completed, skipping messager notification');
                 // 新增：revalidatePath，刷新首页和当前post页面缓存
                 if (typeof revalidatePath === 'function') {
@@ -162,7 +254,7 @@ export async function POST(request: Request) {
                         revalidatePath(`/[locale]/post/${task.post.id}`, 'page');
                     }
                 }
-                await broadcast({
+                await sendTaskBroadcast({
                     type: 'task',
                     content: {
                         uuid: taskUuid,
@@ -172,7 +264,7 @@ export async function POST(request: Request) {
                     },
                     title: '',
                     link: '',
-                });
+                }, taskUuid);
                 return response(200, {
                     message: 'Task report broadcasted successfully',
                 });
@@ -181,7 +273,7 @@ export async function POST(request: Request) {
                 // 修正：优先 parentReply.user 作为通知对象，其次 belongPost.User
                 const notifyUser = task?.reply?.parentReply?.user || task?.reply?.belongPost?.User;
 
-                await addReplyDocument(JSON.parse(JSON.stringify(task.reply)));
+                await syncReplyToSearchIndex(JSON.parse(JSON.stringify(task.reply)), taskUuid);
 
                 // 防止自己回复自己的评论时发消息给自己
                 if (notifyUser && (!task.user || notifyUser.uid !== task.user.uid)) {
@@ -237,7 +329,7 @@ export async function POST(request: Request) {
                     const truncatedOriginalContent = truncateText(originalContent, 50);
                     const truncatedReplyContent = truncateText(replyContent, 50);
 
-                    await messager(
+                    await sendTaskMessage(
                         {
                             title: lang(
                                 {
@@ -320,6 +412,7 @@ export async function POST(request: Request) {
                             nickname: notifyUser?.nickname,
                             email: notifyUser?.email,
                         },
+                        taskUuid,
                     );
                 }
                 // 新增：revalidatePath，刷新当前post页面缓存
@@ -329,7 +422,7 @@ export async function POST(request: Request) {
                     }
                 }
             }
-            await broadcast({
+            await sendTaskBroadcast({
                 type: 'task',
                 content: {
                     uuid: taskUuid,
@@ -339,7 +432,7 @@ export async function POST(request: Request) {
                 },
                 title: '',
                 link: '',
-            });
+            }, taskUuid);
             return response(200, {
                 message: 'Task report broadcasted successfully',
             });
@@ -350,7 +443,7 @@ export async function POST(request: Request) {
                 type: task?.reply ? 'reply' : 'post',
             });
             // 直接broadcast
-            await broadcast({
+            await sendTaskBroadcast({
                 type: 'task',
                 content: {
                     uuid: taskUuid,
@@ -359,7 +452,7 @@ export async function POST(request: Request) {
                 },
                 title: '',
                 link: '',
-            });
+            }, taskUuid);
             return response(200, {
                 message: 'Task report broadcasted successfully',
             });

@@ -48,6 +48,7 @@ RESEND_API_KEY="xxxxxx" // Resend API密钥
 VERIFY_EMAIL_FROM="XEO OS <noreply@xeoos.net>" // 邮件发送者
 
 TRANSLATE_WORKER="https://translate.xeoos.net/" // Cloudflare AI Translate Worker地址
+TRANSLATE_WORKER_FALLBACK="https://xeo-cf-translate-worker.<your-subdomain>.workers.dev" // 可选：主地址被 Cloudflare challenge 时兜底地址
 TRANSLATE_WORKER_PASSWORD="xxxxxx" // Cloudflare AI Translate Worker密码
 ABLY_API_KEY="xxxxxx" // Ably API密钥
 
