@@ -35,14 +35,37 @@ function truncateText(text: string, maxLength: number = 50): string {
 export async function POST(request: Request) {
     const { password, taskUuid, status } = await request.json();
     let task, taskDetails;
+    const requesterIp =
+        request.headers.get('cf-connecting-ip') ||
+        request.headers.get('x-forwarded-for') ||
+        'unknown';
+    const userAgent = request.headers.get('user-agent') || 'unknown';
+
+    console.info('[task.report] Incoming report', {
+        taskUuid,
+        status,
+        hasPassword: Boolean(password),
+        requesterIp,
+        userAgent,
+    });
 
     if (password !== process.env.TRANSLATE_WORKER_PASSWORD) {
+        console.warn('[task.report] Unauthorized report attempt', {
+            taskUuid,
+            status,
+            requesterIp,
+            userAgent,
+        });
         return response(401, {
             message: 'Unauthorized',
         });
     }
 
     if (!taskUuid || !status) {
+        console.warn('[task.report] Missing required fields', {
+            taskUuid,
+            status,
+        });
         return response(400, {
             message: 'Missing taskUuid or status',
         });
@@ -103,6 +126,10 @@ export async function POST(request: Request) {
         });
 
         if (!task) {
+            console.warn('[task.report] Task not found', {
+                taskUuid,
+                status,
+            });
             return response(404, {
                 message: lang({
                     'zh-CN': '任务未找到',
@@ -119,6 +146,10 @@ export async function POST(request: Request) {
             });
         }
         if (status == 'DONE') {
+            console.info('[task.report] Processing DONE status', {
+                taskUuid,
+                type: task.reply ? 'reply' : 'post',
+            });
             // post任务，不发messager通知，只broadcast
             if (!task.reply) {
                 console.log(task.post);
@@ -313,6 +344,11 @@ export async function POST(request: Request) {
                 message: 'Task report broadcasted successfully',
             });
         } else {
+            console.info('[task.report] Processing non-DONE status', {
+                taskUuid,
+                status,
+                type: task?.reply ? 'reply' : 'post',
+            });
             // 直接broadcast
             await broadcast({
                 type: 'task',

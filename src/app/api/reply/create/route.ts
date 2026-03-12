@@ -4,6 +4,7 @@ import auth from '../../_utils/auth';
 import limitControl from '../../_utils/limit';
 import prisma from '../../_utils/prisma';
 import { revalidatePath } from 'next/cache';
+import { triggerTranslateWorkerTask } from '../../_utils/trigger-translate-worker';
 
 export async function POST(request: Request) {
     const JWT = request.headers.get('Authorization')?.replace('Bearer ', '');
@@ -152,15 +153,15 @@ export async function POST(request: Request) {
                     },
                 }),
             ]);
+            console.info('[reply.create] Created translation task', {
+                replyId: result?.id,
+                userUid: token.uid,
+                taskId: task.id,
+                postId: postid || fatherReply?.belongPostid,
+            });
             await prisma.$disconnect();
             // 开始翻译Task
-            await fetch(process.env.TRANSLATE_WORKER as string, {
-                method: 'POST',
-                body: JSON.stringify({
-                    password: process.env.TRANSLATE_WORKER_PASSWORD,
-                    task: task.id,
-                }),
-            });
+            await triggerTranslateWorkerTask(task.id, 'reply.create');
             // 并发 revalidatePath
             await Promise.all([
                 revalidatePath('/[locale]/page'),

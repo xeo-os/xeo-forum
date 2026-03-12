@@ -4,6 +4,7 @@ import auth from '../../_utils/auth';
 import limitControl from '../../_utils/limit';
 import prisma from '../../_utils/prisma';
 import { revalidatePath } from 'next/cache';
+import { triggerTranslateWorkerTask } from '../../_utils/trigger-translate-worker';
 
 export async function POST(request: Request) {
     const JWT = request.headers.get('Authorization')?.replace('Bearer ', '');
@@ -182,14 +183,14 @@ export async function POST(request: Request) {
                     },
                 });
 
-                // 触发翻译工作流
-                await fetch(process.env.TRANSLATE_WORKER as string, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        password: process.env.TRANSLATE_WORKER_PASSWORD,
-                        task: task.id,
-                    }),
+                console.info('[post.update] Created translation task for publish', {
+                    postId: updatedPost.id,
+                    userUid: token.uid,
+                    taskId: task.id,
                 });
+
+                // 触发翻译工作流
+                await triggerTranslateWorkerTask(task.id, 'post.update.publish');
             } catch (error) {
                 console.error('Error creating translation task:', error);
                 // 即使翻译任务创建失败，帖子更新仍然成功

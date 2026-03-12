@@ -3,6 +3,7 @@ import response from '../../_utils/response';
 import auth from '../../_utils/auth';
 import prisma from '../../_utils/prisma';
 import limitControl from '../../_utils/limit';
+import { triggerTranslateWorkerTask } from '../../_utils/trigger-translate-worker';
 
 export async function POST(request: Request) {
     const { id } = await request.json();
@@ -134,13 +135,11 @@ export async function POST(request: Request) {
         });
         await prisma.$disconnect();
 
-        await fetch(process.env.TRANSLATE_WORKER as string, {
-            method: 'POST',
-            body: JSON.stringify({
-                password: process.env.TRANSLATE_WORKER_PASSWORD,
-                task: taskInfo.id,
-            }),
+        console.info('[task.retry] Retrying translation task', {
+            taskId: taskInfo.id,
+            userUid: user.uid,
         });
+        await triggerTranslateWorkerTask(taskInfo.id, 'task.retry');
 
         await limitControl.update(request);
 
