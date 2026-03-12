@@ -19,7 +19,7 @@ import {
     Reply,
     SidebarIcon,
 } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { EmojiAvatar } from '@/components/emoji-avatar';
 import { SearchForm } from '@/components/search-form';
 import { SearchSheet } from '@/components/search-sheet';
 import '@/styles/animations.css';
@@ -471,33 +471,20 @@ export function SiteHeader({
                         <DropdownMenu modal={false}>
                             <DropdownMenuTrigger asChild>
                                 <div className='relative' suppressHydrationWarning>
-                                    <Avatar
+                                    <EmojiAvatar
                                         className={`cursor-pointer hover:opacity-80 transition-opacity ${
                                             isAvatarShaking ? 'animate-shake-rotate' : ''
-                                        }`}>
-                                        {isLoggedIn ? (
-                                            <AvatarImage
-                                                src={`/api/dynamicImage/emoji?emoji=${encodeURIComponent(
-                                                    userData.avatar?.emoji || '',
-                                                )}&background=${encodeURIComponent(
-                                                    userData.avatar?.background?.replaceAll(
-                                                        '%',
-                                                        '%25',
-                                                    ) || '',
-                                                )}`}
-                                            />
-                                        ) : (
-                                            <AvatarImage src='/api/dynamicImage/emoji' />
-                                        )}
-
-                                        <AvatarFallback>
-                                            {isLoggedIn
+                                        }`}
+                                        emoji={isLoggedIn ? userData.avatar?.emoji : '🙂'}
+                                        background={isLoggedIn ? userData.avatar?.background : null}
+                                        fallbackText={
+                                            isLoggedIn
                                                 ? userData.nickname
                                                     ? userData.nickname.charAt(0)
                                                     : 'U'
-                                                : 'G'}
-                                        </AvatarFallback>
-                                    </Avatar>
+                                                : 'G'
+                                        }
+                                    />
                                     {/* 未读消息红点 */}
                                     {isLoggedIn && unreadCount > 0 && (
                                         <div className='absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-background flex items-center justify-center animate-pulse'>

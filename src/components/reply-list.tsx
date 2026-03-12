@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { EmojiAvatar } from '@/components/emoji-avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import {
     Heart,
@@ -794,30 +794,17 @@ function SingleReply({
                     <Link
                         href={`/${locale}/user/${reply.user.uid}`}
                         className='hover:opacity-80 transition-opacity block'>
-                        <Avatar className={isMobile ? 'h-6 w-6' : 'h-8 w-8'}>
-                            <AvatarImage
-                                src={
-                                    reply.user.avatar[0]?.id
-                                        ? `/api/dynamicImage/emoji?emoji=${reply.user.avatar[0].emoji}&background=${encodeURIComponent(
-                                              reply.user.avatar[0].background.replaceAll(
-                                                  '%',
-                                                  '%25',
-                                              ),
-                                          )}`
-                                        : undefined
-                                }
-                                alt={reply.user.nickname || 'User Avatar'}
-                            />
-                            <AvatarFallback
-                                style={{
-                                    backgroundColor: reply.user.avatar[0]?.background || '#e5e7eb',
-                                }}>
-                                {reply.user.avatar[0]?.emoji ||
-                                    reply.user.profileEmoji ||
-                                    reply.user.nickname?.charAt(0) ||
-                                    'U'}
-                            </AvatarFallback>
-                        </Avatar>
+                        <EmojiAvatar
+                            className={isMobile ? 'h-6 w-6' : 'h-8 w-8'}
+                            emoji={reply.user.avatar[0]?.emoji}
+                            background={reply.user.avatar[0]?.background}
+                            fallbackText={
+                                reply.user.profileEmoji ||
+                                reply.user.nickname?.charAt(0) ||
+                                'U'
+                            }
+                            title={reply.user.nickname || 'User Avatar'}
+                        />
                     </Link>
                 </div>
 
@@ -1295,33 +1282,15 @@ function SingleReply({
                                 className='flex gap-2 py-2'>
                                 {/* 头像 */}
                                 <div className='flex-shrink-0'>
-                                    <Avatar className={isMobile ? 'h-6 w-6' : 'h-8 w-8'}>
-                                        <AvatarImage
-                                            src={
-                                                token.getObject()?.avatar
-                                                    ? `/api/dynamicImage/emoji?emoji=${token.getObject()?.avatar.emoji}&background=${encodeURIComponent(
-                                                          token
-                                                              .getObject()
-                                                              ?.avatar?.background?.replaceAll(
-                                                                  '%',
-                                                                  '%25',
-                                                              ) || '',
-                                                      )}`
-                                                    : undefined
-                                            }
-                                            alt='Your Avatar'
-                                        />
-                                        <AvatarFallback
-                                            style={{
-                                                backgroundColor:
-                                                    token.getObject()?.avatar?.background ||
-                                                    '#e5e7eb',
-                                            }}>
-                                            {token.getObject()?.avatar?.emoji ||
-                                                token.getObject()?.nickname?.charAt(0) ||
-                                                'U'}
-                                        </AvatarFallback>
-                                    </Avatar>
+                                    <EmojiAvatar
+                                        className={isMobile ? 'h-6 w-6' : 'h-8 w-8'}
+                                        emoji={token.getObject()?.avatar?.emoji}
+                                        background={token.getObject()?.avatar?.background}
+                                        fallbackText={
+                                            token.getObject()?.nickname?.charAt(0) || 'U'
+                                        }
+                                        title='Your Avatar'
+                                    />
                                 </div>
 
                                 <div className='flex-1 min-w-0'>

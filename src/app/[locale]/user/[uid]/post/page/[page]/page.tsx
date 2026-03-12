@@ -1,7 +1,7 @@
 import prisma from '@/app/api/_utils/prisma';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { EmojiAvatar } from '@/components/emoji-avatar';
 import {
     ChevronLeft,
     ChevronRight,
@@ -357,18 +357,13 @@ export default async function UserPostsPage({ params }: Props) {
                 <CardHeader>
                     <div className='flex items-center justify-between'>
                         <div className='flex items-center space-x-4'>
-                            <Avatar className='h-12 w-12'>
-                                <AvatarImage
-                                    src={`/api/dynamicImage/emoji?emoji=${encodeURIComponent(
-                                        userAvatar.emoji || '',
-                                    )}&background=${encodeURIComponent(
-                                        userAvatar.background?.replaceAll('%', '%25') || '',
-                                    )}`}
-                                />
-                                <AvatarFallback className='text-lg'>
-                                    {user.username.charAt(0).toUpperCase()}
-                                </AvatarFallback>
-                            </Avatar>
+                            <EmojiAvatar
+                                className='h-12 w-12'
+                                fallbackClassName='text-lg'
+                                emoji={userAvatar.emoji}
+                                background={userAvatar.background}
+                                fallbackText={user.username.charAt(0).toUpperCase()}
+                            />
                             <div>
                                 <CardTitle className='text-xl'>{user.nickname}</CardTitle>
                                 <p className='text-muted-foreground'>@{user.username}</p>

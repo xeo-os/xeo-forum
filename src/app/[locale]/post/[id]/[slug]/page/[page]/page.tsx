@@ -5,7 +5,7 @@ import lang from '@/lib/lang';
 import prisma from '@/app/api/_utils/prisma';
 import { PostDetailClient } from '@/components/post-detail-client';
 import { PostContent } from '@/components/post-content';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { EmojiAvatar } from '@/components/emoji-avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import EmojiBackground from '@/components/emoji-background';
@@ -74,6 +74,7 @@ type PostForMetadata = {
     contentPTBR: string | null;
     contentKOKR: string | null;
     User: {
+        uid: number;
         nickname: string;
         avatar: {
             emoji: string;
@@ -326,6 +327,7 @@ const getPostForMetadata = cache(async (postId: number): Promise<PostForMetadata
             contentKOKR: true,
             User: {
                 select: {
+                    uid: true,
                     nickname: true,
                     avatar: {
                         select: {
@@ -598,9 +600,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         authors: [
             {
                 name: post.User?.nickname || 'Anonymous',
-                url: `/api/dynamicImage/emoji?emoji=${post.User?.avatar[0].emoji}&background=${encodeURIComponent(
-                    post.User?.avatar[0]?.background?.replaceAll('%', '%25') || '',
-                )}`,
+                url: post.User ? `/${locale}/user/${post.User.uid}` : undefined,
             },
         ],
     };
@@ -832,31 +832,17 @@ export default async function PostDetailPage({ params }: Props) {
                                 <Link
                                     href={`/${locale}/user/${post.User?.uid}`}
                                     className='flex-shrink-0 hover:opacity-80 transition-opacity'>
-                                    <Avatar className='h-12 w-12'>
-                                        <AvatarImage
-                                            src={
-                                                post.User?.avatar[0]?.id
-                                                    ? `/api/dynamicImage/emoji?emoji=${post.User.avatar[0].emoji}&background=${encodeURIComponent(
-                                                          post.User.avatar[0].background.replaceAll(
-                                                              '%',
-                                                              '%25',
-                                                          ),
-                                                      )}`
-                                                    : undefined
-                                            }
-                                            alt={post.User?.nickname || 'User Avatar'}
-                                        />
-                                        <AvatarFallback
-                                            style={{
-                                                backgroundColor:
-                                                    post.User?.avatar[0]?.background || '#e5e7eb',
-                                            }}>
-                                            {post.User?.avatar[0]?.emoji ||
-                                                post.User?.profileEmoji ||
-                                                post.User?.nickname?.charAt(0) ||
-                                                'U'}
-                                        </AvatarFallback>
-                                    </Avatar>
+                                    <EmojiAvatar
+                                        className='h-12 w-12'
+                                        emoji={post.User?.avatar[0]?.emoji}
+                                        background={post.User?.avatar[0]?.background}
+                                        fallbackText={
+                                            post.User?.profileEmoji ||
+                                            post.User?.nickname?.charAt(0) ||
+                                            'U'
+                                        }
+                                        title={post.User?.nickname || 'User Avatar'}
+                                    />
                                 </Link>
 
                                 <div className='flex-1 min-w-0'>
@@ -943,28 +929,18 @@ export default async function PostDetailPage({ params }: Props) {
                             />
                             <CardHeader className='relative z-10'>
                                 <div className='flex items-center space-x-3'>
-                                    <Avatar className='h-16 w-16 border-2 border-white/20'>
-                                        <AvatarImage
-                                            src={
-                                                post.User.avatar[0]
-                                                    ? `/api/dynamicImage/emoji?emoji=${encodeURIComponent(
-                                                          post.User.avatar[0].emoji || '',
-                                                      )}&background=${encodeURIComponent(
-                                                          post.User.avatar[0].background?.replaceAll(
-                                                              '%',
-                                                              '%25',
-                                                          ) || '',
-                                                      )}`
-                                                    : undefined
-                                            }
-                                        />
-                                        <AvatarFallback className='text-lg bg-white/20 text-white'>
-                                            {post.User.profileEmoji
+                                    <EmojiAvatar
+                                        className='h-16 w-16 border-2 border-white/20'
+                                        fallbackClassName='text-lg text-white'
+                                        emoji={post.User.avatar[0]?.emoji}
+                                        background={post.User.avatar[0]?.background}
+                                        fallbackText={
+                                            post.User.profileEmoji
                                                 ? post.User.profileEmoji.split(' ')[0] ||
                                                   post.User.username.charAt(0).toUpperCase()
-                                                : post.User.username.charAt(0).toUpperCase()}
-                                        </AvatarFallback>
-                                    </Avatar>
+                                                : post.User.username.charAt(0).toUpperCase()
+                                        }
+                                    />
                                     <div className='flex-1'>
                                         <Link
                                             href={`/${locale}/user/${post.User.uid}`}
@@ -1232,32 +1208,13 @@ export default async function PostDetailPage({ params }: Props) {
                                             href={`/${locale}/user/${user.uid}`}
                                             className='hover:opacity-80 transition-opacity'
                                             title={user.nickname || 'Anonymous'}>
-                                            <Avatar className='h-8 w-8'>
-                                                <AvatarImage
-                                                    src={
-                                                        user.avatar[0]
-                                                            ? `/api/dynamicImage/emoji?emoji=${encodeURIComponent(
-                                                                  user.avatar[0].emoji || '',
-                                                              )}&background=${encodeURIComponent(
-                                                                  user.avatar[0].background?.replaceAll(
-                                                                      '%',
-                                                                      '%25',
-                                                                  ) || '',
-                                                              )}`
-                                                            : undefined
-                                                    }
-                                                />
-                                                <AvatarFallback
-                                                    className='text-xs'
-                                                    style={{
-                                                        backgroundColor:
-                                                            user.avatar[0]?.background || '#e5e7eb',
-                                                    }}>
-                                                    {user.avatar[0]?.emoji ||
-                                                        user.nickname?.charAt(0) ||
-                                                        'U'}
-                                                </AvatarFallback>
-                                            </Avatar>
+                                            <EmojiAvatar
+                                                className='h-8 w-8'
+                                                fallbackClassName='text-xs'
+                                                emoji={user.avatar[0]?.emoji}
+                                                background={user.avatar[0]?.background}
+                                                fallbackText={user.nickname?.charAt(0) || 'U'}
+                                            />
                                         </Link>
                                     ))}
                                     {uniqueLikers.length > 27 && (
@@ -1303,32 +1260,13 @@ export default async function PostDetailPage({ params }: Props) {
                                             href={`/${locale}/user/${user.uid}`}
                                             className='hover:opacity-80 transition-opacity'
                                             title={user.nickname || 'Anonymous'}>
-                                            <Avatar className='h-8 w-8'>
-                                                <AvatarImage
-                                                    src={
-                                                        user.avatar[0]
-                                                            ? `/api/dynamicImage/emoji?emoji=${encodeURIComponent(
-                                                                  user.avatar[0].emoji || '',
-                                                              )}&background=${encodeURIComponent(
-                                                                  user.avatar[0].background?.replaceAll(
-                                                                      '%',
-                                                                      '%25',
-                                                                  ) || '',
-                                                              )}`
-                                                            : undefined
-                                                    }
-                                                />
-                                                <AvatarFallback
-                                                    className='text-xs'
-                                                    style={{
-                                                        backgroundColor:
-                                                            user.avatar[0]?.background || '#e5e7eb',
-                                                    }}>
-                                                    {user.avatar[0]?.emoji ||
-                                                        user.nickname?.charAt(0) ||
-                                                        'U'}
-                                                </AvatarFallback>
-                                            </Avatar>
+                                            <EmojiAvatar
+                                                className='h-8 w-8'
+                                                fallbackClassName='text-xs'
+                                                emoji={user.avatar[0]?.emoji}
+                                                background={user.avatar[0]?.background}
+                                                fallbackText={user.nickname?.charAt(0) || 'U'}
+                                            />
                                         </Link>
                                     ))}
                                     {uniqueRepliers.length > 27 && (

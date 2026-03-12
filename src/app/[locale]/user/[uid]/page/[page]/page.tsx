@@ -1,7 +1,7 @@
 import prisma from '@/app/api/_utils/prisma';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { EmojiAvatar } from '@/components/emoji-avatar';
 import {
     CalendarDays,
     MapPin,
@@ -709,21 +709,18 @@ export default async function UserPage({ params }: Props) {
                 <EmojiBackground primaryColor='#f0b100' userEmojis={user.profileEmoji} />
                 <CardHeader className='relative z-10'>
                     <div className='flex items-center space-x-4'>
-                        <Avatar className='h-20 w-20 border-2 border-white/20'>
-                            <AvatarImage
-                                src={`/api/dynamicImage/emoji?emoji=${encodeURIComponent(
-                                    userAvatar.emoji || '',
-                                )}&background=${encodeURIComponent(
-                                    userAvatar.background?.replaceAll('%', '%25') || '',
-                                )}`}
-                            />
-                            <AvatarFallback className='text-2xl bg-white/20 text-white'>
-                                {user.profileEmoji
+                        <EmojiAvatar
+                            className='h-20 w-20 border-2 border-white/20'
+                            fallbackClassName='text-2xl text-white'
+                            emoji={userAvatar.emoji}
+                            background={userAvatar.background}
+                            fallbackText={
+                                user.profileEmoji
                                     ? user.profileEmoji.split(' ')[0] ||
                                       user.username.charAt(0).toUpperCase()
-                                    : user.username.charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                        </Avatar>
+                                    : user.username.charAt(0).toUpperCase()
+                            }
+                        />
                         <div className='flex-1'>
                             <CardTitle className='text-2xl mb-2 text-white drop-shadow-lg'>
                                 {user.nickname}

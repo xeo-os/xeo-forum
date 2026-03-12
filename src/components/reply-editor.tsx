@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { EmojiAvatar } from '@/components/emoji-avatar';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import lang from '@/lib/lang';
@@ -331,27 +331,14 @@ export function ReplyEditor({
   return (
     <div className="bg-muted/20 rounded-lg p-4 border border-muted/50">
       <div className="flex gap-3">
-        <Avatar className="h-8 w-8">
-          <AvatarImage
-            src={
-              token.getObject()?.avatar
-                ? `/api/dynamicImage/emoji?emoji=${token.getObject()?.avatar.emoji}&background=${encodeURIComponent(
-                    token.getObject()?.avatar?.background?.replaceAll('%', '%25') || ''
-                  )}`
-                : undefined
-            }
-            alt="Your Avatar"
-          />
-          <AvatarFallback
-            style={{
-              backgroundColor: token.getObject()?.avatar?.background || '#e5e7eb',
-            }}
-          >
-            {token.getObject()?.avatar?.emoji ||
-              token.getObject()?.nickname?.charAt(0) ||
-              'U'}
-          </AvatarFallback>
-        </Avatar>        <div className="flex-1 min-w-0">
+        <EmojiAvatar
+          className="h-8 w-8"
+          emoji={token.getObject()?.avatar?.emoji}
+          background={token.getObject()?.avatar?.background}
+          fallbackText={token.getObject()?.nickname?.charAt(0) || 'U'}
+          title="Your Avatar"
+        />
+        <div className="flex-1 min-w-0">
           {!token.get() ? (
             // 未登录用户显示登录提示
             <div className="relative">

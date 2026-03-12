@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import lang from '@/lib/lang';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { EmojiAvatar } from '@/components/emoji-avatar';
 import {
     Trophy,
     Users,
@@ -123,30 +123,13 @@ function UserCard({ user, index, locale, type }: { user: LeaderboardUser; index:
                         title={user.nickname}
                         rel="noopener"
                     >
-                        <Avatar className="h-12 w-12">
-                            <AvatarImage
-                                src={
-                                    userAvatar.emoji
-                                        ? `/api/dynamicImage/emoji?emoji=${encodeURIComponent(
-                                            userAvatar.emoji,
-                                        )}&background=${encodeURIComponent(
-                                            userAvatar.background?.replaceAll('%', '%25') || '',
-                                        )}`
-                                        : undefined
-                                }
-                                alt={user.nickname}
-                            />
-                            <AvatarFallback
-                                style={{
-                                    backgroundColor: userAvatar.background || '#e5e7eb',
-                                }}
-                            >
-                                {userAvatar.emoji ||
-                                    user.profileEmoji ||
-                                    user.nickname.charAt(0) ||
-                                    'U'}
-                            </AvatarFallback>
-                        </Avatar>
+                        <EmojiAvatar
+                            className="h-12 w-12"
+                            emoji={userAvatar.emoji}
+                            background={userAvatar.background}
+                            fallbackText={user.profileEmoji || user.nickname.charAt(0) || 'U'}
+                            title={user.nickname}
+                        />
                         
                         <div className="flex-1">
                             <div className="font-semibold">{user.nickname}</div>
@@ -227,23 +210,14 @@ function CompactPostItem({ post, index, locale }: { post: LeaderboardPost; index
                         title={post.user.nickname}
                         rel="noopener"
                     >
-                        <Avatar className="h-4 w-4">
-                            <AvatarImage
-                                src={
-                                    userAvatar.emoji
-                                        ? `/api/dynamicImage/emoji?emoji=${encodeURIComponent(
-                                            userAvatar.emoji,
-                                        )}&background=${encodeURIComponent(
-                                            userAvatar.background?.replaceAll('%', '%25') || '',
-                                        )}`
-                                        : undefined
-                                }
-                                alt={post.user.nickname}
-                            />
-                            <AvatarFallback className="text-xs">
-                                {userAvatar.emoji || post.user.nickname.charAt(0)}
-                            </AvatarFallback>
-                        </Avatar>
+                        <EmojiAvatar
+                            className="h-4 w-4"
+                            fallbackClassName="text-xs"
+                            emoji={userAvatar.emoji}
+                            background={userAvatar.background}
+                            fallbackText={post.user.nickname.charAt(0)}
+                            title={post.user.nickname}
+                        />
                         <span className="text-xs text-muted-foreground">{post.user.nickname}</span>
                     </Link>
                     
